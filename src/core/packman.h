@@ -47,6 +47,8 @@ private:
   int status(git_repository *repo); // return 1 if the workdir is modified
   QString head(git_repository *repo); // get commit hash of HEAD
   QString generate_changelog(git_repository *repo, const QString &commit_range);
+  void sanitize_package_db(const QString &packname);
+  static QString extract_pack_name(const QString &url);
 };
 
 extern PackMan *Pacman;

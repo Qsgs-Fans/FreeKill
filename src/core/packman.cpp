@@ -102,7 +102,10 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       enablePack(name);
 
       GitRepo head_repo;
-      if (open(name, head_repo) == 0 && head(head_repo.repo) != obj["hash"].toString()) {
+      int openErr = open(name, head_repo);
+      if (openErr != 0) {
+        sanitize_package_db(name);
+      } else if (head(head_repo.repo) != obj["hash"].toString()) {
         err = updatePack(name, obj["hash"].toString());
         if (err != 0) {
 #ifndef FK_SERVER_ONLY
@@ -148,16 +151,11 @@ int PackMan::downloadNewPack(const QString &url, bool useThread) {
     GitRepo raii_repo;
     int err = clone(url, raii_repo);
     if (err < 0) {
+      sanitize_package_db(extract_pack_name(url));
       return err;
     }
 
-    auto u = url;
-    while (u.endsWith('/')) {
-      u.chop(1);
-    }
-    QString fileName = QUrl(u).fileName();
-    if (fileName.endsWith(".git"))
-      fileName.chop(4);
+    auto fileName = extract_pack_name(url);
 
     auto result = db->select(sql_select.arg(fileName));
     if (result.isEmpty()) {
@@ -205,8 +203,10 @@ void PackMan::disablePack(const QString &pack) {
 int PackMan::updatePack(const QString &pack, const QString &hash) {
   GitRepo raii_repo;
   int err = open(pack, raii_repo);
-  if (err < 0)
+  if (err < 0) {
+    sanitize_package_db(pack);
     return err;
+  }
   auto repo = raii_repo.repo;
 
   // 先status 检查dirty 后面全是带--force的操作
@@ -230,8 +230,10 @@ int PackMan::updatePack(const QString &pack, const QString &hash) {
 int PackMan::upgradePack(const QString &pack) {
   GitRepo raii_repo;
   int err = open(pack, raii_repo);
-  if (err < 0)
+  if (err < 0) {
+    sanitize_package_db(pack);
     return err;
+  }
   auto repo = raii_repo.repo;
 
   // 先status 检查dirty 后面全是带--force的操作
@@ -281,8 +283,10 @@ QString PackMan::listPackages() {
 void PackMan::forceCheckoutMaster(const QString &pack) {
   GitRepo repo;
   int err = open(pack, repo);
-  if (err < 0)
+  if (err < 0) {
+    sanitize_package_db(pack);
     return;
+  }
   checkout_branch(repo.repo, "master");
 }
 
@@ -291,8 +295,10 @@ void PackMan::syncCommitHashToDatabase() {
     auto pack = e["name"];
     GitRepo repo;
     int err = open(pack, repo);
-    if (err < 0)
+    if (err < 0) {
+      sanitize_package_db(pack);
       continue;
+    }
     db->exec(QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
              .arg(head(repo.repo))
              .arg(pack));
@@ -434,13 +440,7 @@ static int transfer_progress_cb(const git_indexer_progress *stats,
 }
 
 int PackMan::clone(const QString &u, GitRepo &repo) {
-  auto url = u;
-  while (url.endsWith('/')) {
-    url.chop(1);
-  }
-  QString fileName = QUrl(url).fileName();
-  if (fileName.endsWith(".git"))
-    fileName.chop(4);
+  QString fileName = extract_pack_name(u);
   QString clonePath = QString("packages/%1").arg(fileName);
 
   git_repository *raw = nullptr;
@@ -745,6 +745,49 @@ QString PackMan::generate_changelog(git_repository *repo, const QString &commit_
 clean:
   git_revwalk_free(walk);
   return result;
+}
+
+QString PackMan::extract_pack_name(const QString &u) {
+  auto url = u;
+  while (url.endsWith('/')) {
+    url.chop(1);
+  }
+  QString fileName = QUrl(url).fileName();
+  if (fileName.endsWith(".git"))
+    fileName.chop(4);
+  return fileName;
+}
+
+void PackMan::sanitize_package_db(const QString &packname) {
+  QString dirPath = QString("packages/%1").arg(packname);
+  QDir dir(dirPath);
+  bool dirExists = dir.exists();
+
+  auto result = db->select(QString("SELECT name FROM packages WHERE name='%1';").arg(packname));
+  bool dbHasRecord = !result.isEmpty();
+
+  if (!dirExists && dbHasRecord) {
+    db->exec(QString("DELETE FROM packages WHERE name='%1';").arg(packname));
+    return;
+  }
+
+  if (dirExists && !dbHasRecord) {
+    GitRepo repo;
+    if (open(packname, repo) != 0)
+      return;
+
+    git_remote *remote = NULL;
+    QString url;
+    if (git_remote_lookup(&remote, repo.repo, "origin") == 0) {
+      url = QString::fromUtf8(git_remote_url(remote));
+      git_remote_free(remote);
+    }
+
+    QString hash = head(repo.repo);
+
+    db->exec(QString("INSERT INTO packages (name,url,hash,enabled) VALUES ('%1','%2','%3',1);")
+             .arg(packname).arg(url).arg(hash));
+  }
 }
 
 #undef GIT_FAIL
