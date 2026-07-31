@@ -448,7 +448,7 @@ int PackMan::clone(const QString &u, GitRepo &repo) {
   git_clone_init_options(&opt, GIT_CLONE_OPTIONS_VERSION);
   opt.fetch_opts.proxy_opts.version = 1;
   opt.fetch_opts.callbacks.transfer_progress = transfer_progress_cb;
-  int err = git_clone(&raw, url.toUtf8(), clonePath.toUtf8(), &opt);
+  int err = git_clone(&raw, u.toUtf8(), clonePath.toUtf8(), &opt);
   if (err < 0) {
     QDir(clonePath).removeRecursively();
     GIT_FAIL;
