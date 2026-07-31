@@ -598,6 +598,27 @@ int PackMan::status(git_repository *repo) {
     s = git_status_byindex(status_list, i);
     if (s->status != GIT_STATUS_CURRENT && s->status != GIT_STATUS_IGNORED) {
       git_status_list_free(status_list);
+      status_list = NULL;
+
+      // 如果是程序设置HEAD后未checkout导致，index和workdir之间没有diff，可以自动恢复
+      git_diff *diff = NULL;
+      git_diff_options diff_opts = GIT_DIFF_OPTIONS_INIT;
+      if (git_diff_index_to_workdir(&diff, repo, NULL, &diff_opts) == 0) {
+        size_t num_deltas = git_diff_num_deltas(diff);
+        git_diff_free(diff);
+        if (num_deltas == 0) {
+          git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+          checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE;
+          err = git_checkout_head(repo, &checkout_opts);
+          if (err == 0) {
+            qInfo("Auto-recovered from interrupted set_head.");
+            return 0;
+          }
+          GIT_FAIL;
+          return err;
+        }
+      }
+
       qCritical("Workspace is dirty.");
       return 100;
     }
