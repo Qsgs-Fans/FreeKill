@@ -2,6 +2,7 @@
 
 #include <git2.h>
 #include <git2/errors.h>
+#include <algorithm>
 #include "core/packman.h"
 #include "core/c-wrapper.h"
 #include "core/util.h"
@@ -238,6 +239,8 @@ int PackMan::upgradePack(const QString &pack) {
   if (err != 0)
     return err;
 
+  auto old_hash = head(repo);
+
   err = pull(repo);
   if (err < 0)
     return err;
@@ -247,6 +250,10 @@ int PackMan::upgradePack(const QString &pack) {
   err = checkout_branch(repo, "master");
   if (err < 0)
     return err;
+
+  auto hash = head(repo);
+  auto commit_range = QString("%1..%2").arg(old_hash, hash);
+  generate_changelog(repo, commit_range);
 
   db->exec(QString("UPDATE packages SET hash = '%1' WHERE name = '%2';")
                   .arg(head(repo))
@@ -617,6 +624,127 @@ QString PackMan::head(git_repository *repo) {
 clean:
   git_object_free(obj);
   return QString("0000000000000000000000000000000000000000");
+}
+
+struct ConvCommit {
+  QString raw_message_head;
+  enum { Feat, Fix } type;
+  bool breaking = false;
+  QString subtype;
+  QString message_title;
+};
+
+// 根据Conventional Commit规范，对于给定commit_range生成摘要
+// 但是实际上是简化版方法，只检测feat: 和 fix:，以及他俩携带括号的版本和携带感叹号的版本
+// 比如feat(foo)!: message title\n\n  LONG MESSAGE BODY
+// 这单独一条显示为 - **破坏性!** (foo) message title
+QString PackMan::generate_changelog(git_repository *repo, const QString &commit_range) {
+  int err;
+  git_revwalk *walk = NULL;
+  git_oid oid;
+  QList<ConvCommit> feats;
+  QList<ConvCommit> fixes;
+  QString result;
+
+  err = git_revwalk_new(&walk, repo);
+  GIT_CHK_CLEAN;
+
+  err = git_revwalk_push_range(walk, commit_range.toUtf8());
+  GIT_CHK_CLEAN;
+
+  while (!git_revwalk_next(&oid, walk)) {
+    git_commit *commit = NULL;
+    err = git_commit_lookup(&commit, repo, &oid);
+    if (err < 0) continue;
+
+    const char *msg = git_commit_message(commit);
+    QString msg_str(msg);
+    auto first_line = msg_str.left(msg_str.indexOf('\n'));
+    if (first_line.isEmpty())
+      first_line = msg_str;
+
+    ConvCommit cc;
+    cc.raw_message_head = first_line;
+
+    int pos = 0;
+    if (first_line.startsWith("feat")) {
+      cc.type = ConvCommit::Feat;
+      pos = 4;
+    } else if (first_line.startsWith("fix")) {
+      cc.type = ConvCommit::Fix;
+      pos = 3;
+    } else {
+      git_commit_free(commit);
+      continue;
+    }
+
+    if (pos < first_line.size() && first_line[pos] == '(') {
+      int end = first_line.indexOf(')', pos);
+      if (end != -1) {
+        cc.subtype = first_line.mid(pos + 1, end - pos - 1);
+        pos = end + 1;
+      }
+    }
+
+    if (pos < first_line.size() && first_line[pos] == '!') {
+      cc.breaking = true;
+      pos++;
+    }
+
+    if (pos < first_line.size() && first_line[pos] == ':') {
+      pos++;
+      if (pos < first_line.size() && first_line[pos] == ' ') {
+        pos++;
+      }
+    }
+
+    cc.message_title = first_line.mid(pos);
+
+    if (cc.type == ConvCommit::Feat) {
+      feats.append(cc);
+    } else {
+      fixes.append(cc);
+    }
+
+    git_commit_free(commit);
+  }
+
+  std::reverse(feats.begin(), feats.end());
+  std::reverse(fixes.begin(), fixes.end());
+
+  if (!feats.isEmpty()) {
+    result += "## Feature(s)\n\n";
+    for (const auto &c : feats) {
+      result += "- ";
+      if (c.breaking) {
+        result += "**BREAKING!** ";
+      }
+      if (!c.subtype.isEmpty()) {
+        result += "(" + c.subtype + ") ";
+      }
+      result += c.message_title + "\n";
+    }
+    result += "\n";
+  }
+
+  if (!fixes.isEmpty()) {
+    result += "## Fix(es)\n\n";
+    for (const auto &c : fixes) {
+      result += "- ";
+      if (c.breaking) {
+        result += "**BREAKING!** ";
+      }
+      if (!c.subtype.isEmpty()) {
+        result += "(" + c.subtype + ") ";
+      }
+      result += c.message_title + "\n";
+    }
+    result += "\n";
+  }
+
+clean:
+  git_revwalk_free(walk);
+  return result;
 }
 
 #undef GIT_FAIL

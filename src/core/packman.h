@@ -46,6 +46,7 @@ private:
   int checkout_branch(git_repository *repo, const QString &branch);
   int status(git_repository *repo); // return 1 if the workdir is modified
   QString head(git_repository *repo); // get commit hash of HEAD
+  QString generate_changelog(git_repository *repo, const QString &commit_range);
 };
 
 extern PackMan *Pacman;
