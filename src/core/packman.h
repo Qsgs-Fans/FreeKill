@@ -4,6 +4,7 @@
 #define _PACKMAN_H
 
 class Sqlite3;
+struct git_repository;
 
 // 管理拓展包所需的类，本质上是libgit2接口的再封装。
 class PackMan : public QObject {
@@ -34,15 +35,17 @@ public:
 
 private:
   std::unique_ptr<Sqlite3> db;
-
-  int clone(const QString &url);
-  int pull(const QString &name);
-  int hasCommit(const QString &name, const QString &hash);
-  int checkout(const QString &name, const QString &hash);
-  int checkout_branch(const QString &name, const QString &branch);
-  int status(const QString &name); // return 1 if the workdir is modified
-  QString head(const QString &name); // get commit hash of HEAD
   QStringList disabled_packs;
+
+  struct GitRepo;
+  int open(const QString &name, GitRepo &repo);
+  int clone(const QString &url, GitRepo &repo);
+  int pull(git_repository *repo);
+  int hasCommit(git_repository *repo, const QString &hash);
+  int checkout(git_repository *repo, const QString &hash);
+  int checkout_branch(git_repository *repo, const QString &branch);
+  int status(git_repository *repo); // return 1 if the workdir is modified
+  QString head(git_repository *repo); // get commit hash of HEAD
 };
 
 extern PackMan *Pacman;
