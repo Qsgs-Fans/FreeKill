@@ -80,6 +80,9 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       Backend->notifyUI("SetDownloadingPackage", name);
 #endif
 
+      // 先尝试一下令DB与磁盘状态一致，再决定clone还是pull
+      sanitize_package_db(name);
+
       if (db->select(
               QString("SELECT name FROM packages WHERE name='%1';").arg(name))
               .isEmpty()) {
@@ -102,10 +105,7 @@ void PackMan::loadSummary(const QString &jsonData, bool useThread) {
       enablePack(name);
 
       GitRepo head_repo;
-      int openErr = open(name, head_repo);
-      if (openErr != 0) {
-        sanitize_package_db(name);
-      } else if (head(head_repo.repo) != obj["hash"].toString()) {
+      if (open(name, head_repo) == 0 && head(head_repo.repo) != obj["hash"].toString()) {
         err = updatePack(name, obj["hash"].toString());
         if (err != 0) {
 #ifndef FK_SERVER_ONLY
