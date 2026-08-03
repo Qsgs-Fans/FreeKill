@@ -35,6 +35,15 @@ ServerPlayer *RoomBase::findPlayer(int id) const {
   return nullptr;
 }
 
+ServerPlayer *RoomBase::findObserver(int id) const {
+  for (auto p : observers) {
+    if (p->getId() == id)
+      return p;
+  }
+  return nullptr;
+}
+
+
 void RoomBase::doBroadcastNotify(const QList<ServerPlayer *> targets,
                              const QByteArray &command, const QByteArray &jsonData) {
   for (auto p : targets) {

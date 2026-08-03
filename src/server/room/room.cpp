@@ -698,6 +698,7 @@ void Room::addRobotRequest(ServerPlayer *player, const QByteArray &) {
 void Room::kickPlayer(ServerPlayer *player, const QByteArray &jsonData) {
   int i = QCborValue::fromCbor(jsonData).toInteger();
   auto p = findPlayer(i);
+  if (!p) p = findObserver(i);
   if (p && !isStarted()) {
     removePlayer(p);
     addRejectId(i);

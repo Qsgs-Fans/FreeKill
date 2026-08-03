@@ -13,6 +13,7 @@ class RoomBase : public QObject {
   QList<ServerPlayer *> getPlayers() const;
   QList<ServerPlayer *> getOtherPlayers(ServerPlayer *expect) const;
   ServerPlayer *findPlayer(int id) const;
+  ServerPlayer *findObserver(int id) const;
 
   void doBroadcastNotify(const QList<ServerPlayer *> targets,
                          const QByteArray &command, const QByteArray &jsonData);
