@@ -803,10 +803,33 @@ void Room::switchToObserver(ServerPlayer *player, const QByteArray &) {
   if (gameStarted) return;
   if (!players.contains(player)) return;
 
+  ServerPlayer *candidate = nullptr;
+  if (player == owner) {
+    // 从剩余真实玩家中找个人接任房主
+    for (auto p : players) {
+      if (p == player) continue;
+      if (p->getState() == Player::Robot) continue;
+      if (!candidate) {
+        candidate = p;
+        break;
+      }
+    }
+
+    // 没有真实玩家可以接任房主，不允许旁观
+    if (!candidate) {
+      player->doNotify("ErrorMsg", "Room owner cannot spectate: no eligible player");
+      return;
+    }
+  }
+
   players.removeOne(player);
   observers.append(player);
   broadcast("SwitchToObserver", QCborArray { player->getId() }.toCborValue().toCbor());
   player->setReady(false);
+
+  if (player == owner) {
+    setOwner(candidate);
+  }
 }
 
 typedef void (Room::*room_cb)(ServerPlayer *, const QByteArray &);
