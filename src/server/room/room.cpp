@@ -294,7 +294,9 @@ void Room::addObserver(ServerPlayer *player) {
     const auto bytes = QCborArray {
       player->getId(),
       player->getScreenName(),
-      player->getAvatar()
+      player->getAvatar(),
+      false, // player->isReady(),
+      player->getTotalGameTime(),
     }.toCborValue().toCbor();
     broadcast("AddObserver", bytes);
   }
@@ -317,7 +319,7 @@ void Room::addObserver(ServerPlayer *player) {
         p->isReady(), p->getTotalGameTime(), (p == owner) };
 	  }
     for (auto p : observers) {
-	    observerList << QCborArray { p->getId(), p->getScreenName(), p->getAvatar() };
+	    observerList << QCborArray { p->getId(), p->getScreenName(), p->getAvatar(), false, p->getTotalGameTime() };
 	  }
     obsSettings[QStringLiteral("isObserver")] = true;
     obsSettings[QStringLiteral("_players")] = playerList;
@@ -620,18 +622,6 @@ void Room::_gameOver() {
     delete p;
   }
 
-  for (auto p : observers) {
-    // 把旁观者的数据赶紧变回去 方便他回到房间内
-    if (p->getState() == Player::Online) {
-      QCborArray arr {
-        p->getId(),
-        p->getScreenName(),
-        p->getAvatar(),
-      };
-      p->doNotify("Setup", arr.toCborValue().toCbor());
-    }
-  }
-
   insideGameOver = false;
 }
 
@@ -797,6 +787,18 @@ void Room::switchToPlayer(ServerPlayer *player, const QByteArray &) {
   players.append(player);
   broadcast("SwitchToPlayer", QCborArray { player->getId() }.toCborValue().toCbor());
   player->setReady(false);
+
+  // 树上下来的人在客户端没有胜率和时长需要补发一下
+  auto mode = settings_obj["gameMode"_L1].toString();
+  if (player->getLastGameMode() != mode) {
+    player->setLastGameMode(mode);
+    updatePlayerGameData(player->getId(), mode);
+  }
+  QCborArray arr = { player->getId() };
+  for (int i : player->getGameData()) {
+    arr << i;
+  }
+  broadcast("UpdateGameData", arr.toCborValue().toCbor());
 }
 
 void Room::switchToObserver(ServerPlayer *player, const QByteArray &) {

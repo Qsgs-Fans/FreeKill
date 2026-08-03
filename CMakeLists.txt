@@ -35,7 +35,7 @@ endif()
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 find_package(OpenSSL)
-find_package(Lua)
+find_package(Lua 5.4 EXACT REQUIRED)
 find_package(SQLite3)
 
 set(CMAKE_AUTOMOC ON)
@@ -46,10 +46,8 @@ set(REQUIRED_QT_VERSION "6.8")
 include_directories(include)
 include_directories(src)
 # 谁加的，把我Github Action搞坏了，如果是MacOS的话麻烦加if吧我现在忙着调CI没空管
-# include_directories(${LUA_INCLUDE_DIR})
+include_directories(${LUA_INCLUDE_DIR})
 # include_directories(${LIBGIT2_INCLUDE_DIRS})
-include_directories(include/lua)
-include_directories(include/libgit2)
 
 if (${CMAKE_BUILD_TYPE}0 STREQUAL "Debug0")
   # add_compile_options(-fsanitize=address -fsanitize=undefined)
