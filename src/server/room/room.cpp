@@ -169,6 +169,17 @@ void Room::addPlayer(ServerPlayer *player) {
     player->doNotify("UpdateGameData", arr.toCborValue().toCbor());
   }
 
+  for (auto p : observers) {
+    arr = {
+      p->getId(),
+      p->getScreenName(),
+      p->getAvatar(),
+      false,
+      p->getTotalGameTime(),
+    };
+    player->doNotify("AddObserver", arr.toCborValue().toCbor());
+  }
+
   if (this->owner != nullptr) {
     arr = { this->owner->getId() };
     player->doNotify("RoomOwner", arr.toCborValue().toCbor());
