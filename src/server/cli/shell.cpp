@@ -251,7 +251,7 @@ void Shell::msgRoomCommand(QStringList &list) {
     return;
   }
   auto msg = list.join(' ');
-  room->doBroadcastNotify(room->getPlayers(), "ServerMessage", msg.toUtf8());
+  room->broadcast("ServerMessage", msg.toUtf8());
 }
 
 

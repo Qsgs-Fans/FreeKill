@@ -383,7 +383,7 @@ void Server::refreshMd5() {
           p->kicked();
         }
       } else {
-        room->doBroadcastNotify(room->getPlayers(), "GameLog", QCborMap {
+        room->broadcast("GameLog", QCborMap {
           { "type", "#RoomOutdated" },
           { "toast", true },
         }.toCborValue().toCbor());

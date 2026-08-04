@@ -228,7 +228,7 @@ void ServerPlayer::onStateChanged() {
   if (room->isAbandoned()) return;
 
   auto state = getState();
-  room->doBroadcastNotify(room->getPlayers(), "NetStateChanged",
+  room->broadcast("NetStateChanged",
       QCborArray { getId(), getStateString() }.toCborValue().toCbor());
 
   if (state == Player::Online) {
@@ -240,7 +240,8 @@ void ServerPlayer::onStateChanged() {
 
 void ServerPlayer::onReadyChanged() {
   if (room && !room->isLobby()) {
-    room->doBroadcastNotify(room->getPlayers(), "ReadyChanged",
+    auto room_ = dynamic_cast<Room *>(room);
+    room_->broadcast("ReadyChanged",
                             QCborArray { getId(), isReady() }.toCborValue().toCbor());
   }
 }
