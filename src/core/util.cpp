@@ -116,57 +116,7 @@ QString Color(const QString &raw, fkShell::TextColor color,
 #endif
 }
 
-/**
-QByteArray FetchFileFromHttp(const QString &addr) {
-  // 初始化网络访问管理器
-  QNetworkAccessManager manager;
-
-  // 创建GET请求
-  QNetworkRequest request;
-  request.setUrl(QUrl(addr));
-  request.setHeader(QNetworkRequest::UserAgentHeader, "Qt HTTP Client");
-
-  // 发送GET请求并获取回复
-  QNetworkReply *reply = manager.get(request);
-
-  // 设置超时时间为5秒
-  QTimer timeoutTimer;
-  timeoutTimer.singleShot(5000, [=]() {
-    if (reply && reply->isRunning()) {
-      qWarning() << "Request timed out. Aborting.";
-      reply->abort();
-    }
-  });
-
-  // 使用事件循环阻塞直到请求完成或超时
-  QEventLoop loop;
-  QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-  loop.exec();
-
-  // 检查是否有错误发生
-  if (reply->error() != QNetworkReply::NoError) {
-    qWarning() << "Network error occurred:" << reply->errorString();
-    delete reply;
-    return QByteArray();
-  }
-
-  // 检查HTTP状态码是否为成功（例如200 OK）
-  int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-  if (statusCode != 200) {
-    qWarning() << "HTTP request failed with status code:" << statusCode;
-    delete reply;
-    return QByteArray();
-  }
-
-  // 获取响应数据
-  QByteArray responseData = reply->readAll();
-
-  // 删除回复对象以释放资源
-  delete reply;
-
-  return responseData;
-}
-
+/*
 static QJsonDocument variantToJson(QVariant data) {
   QJsonDocument jsonDoc;
 

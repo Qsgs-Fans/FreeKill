@@ -6,7 +6,10 @@
 
 #ifndef FK_SERVER_ONLY
 #include <QAudioOutput>
+#include <QNetworkAccessManager>
 #include <QNetworkDatagram>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QDnsLookup>
 
 #include <QClipboard>
@@ -114,6 +117,74 @@ QJsonObject QmlBackend::readJsonObjectFromFile(const QString &file) {
   }
 
   return jsonDoc.object();
+}
+
+namespace {
+
+QString assetsRootPath() {
+  return QDir::currentPath() + QStringLiteral("/assets");
+}
+
+// 将 path 解析为 assets 目录内的绝对路径，若越界或非法则返回空串
+QString resolveAssetsPath(const QString &path) {
+  QString p = path;
+#ifdef Q_OS_WIN
+  if (p.startsWith("file:///"))
+    p.replace(0, 8, "file://");
+#endif
+  p = QUrl(p).path();
+  if (p.isEmpty())
+    return QString();
+
+  const QString root = QDir::cleanPath(assetsRootPath());
+  const QString abs = QDir::cleanPath(QDir(root).absoluteFilePath(p));
+  if (abs != root && !abs.startsWith(root + QLatin1Char('/')))
+    return QString();
+  return abs;
+}
+
+} // namespace
+
+QString QmlBackend::readFileFromAssets(const QString &path) {
+  const QString abs = resolveAssetsPath(path);
+  if (abs.isEmpty()) {
+    qWarning() << "Assets path out of bounds:" << path;
+    return QString();
+  }
+
+  QFile f(abs);
+  if (!f.open(QIODevice::ReadOnly)) {
+    qWarning() << "Failed to open assets file for reading:" << abs;
+    return QString();
+  }
+  return QString::fromUtf8(f.readAll());
+}
+
+bool QmlBackend::writeFileToAssets(const QString &path, const QString &content) {
+  const QString abs = resolveAssetsPath(path);
+  if (abs.isEmpty()) {
+    qWarning() << "Assets path out of bounds:" << path;
+    return false;
+  }
+
+  if (!QDir().mkpath(QFileInfo(abs).absolutePath())) {
+    qWarning() << "Failed to create parent directory:" << abs;
+    return false;
+  }
+
+  QFile f(abs);
+  if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+    qWarning() << "Failed to open assets file for writing:" << abs;
+    return false;
+  }
+  f.write(content.toUtf8());
+  f.close();
+  return true;
+}
+
+bool QmlBackend::existsInAssets(const QString &path) {
+  const QString abs = resolveAssetsPath(path);
+  return !abs.isEmpty() && QFile::exists(abs);
 }
 
 #ifndef FK_SERVER_ONLY
@@ -274,6 +345,50 @@ void QmlBackend::saveConf(const QString &conf) {
   if (!c.open(QIODevice::WriteOnly)) return;
   c.write(conf.toUtf8());
   c.close();
+}
+
+void QmlBackend::downloadFileToAssets(const QString &url,
+                                      const QString &path) {
+  const QString abs = resolveAssetsPath(path);
+  if (abs.isEmpty()) {
+    qWarning() << "Assets path out of bounds:" << path;
+    emit assetsDownloadFinished(false, path, tr("Invalid path"));
+    return;
+  }
+
+  auto *manager = new QNetworkAccessManager(this);
+  QNetworkRequest request{QUrl(url)};
+  request.setHeader(QNetworkRequest::UserAgentHeader,
+                    "FreeKill Asset Download");
+  auto *reply = manager->get(request);
+
+  connect(reply, &QNetworkReply::finished, this, [=, this]() {
+    if (reply->error() != QNetworkReply::NoError) {
+      const QString err = reply->errorString();
+      qWarning() << "Download failed:" << err;
+      emit assetsDownloadFinished(false, path, err);
+      reply->deleteLater();
+      manager->deleteLater();
+      return;
+    }
+
+    QString err;
+    if (!QDir().mkpath(QFileInfo(abs).absolutePath())) {
+      err = tr("Failed to create directory");
+    } else {
+      QFile f(abs);
+      if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        err = tr("Failed to open file for writing");
+      } else {
+        f.write(reply->readAll());
+        f.close();
+      }
+    }
+
+    emit assetsDownloadFinished(err.isEmpty(), path, err);
+    reply->deleteLater();
+    manager->deleteLater();
+  });
 }
 
 void QmlBackend::playSound(const QString &name, int index) {

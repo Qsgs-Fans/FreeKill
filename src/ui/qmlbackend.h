@@ -23,6 +23,12 @@ public:
   // only used in qml
   static Q_INVOKABLE QJsonObject readJsonObjectFromFile(const QString &file);
 
+  // 在根目录 assets 目录内读写文件（路径被限制在 assets 目录内，禁止越界）
+  static Q_INVOKABLE QString readFileFromAssets(const QString &path);
+  static Q_INVOKABLE bool writeFileToAssets(const QString &path,
+                                            const QString &content);
+  static Q_INVOKABLE bool existsInAssets(const QString &path);
+
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
   void setEngine(QQmlApplicationEngine *engine);
@@ -51,6 +57,10 @@ public:
 
   Q_INVOKABLE void detectServer();
   Q_INVOKABLE void getServerInfo(const QString &addr, ushort port = 9527u);
+
+  // 从网络下载文件到 assets 目录（异步，结果通过 assetsDownloadFinished 通知）
+  Q_INVOKABLE void downloadFileToAssets(const QString &url,
+                                        const QString &path);
 
   Q_INVOKABLE void showDialog(const QString &type, const QString &text,
       const QString &orig = QString());
@@ -82,6 +92,8 @@ public:
 signals:
   void quickStartModeChanged();
   void notifyUI(const QString &command, const QVariant &data);
+  void assetsDownloadFinished(bool ok, const QString &path,
+                              const QString &error);
   void dialog(const QString &type, const QString &text, const QString &orig = QString());
   void volumeChanged(qreal);
   void replayerToggle();
