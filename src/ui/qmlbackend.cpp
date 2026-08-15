@@ -181,6 +181,15 @@ bool QmlBackend::existsInAssets(const QString &path) {
   return !abs.isEmpty() && QFile::exists(abs);
 }
 
+bool QmlBackend::removeFileFromAssets(const QString &path) {
+  const QString abs = resolveAssetsPath(path);
+  if (abs.isEmpty()) {
+    qWarning() << "Assets path out of bounds:" << path;
+    return false;
+  }
+  return QFile::remove(abs);
+}
+
 #ifndef FK_SERVER_ONLY
 
 QQmlApplicationEngine *QmlBackend::getEngine() const { return engine; }

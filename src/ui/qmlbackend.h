@@ -28,6 +28,7 @@ public:
   static Q_INVOKABLE bool writeFileToAssets(const QString &path,
                                             const QString &content);
   static Q_INVOKABLE bool existsInAssets(const QString &path);
+  static Q_INVOKABLE bool removeFileFromAssets(const QString &path);
 
 #ifndef FK_SERVER_ONLY
   QQmlApplicationEngine *getEngine() const;
