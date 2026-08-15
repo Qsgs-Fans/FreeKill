@@ -55,10 +55,10 @@
   <name>PackageDownload</name>
   <message>
     <source>DownloadMsg</source>
-    <translation>Syncing expansion packs with the server.&ltbr>Please wait. &ltb>
-        Do not close this page until all downloads are complete.&lt/b>&ltbr>&ltbr>
-        If any &ltfont color='red'>errors&lt/font> occur during the process, &ltb>
-        you will be unable to join the server&lt/b>. Please take a screenshot and ask for support.</translation>
+    <translation>Syncing expansion packs with the server.&lt;br>Please wait. &lt;b>
+        Do not close this page until all downloads are complete.&lt;/b>&lt;br>&lt;br>
+        If any &lt;font color='red'>errors&lt;/font> occur during the process, &lt;b>
+        you will be unable to join the server&lt;/b>. Please take a screenshot and ask for support.</translation>
   </message>
   <message>
     <source>CoreChanged</source>
