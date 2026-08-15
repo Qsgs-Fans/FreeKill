@@ -43,6 +43,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(REQUIRED_QT_VERSION "6.8")
 
 include_directories(include)
+include_directories(include/lua)
+include_directories(include/libgit2)
 include_directories(src)
 # 谁加的，把我Github Action搞坏了，如果是MacOS的话麻烦加if吧我现在忙着调CI没空管
 include_directories(${LUA_INCLUDE_DIR})
