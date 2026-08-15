@@ -43,6 +43,7 @@ freekill-wrap.cxx
 /flist.txt
 /server-list.json
 /resource_pak
+/assets
 
 # windeployqt
 /bearer/
