@@ -16,6 +16,8 @@ cp -r ../audio assets/res
 cp -r ../fonts assets/res
 cp -r ../image assets/res
 cp -r ../lua assets/res
+cp -r ../ltk assets/res
+cp -r ../LunarLtk assets/res
 # TODO: Windows hosts machine
 cp -r /etc/ca-certificates/extracted/cadir assets/res/certs
 chmod 644 assets/res/certs/*
