@@ -118,6 +118,7 @@ jobs:
 
     - name: Copy android assets
       run: |
+        rm -rf include/libgit2 && cp -r ../libgit2/include include/libgit2
         ${Qt6_DIR}/../gcc_64/bin/lrelease lang/zh_CN.ts
         ${Qt6_DIR}/../gcc_64/bin/lrelease lang/en_US.ts
         cp lang/zh_CN.qm .
