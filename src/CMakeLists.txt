@@ -81,7 +81,6 @@ if (WIN32)
   set(SQLITE3_LIB ${PROJECT_SOURCE_DIR}/lib/win/sqlite3.dll)
   set(CRYPTO_LIB OpenSSL::Crypto)
   set(GIT_LIB ${PROJECT_SOURCE_DIR}/lib/win/libgit2.dll)
-  set(WIN_EXTRA_LIBS winmm)
   set(app_icon_resource_windows "${PROJECT_SOURCE_DIR}/image/icon.rc")
   list(APPEND freekill_EXESRCS ${app_icon_resource_windows})
 elseif (ANDROID)
@@ -149,7 +148,6 @@ target_link_libraries(libFreeKill PRIVATE
   ${SSH_LIB}
   ${GIT_LIB}
   ${IDBFS_LIB}
-  ${WIN_EXTRA_LIBS}
   ${JEMALLOC_LIBRARIES}
 )
 

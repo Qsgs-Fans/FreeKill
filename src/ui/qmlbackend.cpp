@@ -16,14 +16,8 @@
 #include <QMediaPlayer>
 #include <QMessageBox>
 #include <QAbstractButton>
-#include <QAtomicInt>
+#include <QLibrary>
 #include <QtConcurrent>
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <mmsystem.h>
-#pragma comment(lib, "winmm.lib")
-#endif
 #endif
 
 #include <cstdlib>
@@ -391,6 +385,30 @@ void QmlBackend::downloadFileToAssets(const QString &url,
   });
 }
 
+// 静默 FFmpeg 刷屏的日志（仅保留 error 级别）
+static void silenceFfmpegLogs() {
+  // AV_LOG_ERROR = 16，屏蔽 warning/info/debug
+  const QStringList candidates = {
+#ifdef Q_OS_WIN
+    QStringLiteral("avutil-59"), QStringLiteral("avutil-58"),
+    QStringLiteral("avutil-57"),
+#else
+    QStringLiteral("avutil"),
+#endif
+  };
+  for (const auto &name : candidates) {
+    QLibrary lib(name);
+    if (!lib.load()) continue;
+    using AvLogSetLevel = void (*)(int);
+    auto setLevel =
+        reinterpret_cast<AvLogSetLevel>(lib.resolve("av_log_set_level"));
+    if (setLevel) {
+      setLevel(16);
+      return;
+    }
+  }
+}
+
 void QmlBackend::playSound(const QString &name, int index) {
   QString fname(name);
   if (index == -1) {
@@ -417,44 +435,11 @@ void QmlBackend::playSound(const QString &name, int index) {
   QJniObject::callStaticMethod<void>("org/notify/FreeKill/Helper", "PlaySound",
       "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
-#elif defined(Q_OS_WIN)
-  // 使用 Windows MCI 播放，避免 QMediaPlayer(WMF) 对高码率MP3支持不佳的问题
-  // 每个音效用唯一别名支持并发播放
-  if (maxConcurrentPlayback < 0) return;
-  static QAtomicInt sfxCounter(0);
-  int id = sfxCounter.fetchAndAddRelaxed(1) % 100000;
-  QString alias = QString("fk_sfx_%1").arg(id);
-  QString abs = QDir::toNativeSeparators(QFileInfo(fname).absoluteFilePath());
-
-  QString cmdOpen = QString("open \"%1\" type mpegvideo alias %2").arg(abs, alias);
-  if (mciSendStringW((LPCWSTR)cmdOpen.utf16(), NULL, 0, NULL) != 0)
-    return;
-
-  QString cmdVolume = QString("setaudio %1 volume to %2")
-                          .arg(alias).arg((int)(m_volume * 10));
-  mciSendStringW((LPCWSTR)cmdVolume.utf16(), NULL, 0, NULL);
-
-  mciSendStringW((LPCWSTR)QString("play %1 from 0").arg(alias).utf16(), NULL, 0, NULL);
-  maxConcurrentPlayback--;
-
-  // 轮询播放状态，结束后清理
-  auto timer = new QTimer(this);
-  timer->setInterval(300);
-  connect(timer, &QTimer::timeout, this, [=]() mutable {
-    wchar_t buf[64] = {0};
-    mciSendStringW((LPCWSTR)QString("status %1 mode").arg(alias).utf16(), buf, 63, NULL);
-    if (wcscmp(buf, L"playing") != 0) {
-      mciSendStringW((LPCWSTR)QString("close %1").arg(alias).utf16(), NULL, 0, NULL);
-      timer->stop();
-      timer->deleteLater();
-      maxConcurrentPlayback++;
-    }
-  });
-  timer->start();
 #else
   if (maxConcurrentPlayback < 0) return;
   auto player = new QMediaPlayer;
   auto output = new QAudioOutput;
+  silenceFfmpegLogs(); // 后端已加载，静默 FFmpeg 的 warning/info 日志
   maxConcurrentPlayback--;
 
   player->setAudioOutput(output);
