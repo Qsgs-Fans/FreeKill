@@ -4,6 +4,22 @@
 inspect = require "inspect"
 dbg = require "debugger"
 
+local ok, luadebug = pcall(require, "vscode-debug-attacher")
+if ok then
+  fk._VscodeDbgEnabled = os.getenv("FREEKILL_LUA_DEBUG")
+
+  function fk._VscodeDbgWait(port)
+    printf("在端口 %d 等待调试器", port)
+    luadebug:start("127.0.0.1:" .. port):event("wait")
+    printf("端口 %d 的调试器已就绪！", port)
+  end
+
+  function fk._VscodeDbgAttach()
+    print("尝试连接到本进程已有调试器")
+    luadebug:attach():event("wait")
+  end
+end
+
 function PrintWhere()
   local info = debug.getinfo(2)
   local name = info.name

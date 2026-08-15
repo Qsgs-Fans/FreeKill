@@ -6,6 +6,7 @@ import QtQuick.Layouts
 
 import Fk.Widgets as W
 import Fk
+import LunarLtk
 
 Rectangle {
   color: "transparent"
@@ -17,7 +18,7 @@ Rectangle {
     if (general == "__server") {
       general = "";
       avatar = "__server"
-    } else if (Lua.evaluate(`ClientInstance:getPlayerById(${data.sender}) == nil`)) {
+    } else if (!Ltk.getPlayer(data.sender)) {
       avatar = "__observer";
     }
     chatLogBox.append({
@@ -36,13 +37,13 @@ Rectangle {
 
   function loadGeneralSkillAudios(general) {
     if (general === "") return;
-    const sks = Lua.call("GetGeneralDetail", general).skill;
+    const sks = Ltk.getGeneralDetail(general).skill;
     sks.forEach(t => {
       if (!t.name.startsWith('#')) {
         //generalText.append((t.is_related_skill ? "<font color=\"purple\"><b>" : "<b>") + Lua.tr(t.name) +
         //"</b>: " + t.description + (t.is_related_skill ? "</font>" : ""));
 
-        const gdata = Lua.call("GetGeneralData", general);
+        const gdata = Ltk.getGeneralData(general);
         const extension = gdata.extension;
         let ret = false;
         for (let i = 0; i < 999; i++) {
@@ -56,7 +57,7 @@ Rectangle {
           }
         }
         if (!ret) {
-          const skilldata = Lua.call("GetSkillData", t.name);
+          const skilldata = Ltk.getSkillData(t.name);
           if (!skilldata) return;
           const extension = skilldata.extension;
           for (let i = 0; i < 999; i++) {
@@ -75,7 +76,7 @@ Rectangle {
 
   function findWinDeathAudio(general, isWin) {
     if (general === "") return;
-    const extension = Lua.call("GetGeneralData", general).extension;
+    const extension = Ltk.getGeneralData(general).extension;
     const fname = SkinBank.getAudioRealPath(general, extension, isWin ? "win" : "death");
     if (Backend.exists(fname)) {
       skills.append({ name: (isWin ? "!" : "~") + general });
@@ -84,13 +85,15 @@ Rectangle {
 
   function loadSkills() {
     skills.clear();
-    const general = Lua.evaluate(`Self.general`);
+
+    const self = Lua.selfPlayer;
+    const general = self.general;
     if (general) {
       loadGeneralSkillAudios(general);
       findWinDeathAudio(general, true);
       findWinDeathAudio(general, false);
     }
-    const deputyGeneral = Lua.evaluate(`Self.deputyGeneral`);
+    const deputyGeneral = self.deputyGeneral;
     if (deputyGeneral) {
       loadGeneralSkillAudios(deputyGeneral);
       findWinDeathAudio(deputyGeneral, true);
@@ -232,10 +235,10 @@ Rectangle {
 
         onClicked: {
           opTimer.start();
-          const general = Lua.evaluate(`Self.general`);
+          const general = Lua.selfPlayer.general;
           if ( name === "fastchat_m" ) {
             if (general !== "") {
-              const data = Lua.call("GetGeneralDetail", general);
+              const data = Ltk.getGeneralDetail(general);
               const gender = data.gender;
               if (gender !== 1) {
                 name = "fastchat_f";

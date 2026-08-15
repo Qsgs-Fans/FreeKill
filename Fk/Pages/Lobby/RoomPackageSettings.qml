@@ -6,6 +6,8 @@ import QtQuick.Layouts
 
 import Fk
 
+import LunarLtk
+
 Flickable {
   id: root
   flickableDirection: Flickable.AutoFlickIfNeeded
@@ -77,7 +79,7 @@ Flickable {
             } else {
               packs.push(orig_name);
             }
-            Lua.call("UpdatePackageEnable", orig_name, checked);
+            Ltk.updatePackageEnable(orig_name, checked);
             Config.curSchemeChanged();
           }
         }
@@ -93,7 +95,7 @@ Flickable {
     loading = true;
     let orig;
 
-    const c = Lua.call("GetAllCardPack");
+    const c = Ltk.getAllCardPack();
     for (orig of c) {
       if (Config.serverHiddenPacks.includes(orig)) {
         continue;

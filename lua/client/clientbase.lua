@@ -2,6 +2,7 @@
 ---@field public client fk.Client
 ---@field public clientplayer_klass any
 ---@field public observing boolean 客户端是否在旁观
+---@field public observer_setup_data any 我这个旁观者本人的实际setup信息
 ---@field public replaying boolean 客户端是否在重放
 ---@field public replaying_show boolean 重放时是否要看到全部牌
 ---@field public record any
@@ -24,8 +25,10 @@ function ClientBase:initialize(_client)
   self:addCallback("EnterLobby", self.quitRoom, true)
   self:addCallback("AddPlayer", self.addPlayer)
   self:addCallback("RemovePlayer", self.removePlayer)
-  self:addCallback("AddObserver", self.addObserver)
-  self:addCallback("RemoveObserver", self.removeObserver)
+  self:addCallback("AddObserver", self.addObserver, true)
+  self:addCallback("RemoveObserver", self.removeObserver, true)
+  self:addCallback("SwitchToObserver", self.switchToObserver, true)
+  self:addCallback("SwitchToPlayer", self.switchToPlayer, true)
   self:addCallback("UpdateGameData", self.updateGameData, true)
   self:addCallback("AddTotalGameTime", self.addTotalGameTime)
   self:addCallback("NetStateChanged", self.changeNetState, true)
@@ -122,7 +125,7 @@ function ClientBase:setup(data)
   self_player:setId(id)
   self_player:setScreenName(name)
   self_player:setAvatar(avatar)
-  Self = self.clientplayer_klass:new(self_player)
+  Self = self:createPlayer(self_player)
   self.players = { Self }
   if msec then
     self.client:setupServerLag(msec)
@@ -138,6 +141,7 @@ function ClientBase:enterRoom(_data)
 
   -- FIXME: 需要改Qml
   local ob = self.observing
+  local obdata = self.observer_setup_data
   local replaying = self.replaying
   local showcards = self.replaying_show
   local recording = self.recording
@@ -147,9 +151,10 @@ function ClientBase:enterRoom(_data)
   local client_klass = Fk:getBoardGame(data.gameMode).client_klass
   ClientInstance = client_klass:new(self.client)
   self = ClientInstance
-  Self = self.clientplayer_klass:new(self.client:getSelf())
+  Self = self:createPlayer(self.client:getSelf())
 
   self.observing = ob
+  self.observer_setup_data = obdata
   self.replaying = replaying
   self.replaying_show = showcards
   self.recording = recording -- 重连/旁观的录像后面那段EnterRoom会触发该函数
@@ -157,14 +162,31 @@ function ClientBase:enterRoom(_data)
 
   -- FIXME: 应该在C++中修改，这种改法错大发了
   -- FIXME: C++中加入房间时需要把Self也纳入players列表
+  -- FIXME: 经典甩锅v0.6
+  -- FIXME: 这几句是不是有内存泄漏啊
   local sp = Self.player
   local new_sp = self.client:addPlayer(sp:getId(), sp:getScreenName(), sp:getAvatar())
   new_sp:addTotalGameTime(sp:getTotalGameTime())
   local gameData = sp:getGameData()
   new_sp:setGameData(gameData:at(0), gameData:at(1), gameData:at(2))
   Self.player = new_sp
-  self.players = {Self}
-  self.alive_players = {Self}
+
+  -- 旁观者在游戏开始前进入
+  if data.isObserver and data._players then
+    local players = {}
+    for _, tab in ipairs(data._players or {}) do
+      local id, name, avatar, ready, gameTime, owner = table.unpack(tab)
+      local cp = self.client:addPlayer(id, name, avatar)
+      cp:addTotalGameTime(gameTime)
+      local lp = self:createPlayer(cp)
+      table.insert(players, lp)
+    end
+    self.players = players
+    self.alive_players = table.simpleClone(players)
+  else
+    self.players = {Self}
+    self.alive_players = {Self}
+  end
 
   self.enter_room_data = cbor.encode(_data);
   -- 补一个，防止爆炸
@@ -174,6 +196,24 @@ function ClientBase:enterRoom(_data)
   self.capacity = _data[1]
   self.timeout = _data[2]
   self.settings = data
+
+  -- 旁观者在游戏开始前进入时，从 EnterRoom 数据填充旁观者列表（含自己）
+  if data.isObserver and data._observers then
+    self.observers = {}
+    local function fakeObs(id, name, avatar, gameTime)
+      local player = {
+        getId = function() return id end,
+        getScreenName = function() return name end,
+        getAvatar = function() return avatar end,
+        getState = function() return fk.Player_Online end,
+        getTotalGameTime = function() return gameTime end,
+      }
+      return {0, player, id}
+    end
+    for _, o in ipairs(data._observers or {}) do
+      table.insert(self.observers, fakeObs(o[1], o[2], o[3], o[5]))
+    end
+  end
 end
 
 function ClientBase:changeRoom(_data)
@@ -187,6 +227,7 @@ function ClientBase:changeRoom(_data)
 
   -- FIXME: 需要改Qml
   local ob = self.observing
+  local obdata = self.observer_setup_data
   local replaying = self.replaying
   local showcards = self.replaying_show
   local recording = self.recording
@@ -194,26 +235,48 @@ function ClientBase:changeRoom(_data)
   local record = self.record
 
   local old_players = self.players
+  local old_observers = self.observers or {}
+  local old_self = Self
+  local old_self_id = old_self and old_self.id
 
   local client_klass = Fk:getBoardGame(data.gameMode).client_klass
   ClientInstance = client_klass:new(self.client)
   self = ClientInstance
 
   self.observing = ob
+  self.observer_setup_data = obdata
   self.replaying = replaying
   self.replaying_show = showcards
   self.recording = recording -- 重连/旁观的录像后面那段EnterRoom会触发该函数
   self.record = record
 
   local new_players = table.map(old_players, function(p)
-    local pl = self.clientplayer_klass:new(p.player)
+    local pl = self:createPlayer(p.player)
     pl.owner = p.owner
     pl.ready = p.ready
     return pl
   end)
   self.players = new_players
-  self.alive_players = new_players
-  Self = self:getPlayerById(Self.id)
+  self.alive_players = table.simpleClone(new_players)
+  self.observers = old_observers
+  if old_self_id then
+    -- A pre-game observer is intentionally absent from players. Keep its
+    -- client identity when rebuilding the room for a settings change.
+    Self = self:getPlayerById(old_self_id) or old_self
+  end
+
+  data.isObserver = self.observing == true
+  data._players = table.map(self.players, function(p)
+    local cp = p.player
+    return {
+      cp:getId(), cp:getScreenName(), cp:getAvatar(),
+      p.ready == true, cp:getTotalGameTime(), p.owner == true,
+    }
+  end)
+  data._observers = table.map(self.observers, function(t)
+    local p = t[2]
+    return { t[3], p:getScreenName(), p:getAvatar(), false, p:getTotalGameTime() }
+  end)
 
   self.enter_room_data = cbor.encode(_data);
 
@@ -349,27 +412,73 @@ function ClientBase:removePlayer(data)
 end
 
 function ClientBase:addObserver(data)
-  local id, name, avatar = data[1], data[2], data[3]
+  local id, name, avatar, gameTime = data[1], data[2], data[3], data[5]
   local player = {
     getId = function() return id end,
     getScreenName = function() return name end,
     getAvatar = function() return avatar end,
     getState = function() return fk.Player_Online end,
+    getTotalGameTime = function() return gameTime end,
   }
-  local p = self.clientplayer_klass:new(player)
-  table.insert(self.observers, p)
+  table.insert(self.observers, {0, player, id})
   -- self:notifyUI("ServerMessage", string.format(Fk:translate("$AddObserver"), name))
 end
 
 function ClientBase:removeObserver(data)
   local id = data[1]
-  for _, p in ipairs(self.observers) do
-    if p.player:getId() == id then
-      table.removeOne(self.observers, p)
+  for i, p in ipairs(self.observers) do
+    if p[3] == id then
+      table.remove(self.observers, i)
       -- self:notifyUI("ServerMessage", string.format(Fk:translate("$RemoveObserver"), p.player:getScreenName()))
       break
     end
   end
+end
+
+function ClientBase:switchToObserver(data)
+  -- 将玩家和旁观数据也修改一下再给qml
+  local id = data[1]
+  local lp = self:getPlayerById(id)
+  local cp = lp.player
+  local _id, _name, _avatar, _gameTime = cp:getId(), cp:getScreenName(), cp:getAvatar(), cp:getTotalGameTime()
+  local player = {
+    getId = function() return _id end,
+    getScreenName = function() return _name end,
+    getAvatar = function() return _avatar end,
+    getState = function() return fk.Player_Online end,
+    getTotalGameTime = function() return _gameTime end,
+  }
+  table.removeOne(self.players, lp)
+  -- FIXME: Self不能死 不是这哪来那么多乱七八糟的耦合
+  if id ~= Self.id then
+    self.client:removePlayer(id)
+  end
+  table.insert(self.observers, {0, player, id})
+end
+
+function ClientBase:switchToPlayer(data)
+  local id = data[1]
+  local p
+  for i, t in ipairs(self.observers) do
+    if t[3] == id then
+      p = t[2]
+      table.remove(self.observers, i)
+      break
+    end
+  end
+
+  if not p then return end
+
+  local cp = self.client:addPlayer(p:getId(), p:getScreenName(), p:getAvatar())
+  cp:addTotalGameTime(p:getTotalGameTime())
+  local lp = self:createPlayer(cp)
+  -- FIXME: 呃，这都哪跟哪，client的c++代码急须重构啊
+  -- v0.6 救救我们
+  if p:getId() == Self.id then
+    self.client:changeSelf(p:getId())
+    Self = lp
+  end
+  table.insert(self.players, lp)
 end
 
 function ClientBase:chat(data)
@@ -384,8 +493,8 @@ function ClientBase:chat(data)
   local p = self:getPlayerById(data.sender)
   if not p then
     for _, pl in ipairs(self.observers) do
-      if pl.id == data.sender then
-        p = pl; break
+      if pl[3] == data.sender then
+        p = { player = pl[2] }; break
       end
     end
     if not p then return end
@@ -396,7 +505,7 @@ function ClientBase:chat(data)
   if data.general == nil then
     data.general = ""
   end
-  if data.general == "" and self:getPlayerById(p.player:getId()) ~= nil then
+  if data.general == "" and self:getPlayerById(data.sender) ~= nil then
     data.general = p.player:getAvatar()
   end
   data.userName = p.player:getScreenName()
@@ -477,6 +586,11 @@ function ClientBase:loadRoomSummary(data)
     end
   end
 
+  local observers = data.observers
+  for _, t in ipairs(observers) do
+    self:addObserver(t)
+  end
+
   self:startGame()
 
   self:arrangeSeats(data.circle)
@@ -512,10 +626,26 @@ end
 function ClientBase:observe(data)
   local players = data.players
 
+  self:stopRecording("")
+  -- 若我此时处于房间中则发送一下进大厅刷页面
+  if table.find(self.observers, function(t)
+    -- 在开战前的房间，observers里面有Self.id
+    return t[3] == Self.id or
+    -- 在开战后的房间，Self.id换个法子寻找
+      t[3] == (self.observer_setup_data or {})[1]
+  end) then
+    self:notifyUI("EnterLobby", "")
+  end
+
   if not self.replaying then
     self:startRecording()
     self.record[6] = "reconnect"
     table.insert(self.record, {math.floor(os.getms() / 1000), false, "Observe", cbor.encode(data)})
+  end
+
+  if not self.observer_setup_data then
+    self.observer_setup_data = {
+      Self.id, Self.player:getScreenName(), Self.player:getAvatar() }
   end
 
   local setup_data = players[data.you].setup_data
@@ -591,7 +721,7 @@ function ClientBase:gameOver(jsonData)
     if not self.observing and not self.replaying then
       local result
       local winner = jsonData
-      if table.contains(winner:split("+"), Self.role) then
+      if table.contains(winner:split("+"), tostring(Self.id)) then
         result = 1
       elseif winner == "" then
         result = 3

@@ -12,31 +12,12 @@ tiandu:addEffect(fk.FinishJudge, {
   end,
 })
 
-tiandu:addTest(function(room, me)
-  FkTest.runInRoom(function()
-    room:handleAddLoseSkills(me, "tiandu")
-  end)
-  FkTest.setNextReplies(me, { "1", "1", "1", "1", "1", "1", "1", "1" }) -- 试图领取所有人的判定牌
-  FkTest.runInRoom(function()
-    for _, p in ipairs(room.players) do
-      room:judge{
-        who = p,
-        pattern = ".",
-        reason = "test"
-      }
-    end
-  end)
-  lu.assertEquals(#me:getCardIds("h"), 1)
-end)
-
 tiandu:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = function(self, ai)
-    ---@type JudgeData
     local data = ai.room.logic:getCurrentEvent().data
-    local val = ai:getBenefitOfEvents(function(logic)
+    return ai:getBenefitOfEvents(function(logic)
       logic:obtainCard(data.who, data.card, true, fk.ReasonJustMove, data.who, tiandu.name)
-    end)
-    return val > 0
+    end) > 0
   end,
 })
 

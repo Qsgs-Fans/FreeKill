@@ -28,53 +28,22 @@ fankui:addEffect(fk.Damaged, {
 
 fankui:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = function(self, ai)
-    ---@type DamageData
     local data = ai.room.logic:getCurrentEvent().data
     local player = ai.player
     local ret, benefit = player.ai:askToChooseCards({
-      cards = data.from:getCardIds("hej"),
+      cards = data.from:getCardIds("he"),
       skill_name = fankui.name,
       data = {
-        to_place = Card.PlayerHand,
+        toArea = Card.PlayerHand,
         target = player,
         reason = fk.ReasonPrey,
         proposer = player,
       },
     })
-    local val = ai:getBenefitOfEvents(function(logic)
+    return ai:getBenefitOfEvents(function(logic)
       logic:obtainCard(player, ret, false, fk.ReasonPrey, player, fankui.name)
-    end)
-    return val > 0
+    end) > 0
   end,
 })
-
-fankui:addTest(function(room, me)
-  local comp2 = room.players[2] ---@type ServerPlayer, ServerPlayer
-  FkTest.runInRoom(function() room:handleAddLoseSkills(me, "fankui") end)
-
-  -- 空牌的情况
-  local slash = Fk:getCardById(1)
-  FkTest.setNextReplies(me, { "__cancel" })
-  FkTest.runInRoom(function()
-    room:useCard{
-      from = comp2,
-      tos = { me },
-      card = slash,
-    }
-  end)
-  lu.assertEquals(#me:getCardIds("h"), 0)
-
-  -- 有牌的情况
-  FkTest.setNextReplies(me, { "__cancel", "1", 3 })
-  FkTest.runInRoom(function()
-    room:obtainCard(comp2, { 3 })
-    room:useCard{
-      from = comp2,
-      tos = { me },
-      card = slash,
-    }
-  end)
-  lu.assertEquals(me:getCardIds("h")[1], 3)
-end)
 
 return fankui

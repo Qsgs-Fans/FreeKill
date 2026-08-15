@@ -104,16 +104,5 @@ Item {
         modes: v.modes,
       });
     }
-
-    // const mode_data = Lua.call("GetGameModes");
-    // let i = 0;
-    // for (const d of mode_data) {
-    //   gameModeList.append(d);
-    //   if (d.orig_name === gameMode) {
-    //     gameModeCombo.setCurrentIndex(i);
-    //   }
-    //   i += 1;
-    // }
-
   }
 }

@@ -33,50 +33,31 @@ function GameMode:initialize(name, min, max)
   self.maxPlayer = math.min(max, 10)
 end
 
--- 判断胜利者的函数，若不为""，则游戏存在胜利者（一般会结束游戏）
----@param victim ServerPlayer @ 死者
----@return string @ 胜者阵营
+-- 判断胜利者的函数，若不返回""，则游戏存在胜利者。默认游戏模式为两阵营对抗，如果是多阵营（如有内奸的身份局），则需重写winner_getter
+---@param victim ServerPlayer @ 死者或投降者
+---@return ServerPlayer[] | string @ 胜者的玩家表，或胜利阵营字符串
 function GameMode:getWinner(victim)
-  if not victim.surrendered and victim.rest > 0 then
-    return ""
-  end
-
-  local room = victim.room
-  local winner = ""
-  local alive = table.filter(room.players, function(p)
-    return not p.surrendered and not (p.dead and p.rest == 0) and p.role ~= "civilian"
-  end)
-
-  if victim.role == "lord" then
-    if #alive == 1 and alive[1].role == "renegade" then
-      winner = "renegade"
-    else
-      winner = "rebel+rebel_chief"
+    if not victim.surrendered and victim.rest > 0 then
+      return ""
     end
-  elseif victim.role ~= "loyalist" then
-    local lord_win = true
+    local room = victim.room
+    local alive = table.filter(room.players, function(p) ---@type Player[]
+      return not p.surrendered and not (p.dead and p.rest == 0)
+    end)
+    local winner = alive[1].role
     for _, p in ipairs(alive) do
-      if p.role == "rebel" or p.role == "rebel_chief" or p.role == "renegade" then
-        lord_win = false
-        break
+      if p.role ~= winner then
+        return ""
       end
     end
-    if lord_win then
-      winner = "lord+loyalist"
-    end
-  end
-
-  if winner ~= "" then
-    winner = winner.. "+civilian"
-  end
-
-  return winner
+    return alive[1]:getFriends(true, true)
 end
 
 -- 判断什么时候可以投降的函数
 ---@param playedTime number @ 游戏时长（单位：秒）
+---@param player Player @ 发起投降的玩家
 ---@return table
-function GameMode:surrenderFunc(playedTime)
+function GameMode:surrenderFunc(playedTime, player)
   return {}
 end
 
@@ -86,6 +67,14 @@ end
 function GameMode:countInFunc(room)
   return true
 end
+
+-- 判断是否允许点确定按钮创房间。
+function GameMode:feasible(settings)
+  return true
+end
+
+-- 以下大多是三国杀特有的
+------------------------------
 
 -- 决定初始牌堆以及初始游戏外区域的函数
 -- 需要返回两个数组，一个是牌堆，一个是游戏外（void）
@@ -122,7 +111,7 @@ end
 ---@param killer? ServerPlayer @ 击杀者，可能没有
 function GameMode:deathRewardAndPunish (victim, killer)
   if not killer or killer.dead then return end
-  if victim.role == "rebel" or victim.role == "rebel_chief" then
+  if victim.role == "rebel" or victim.role == "rebel_chief" or killer.role == "wild" then
     killer:drawCards(3, "kill")
   elseif victim.role == "loyalist" and killer.role == "lord" then
     killer:throwAllCards("he")

@@ -4,43 +4,44 @@ local skill = fk.CreateSkill {
 }
 
 ---@type AskForCardFunc
-local spec = function (self, event, target, player, data)
-    local room = player.room
-    local judgeData = {
-      who = player,
-      reason = skill.name,
-      pattern = ".|.|red",
+local spec = function(self, event, target, player, data)
+  local room = player.room
+  local judgeData = {
+    who = player,
+    reason = skill.name,
+    pattern = ".|.|red",
+  }
+  room:judge(judgeData)
+
+  if judgeData:matchPattern() then
+    local new_card = Fk:cloneCard('jink')
+    new_card.skillName = "eight_diagram"
+    local result = {
+      from = player,
+      card = new_card,
     }
-    room:judge(judgeData)
-
-    if judgeData:matchPattern() then
-      local new_card = Fk:cloneCard('jink')
-      new_card.skillName = "eight_diagram"
-      local result = {
-        from = player,
-        card = new_card,
-      }
-      if event:isInstanceOf(fk.AskForCardUse) then
-        result.tos = {}
-      end
-      data.result = result
-
-      return true
+    if event:isInstanceOf(fk.AskForCardUse) then
+      result.tos = {}
     end
+    data.result = result
+
+    return true
   end
+end
 skill:addEffect(fk.AskForCardUse, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and
-      Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
-      not player:prohibitUse(Fk:cloneCard("jink"))
+        Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
+        not player:prohibitUse(Fk:cloneCard("jink")) 
+        and (data.extraData == {} or data.extraData.not_passive ~= true)
   end,
   on_use = spec,
 })
 skill:addEffect(fk.AskForCardResponse, {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(skill.name) and
-      Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
-      not player:prohibitResponse(Fk:cloneCard("jink"))
+        Exppattern:Parse(data.pattern):matchExp("jink|0|nosuit|none") and
+        not player:prohibitResponse(Fk:cloneCard("jink"))
   end,
   on_use = spec,
 })
@@ -84,7 +85,7 @@ skill:addTest(function(room, me)
 end)
 --]]
 
-skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
+skill:addAI(Fk.Ltk.AI.newInvokeStrategy {
   think = function(self, ai)
     return ai:getBenefitOfEvents(function(logic)
       logic:judge({

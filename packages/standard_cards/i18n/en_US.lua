@@ -106,6 +106,7 @@ Fk:loadTranslationTable({
 
   ["god_salvation"] = "God Salvation",
   [":god_salvation"] = "God Salvation (trick card)<br /><b>Phase</b>: Action phase<br /><b>Target</b>: All players<br /><b>Effect</b>: Each target player heals 1 HP.",
+  ["god_salvation_skill"] = "God Salvation",
   ["#god_salvation_skill"] = "Each players heals 1 HP",
 
   ["amazing_grace"] = "Amazing Grace",

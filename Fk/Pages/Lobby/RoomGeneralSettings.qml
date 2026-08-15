@@ -6,13 +6,21 @@ import QtQuick.Layouts
 import Fk
 import Fk.Widgets as W
 
+import LunarLtk
+
 Item {
+  id: root
+
   width: 600
   height: 800
+
+  required property var config
 
   readonly property alias roomName: roomName.text
   readonly property alias playerNum: playerNum.value
   readonly property alias roomPassword: roomPassword.text
+
+  signal settingsUpdated()
 
   W.PreferencePage {
     id: prefPage
@@ -23,7 +31,7 @@ Item {
       W.EntryRow {
         id: roomName
         title: Lua.tr("Room Name")
-        text: Lua.tr("$RoomName").arg(Self.screenName)
+        text: Lua.tr("$RoomName").arg(Config.hideScreenName ? Lua.tr("Player") : Self.screenName)
       }
     }
 
@@ -45,6 +53,8 @@ Item {
 
         onValueChanged: {
           Config.preferedPlayerNum = value;
+          root.config.playerNum = value;
+          root.settingsUpdated();
         }
       }
       W.SpinRow {
@@ -56,6 +66,8 @@ Item {
 
         onValueChanged: {
           Config.preferredTimeout = value;
+          root.config.timeout = value;
+          root.settingsUpdated();
         }
       }
     }
@@ -64,9 +76,9 @@ Item {
       playerNum.value = Config.preferedPlayerNum;
 
       for (let k in Config.curScheme.banPkg) {
-        Lua.call("UpdatePackageEnable", k, false);
+        Ltk.updatePackageEnable(k, false);
       }
-      Config.curScheme.banCardPkg.forEach(p => Lua.call("UpdatePackageEnable", p, false));
+      Config.curScheme.banCardPkg.forEach(p => Ltk.updatePackageEnable(p, false));
       Config.curSchemeChanged();
     }
   }

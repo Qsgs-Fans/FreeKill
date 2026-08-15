@@ -12,6 +12,13 @@ choosePlayersSkill:addEffect('active', {
       return table.contains(self.targets, to_select.id)
     end
   end,
+  card_tip = function (self, player, to_select, selected, selected_targets, card, selectable, extra_data)
+    if self.cardTipName then
+      local cardTip = Fk.card_tips[self.cardTipName]
+      assert(cardTip)
+      return cardTip.card_tip(self, player, to_select, selected, selected_targets, card, selectable, extra_data)
+    end
+  end,
   target_tip = function(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     if self.targetTipName then
       local targetTip = Fk.target_tips[self.targetTipName]
@@ -36,9 +43,15 @@ choosePlayersSkill:addAI(Fk.Ltk.AI.newActiveStrategy {
 
     local cards, card_benefit = strategy:chooseCards(ai)
     local players, player_benefit = strategy:choosePlayers(ai)
-    if cards then
-      return { cards, players }, ((card_benefit == 0 and 1 or card_benefit) * player_benefit) or 0
+    if cards == nil then
+      cards, card_benefit = {}, 0
     end
+    card_benefit = card_benefit or 0
+    if players == nil then
+      players, player_benefit = {}, 0
+    end
+    player_benefit = player_benefit or 0
+    return { cards, players }, ((card_benefit == 0 and 1 or card_benefit) * player_benefit) or 0
   end,
 })
 

@@ -3,6 +3,8 @@
 pragma Singleton
 import QtQuick
 
+import LunarLtk
+
 // TODO 这排var都得不能让外部直接调用了 改成基于函数调用
 // SkinBank.getSystemPic(photoDir, path)之类的
 // 这样美化包就可以把path拐到resource_pak/xxx/packages/freekill-core/...下面
@@ -110,14 +112,14 @@ QtObject {
   }
 
   function getGeneralExtraPic(name, extra) {
-    const data = Lua.call("GetGeneralData", name);
+    const data = Ltk.getGeneralData(name);
     const extension = data.extension;
     const ret = searchPkgResourceWithExtension(extension, "/image/generals/" + extra, name, ".jpg");
     return ret;
   }
 
   function getGeneralPicture(name) {
-    const data = Lua.call("GetGeneralData", name);
+    const data = Ltk.getGeneralData(name);
     const extension = data.extension;
     const ret = searchPkgResourceWithExtension(extension, "/image/generals/", name, ".jpg");
 
@@ -130,9 +132,9 @@ QtObject {
     let name = "unknown";
     if (typeof cidOrName === 'string') {
       name = cidOrName;
-      extension = Lua.call("GetCardExtensionByName", cidOrName);
+      extension = Ltk.getCardExtensionByName(cidOrName);
     } else {
-      const data = Lua.call("GetCardData", cidOrName);
+      const data = Ltk.getCardData(cidOrName);
       extension = data.extension;
       name = data.name;
     }
@@ -147,7 +149,7 @@ QtObject {
   }
 
   function getDelayedTrickPicture(name) {
-    const extension = Lua.call("GetCardExtensionByName", name);
+    const extension = Ltk.getCardExtensionByName(name);
     let ret = searchPkgResourceWithExtension(extension, "/image/card/delayedTrick/", name);
     if (!ret) {
       ret = searchPkgResource("/image/card/delayedTrick/", name);
@@ -159,9 +161,9 @@ QtObject {
 
 
   function getEquipIcon(cid, icon) {
-    let data = Lua.call("GetVirtualEquipData", 0, cid);
+    let data = Ltk.getVirtualEquipData(0, cid);
     if (!data)
-      data = Lua.call("GetCardData", cid, true);
+      data = Ltk.getCardData(cid, true);
 
     const extension = data.extension;
     const name = icon || data.name;

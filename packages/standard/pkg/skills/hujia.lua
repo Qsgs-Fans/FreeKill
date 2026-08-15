@@ -8,7 +8,7 @@ local hujia_spec = {
   can_trigger = function(self, event, target, player, data)
     return target == player and player:hasSkill(hujia.name) and
         Exppattern:Parse(data.pattern):matchExp("jink") and
-        (data.extraData == nil or data.extraData.hujia_ask == nil) and
+        (data.extraData == {} or (data.extraData.hujia_ask == nil and data.extraData.not_passive ~= true)) and
         not table.every(player.room.alive_players, function(p)
           return p == player or p.kingdom ~= "wei"
         end)
@@ -50,19 +50,18 @@ local hujia_spec = {
 hujia:addEffect(fk.AskForCardUse, hujia_spec)
 hujia:addEffect(fk.AskForCardResponse, hujia_spec)
 
-hujia:addAI(Fk.Ltk.AI.newInvokeStrategy{
+hujia:addAI(Fk.Ltk.AI.newInvokeStrategy {
   think = function(self, ai)
     for _, p in ipairs(ai.player.room.alive_players) do
       if ai:isFriend(p) and p.kingdom == "wei" and
-        (p:hasSkill("#eight_diagram_skill") or #table.filter(ai.player:getHandlyIds(), function(cid)
-          return Fk:getCardById(cid).trueName == "jink"
-        end) <= 1) then
+          (p:hasSkill("#eight_diagram_skill") or #table.filter(ai.player:getHandlyIds(), function(cid)
+            return Fk:getCardById(cid).trueName == "jink"
+          end) <= 1) then
         return true
       end
     end
     return false
   end,
 })
-
 
 return hujia

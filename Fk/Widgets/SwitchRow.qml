@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Controls
 
@@ -8,12 +10,16 @@ ActionRow {
   property alias value: root.checked
 
   suffixComponent: Switch {
-    checked: root.checked
-    onCheckedChanged: root.checked = checked
+    checked: root.enabled ? root.checked : false
+    onCheckedChanged: root.checked = root.enabled ? checked : false
   }
 
   onClicked: {
-    checked = !checked;
+    root.checked = !root.checked;
+  }
+
+  onEnabledChanged: {
+    root.checked = false;
   }
 }
 

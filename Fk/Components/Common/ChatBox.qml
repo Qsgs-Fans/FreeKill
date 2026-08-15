@@ -6,6 +6,8 @@ import QtQuick.Layouts
 
 import Fk
 
+import LunarLtk
+
 Rectangle {
   color: "transparent"
   property bool isLobby: false
@@ -83,7 +85,7 @@ Rectangle {
           const general = roomScene.getPhoto(Self.id).general;
           let skill = "fastchat_m";
           if (general !== "") {
-            const data = Lua.call("GetGeneralDetail", general);
+            const data = Ltk.getGeneralDetail(general);
             const gender = data.gender;
             if (gender !== 1) {
               skill = "fastchat_f";

@@ -128,7 +128,7 @@ W.PageBase {
               ret += `${old} -> ${now}`;
             }
             if (errorMsg !== "") {
-              ret += ` <font color='red'>(错误: ${errorMsg})</font>`;
+              ret += qsTr("Download Error: %1").arg(qsTr(errorMsg));
             }
             return ret;
           }
@@ -145,7 +145,7 @@ W.PageBase {
           W.ButtonContent {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            text: "修复"
+            text: qsTr("Fix")
             visible: parent.errorHandler !== null
             onClicked: {;
               parent.errorHandler(parent.myName, index);
@@ -175,13 +175,13 @@ W.PageBase {
       font.pixelSize: 20
       wrapMode: Text.WrapAnywhere
 
-      text: "正在与服务器同步拓展包。<br>请耐心等待，<b>必须在所有拓展包完成下载后才可以关闭该页面</b>。<br><br>若下载途中有<font color='red'>错误</font>产生，<b>则将无法进入服务器</b>，请截图并寻求帮助。" + (root.needRestart ? "<br><br>游戏核心包freekill-core发生更新，必须重启游戏才能生效，请点击按钮关闭游戏后手动重新打开。" : "")
+      text: qsTr("DownloadMsg") + (root.needRestart ? qsTr("CoreChanged") : "")
     }
 
     W.ButtonContent {
       id: backButton
       visible: false
-      text: root.needRestart ? "已完成，点击关闭游戏" : "已完成，点击返回"
+      text: root.needRestart ? qsTr("Done. Click to exit.") : qsTr("Done. Click to return.")
       anchors.bottom: parent.bottom
       anchors.bottomMargin: 8
       width: parent.width - 16
@@ -200,7 +200,7 @@ W.PageBase {
     W.ButtonContent {
       id: repairButton
       visible: false
-      text: "修复全部内容并退出"
+      text: qsTr("Fix All and Exit")
       anchors.bottom: backButton.top
       anchors.bottomMargin: 8
       width: parent.width - 16
@@ -225,27 +225,27 @@ W.PageBase {
 
   function fastRepair(errorMsg) {
     if (/Workspace is dirty/g.exec(errorMsg)) {
-      return ["工作区有未保存的人为修改", (packageName, index) => {
+      return ["Workspace has unsaved changes", (packageName, index) => {
         console.log("Uninstalling " + packageName);
         Pacman.removePack(packageName);
         // updatePackageList();
         packageModel.remove(index);
       }];
     }else if (/exists and is not an empty directory/g.exec(errorMsg)) {
-      return ["目录已存在且非空", null];
+      return ["Directory exists and is not empty", null];
     } else if (/o such file or directory/g.exec(errorMsg)) {
-      return ["文件或目录不存在", (packageName, index) => {
+      return ["No such file or directory", (packageName, index) => {
         console.log("Uninstalling " + packageName);
         Pacman.removePack(packageName);
         // updatePackageList();
         packageModel.remove(index);
       }];
     } else if (/authentiation required but no callback is set/g.exec(errorMsg)) {
-      return ["无法访问仓库URL", null];
+      return ["Repository URL is inaccessible", null];
     } else if (/no match for id/g.exec(errorMsg)) {
-      return ["服务器所需的版本不存在", null];
+      return ["Requested version not found", null];
     } else if (/Http/g.exec(errorMsg)) {
-      return ["网络错误", null];
+      return ["Network error", null];
     }
   
     return [null, null];

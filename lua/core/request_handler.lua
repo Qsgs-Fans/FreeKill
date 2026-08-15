@@ -50,6 +50,7 @@ end
 -- 进入Request之后需要做的第一步操作，对应之前UI代码中state变换
 function RequestHandler:setup() end
 
+-- 析构函数
 function RequestHandler:_finish()
   if not self.finished then
     self.finished = true
@@ -65,10 +66,10 @@ function RequestHandler:finish() end
 
 -- 产生UI事件后由UI触发
 -- 需要实现各种合法性检验，决定需要变更状态的UI，并最终将变更反馈给真实的界面
----@param elemType string
----@param id string | integer
----@param action string
----@param data any
+---@param elemType string UI元素类型
+---@param id string | integer 元件ID
+---@param action string UI事件类型
+---@param data any 需要变化的数据列表
 function RequestHandler:update(elemType, id, action, data) end
 
 function RequestHandler:setPrompt(str)

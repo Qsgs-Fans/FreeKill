@@ -268,7 +268,7 @@ local function bin_search(events, from, to, n, func)
       local id = events[mid].id
       local id_left = mid == 1 and -math.huge or events[mid - 1].id
 
-      if from < id then
+      if from <= id then
         if from >= id_left then
           break
         end

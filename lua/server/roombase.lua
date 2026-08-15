@@ -11,6 +11,7 @@
 ---@field public serverplayer_klass any
 ---@field public logic_klass any
 ---@field public logic Base.GameLogic @ 这个房间使用的游戏逻辑，可能根据游戏模式而变动
+---@field public current_request Request @ 当前正在处理中的request
 ---@field public last_request Request @ 上一次完成的request
 ---@field public _test_disable_delay boolean? 测试专用 会禁用delay和烧条
 ---@field public callbacks { [string|integer]: fun(self, sender: integer, data) }
@@ -38,6 +39,8 @@ function ServerRoomBase:initialize(_room)
   self.timeout = _room:getTimeout()
   self.settings = cbor.decode(self.room:settings())
 
+  self._rand_seed = math.random(os.time())
+  self._rng = fk.rand(self._rand_seed)
   self._resume_fn = Util.TrueFunc
 
   self.callbacks = {}
@@ -138,6 +141,22 @@ function ServerRoomBase:run()
     local player = self.serverplayer_klass:new(p)
     player.room = self
     table.insert(self.players, player)
+  end
+
+  -- 尽可能早的将提前上树的人带到游戏界面
+  local all_observers = self.room:getObservers()
+  for _, p in fk.qlist(all_observers) do
+    self:tellRoomToObserver(p)
+    -- 由于代码机制，旁观者先被踢出房间了，这里只和旁观者同步
+    for _, p2 in fk.qlist(all_observers) do
+      p2:doNotify("AddObserver", cbor.encode {
+        p:getId(),
+        p:getScreenName(),
+        p:getAvatar(),
+        false,
+        p:getTotalGameTime(),
+      })
+    end
   end
 
   local mode = Fk.game_modes[self:getSettings('gameMode')]
@@ -294,6 +313,21 @@ function ServerRoomBase:hasSkill(skill)
   return false
 end
 
+--- 将某个技能作为预亮技能添加给一名角色，并（将触发技）加入房间
+---@param player ServerPlayer
+---@param skill string
+function ServerRoomBase:addFakeSkill(player, skill)
+  player:addFakeSkill(skill)
+  local toget = {table.unpack(Fk.skill_skels[skill].effects)}
+  for _, s in ipairs(toget) do
+    if s:isInstanceOf(TriggerSkill) then
+      ---@cast s TriggerSkill
+      self.logic:addTriggerSkill(s)
+    end
+    --self:addSkill
+  end
+end
+
 function ServerRoomBase:shouldUpdateWinRate()
   if self:getSettings("enableFreeAssign") then
     return false
@@ -312,14 +346,14 @@ end
 
 --- 获取一名角色一局游戏的胜负结果。
 --- 胜利1；失败2；平局3。
----@param winner string @ 获胜的身份，空字符串表示平局
----@param role string @ 角色的身份
+---@param winner string @ 获胜的玩家id字符串，空字符串表示平局
+---@param pid string | number @ 角色的id
 ---@return integer @ 胜负结果
-function ServerRoomBase:victoryResult(winner, role)
+function ServerRoomBase:victoryResult(winner, pid)
   local ret
   if winner == "" then
     ret = 3
-  elseif table.contains(winner:split("+"), role) then
+  elseif table.contains(winner:split("+"), tostring(pid)) then
     ret = 1
   else
     ret = 2
@@ -327,19 +361,18 @@ function ServerRoomBase:victoryResult(winner, role)
   return ret
 end
 
-function ServerRoomBase:gameOver(winner)
+---@param winners string @ 获胜玩家的id字符串
+function ServerRoomBase:gameOver(winners)
   if not self.game_started then return end
   self.room:destroyRequestTimer()
 
+  local winPlayers = table.map(winners:split("+"), function(id) return self:getPlayerById(tonumber(id)) end)
   if table.contains(
     { "running", "normal" },
     coroutine.status(self.main_co)
   ) then
-    self.logic:trigger(fk.GameFinished, nil, winner)
+    self.logic:trigger(fk.GameFinished, nil, { players = winPlayers })
   end
-
-  self:doBroadcastNotify("GameOver", winner)
-  fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self:getSettings('gameMode'), winner, os.time() - self.start_time))
 
   self.game_started = false
   self.game_finished = true
@@ -352,11 +385,20 @@ function ServerRoomBase:gameOver(winner)
       local result
 
       if p.id > 0 then
-        result = self:victoryResult(winner, p.role)
-        self.room:updatePlayerWinRate(id, mode, p.role, result)
+        result = self:victoryResult(winners, tostring(p.id))
+        self.room:updatePlayerWinRate(id, mode, p.role or "", result)
       end
     end
   end
+
+  local winRoles = {}
+  for _, p in ipairs(winPlayers) do
+    table.insertIfNeed(winRoles, p.role)
+  end
+  self:doBroadcastNotify("GameOver", winners)
+  fk.qInfo(string.format("[GameOver] %d, %s, %s, in %ds", self.id, self:getSettings('gameMode'),
+  table.concat(winRoles, "+"),
+  os.time() - self.start_time))
 
   self.room:gameOver()
 
@@ -382,7 +424,11 @@ function ServerRoomBase:tellRoomToObserver(player)
   local observee = self.players[1]
   local start_time = os.getms()
   local summary = self:serialize(observee)
+  summary.settings = table.clone(summary.settings)
+  summary.settings.isObserver = true
   player:doNotify("Observe", cbor.encode(summary))
+  -- 由于开战前旁观的加入，旁观者能回到等待界面了，有必要知道谁是主
+  player:doNotify("RoomOwner", cbor.encode { self.room:getOwner():getId() })
 
   fk.qInfo(string.format("[Observe] %d, %s, in %.3fms",
     self.id, player:getScreenName(), (os.getms() - start_time) / 1000))
@@ -395,10 +441,13 @@ function ServerRoomBase:addObserver(id)
   for _, p in fk.qlist(all_observers) do
     if p:getId() == id then
       self:tellRoomToObserver(p)
+      -- TODO: (v0.6) 记得删除这个，0.6的时候旁观者添加和移除统一到cpp
       self:doBroadcastNotify("AddObserver", {
         p:getId(),
         p:getScreenName(),
-        p:getAvatar()
+        p:getAvatar(),
+        false,
+        p:getTotalGameTime(),
       })
       break
     end
@@ -406,10 +455,11 @@ function ServerRoomBase:addObserver(id)
 end
 
 function ServerRoomBase:removeObserver(id)
-  for _, t in ipairs(self.observers) do
+  for i, t in ipairs(self.observers) do
     local pid = t[3]
     if pid == id then
-      table.removeOne(self.observers, t)
+      table.remove(self.observers, i)
+      -- TODO: (v0.6) 记得删除这个，0.6的时候旁观者添加和移除统一到cpp
       self:doBroadcastNotify("RemoveObserver", { pid })
       break
     end
@@ -520,6 +570,59 @@ end
 function ServerRoomBase:setBanner(name, value)
   Fk.Base.RoomBase.setBanner(self, name, value)
   self:doBroadcastNotify("SetBanner", { name, value })
+end
+
+-- 生成随机数。该随机数只与当前游戏房间有关，
+-- 以便后续可以只根据随机数种子和玩家的决策来重现整个对局。
+function ServerRoomBase:random(m, n)
+  return self._rng:random(m, n)
+end
+
+-- 重置房间的随机数种子，仅用于复盘阶段
+function ServerRoomBase:randomseed(x, y)
+  return self._rng:randomseed(x, y)
+end
+
+--- 基于本房间的随机发生器来原地打乱某个表。
+---@generic T
+---@param t T[]
+function ServerRoomBase:shuffleTable(t)
+  if #t == 2 then
+    if self:random() < 0.5 then
+      t[1], t[2] = t[2], t[1]
+    end
+  else
+    for i = #t, 2, -1 do
+      local j = self:random(i)
+      t[i], t[j] = t[j], t[i]
+    end
+  end
+end
+
+---@generic T
+---@param t T[]
+---@return T
+---@diagnostic disable-next-line
+function ServerRoomBase:tableRandomPick(t) end
+
+--- 基于本房间的随机发生器来从表中随机选取
+---@generic T
+---@param t T[]
+---@param n integer
+---@return T[]
+---@diagnostic disable-next-line: duplicate-set-field
+function ServerRoomBase:tableRandomPick(t, n)
+  local n0 = n
+  n = n or 1
+  if #t == 0 then return n0 ~= nil and {} or nil end
+  local tmp = {table.unpack(t)}
+  local ret = {}
+  while n > 0 and #tmp > 0 do
+    local i = self:random(1, #tmp)
+    table.insert(ret, table.remove(tmp, i))
+    n = n - 1
+  end
+  return n0 == nil and ret[1] or ret
 end
 
 function ServerRoomBase:serialize(player)

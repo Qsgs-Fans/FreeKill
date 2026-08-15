@@ -5,6 +5,8 @@ local zhijian = fk.CreateSkill {
 Fk:loadTranslationTable{
   ["test_zhijian"] = "上装",
   [":test_zhijian"] = "出牌阶段，你可以将任意张装备牌置于一名角色的装备区里（替换原装备）（不选牌则从牌堆中随机一张装备牌，不选角色则装给自己）。",
+  ["test_zhijian_random"] = "使用牌堆的随机装备",
+  ["test_zhijian_put"] = "置入装备区",
 
   ["#test_zhijian"] = "上装：选择任意张装备牌置入一名角色的装备区（替换原装备）（不选牌则从牌堆中随机一张装备牌，不选角色则装给自己）",
 }
@@ -15,6 +17,11 @@ zhijian:addEffect("active", {
   min_target_num = 0,
   max_target_num = 1,
   prompt = "#test_zhijian",
+  interaction = UI.OptionBox { options = { "test_zhijian_random", "test_zhijian_put" }, direct_send = true },
+  refresh_interaction = function(self, player, selected_cards, selected_targets)
+    if #selected_cards == 0 then return { "test_zhijian_random" } end
+    return { "test_zhijian_put" }
+  end,
   card_filter = function(self, player, to_select, selected)
     return Fk:getCardById(to_select).type == Card.TypeEquip
   end,

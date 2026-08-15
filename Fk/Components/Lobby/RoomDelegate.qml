@@ -86,7 +86,7 @@ Item {
     TextField {
       id: passwordEdit
       visible: hasPassword && !outdated
-      width: parent.width - capacityText.width - enterButton.width - 4
+      width: parent.width - capacityText.width - enterButton.width - observeButton.width - 8
       height: capacityText.height + 8
       anchors.left: capacityText.right
       anchors.leftMargin: 2
@@ -97,18 +97,32 @@ Item {
 
     ToolButton {
       id: enterButton
-      text: (playerNum < capacity) ? Lua.tr("Enter") : Lua.tr("Observe")
-      enabled: !outdated && !timer.running
+      text: Lua.tr("Enter")
+      enabled: !outdated && !timer.running && playerNum < capacity
       font.pixelSize: 16
       font.bold: true
       anchors.bottom: parent.bottom
-      anchors.right: parent.right
-      //anchors.rightMargin: -4
+      anchors.right: observeButton.left
       anchors.bottomMargin: -4
       onClicked: {
         timer.start();
         enterRoom(roomId, playerNum, capacity,
         hasPassword ? passwordEdit.text : "");
+      }
+    }
+
+    ToolButton {
+      id: observeButton
+      text: Lua.tr("Observe")
+      enabled: !outdated && !timer.running
+      font.pixelSize: 16
+      font.bold: true
+      anchors.bottom: parent.bottom
+      anchors.right: parent.right
+      anchors.bottomMargin: -4
+      onClicked: {
+        timer.start();
+        observeRoomOnly(roomId, hasPassword ? passwordEdit.text : "");
       }
     }
   }

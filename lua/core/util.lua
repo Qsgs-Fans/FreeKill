@@ -143,7 +143,7 @@ end
 ---@param val_func? fun(e: T): integer @ 计算权值的函数，对int[]可不写
 ---@param reverse? boolean @ 是否反排？反排的话优先返回权值小的元素
 function fk.sorted_pairs(t, val_func, reverse)
-  local t2 = table.simpleClone(t)  -- 克隆一次表，用作迭代器上值
+  local t2 = table.simpleClone(t) -- 克隆一次表，用作迭代器上值
   local t_vals = table.map(t2, val_func or function(e) return e end)
   local iter = function()
     local max_idx, max, max_val = -1, nil, nil
@@ -226,12 +226,16 @@ Util.CardTargetFilter = function(skill, player, to_select, selected, selected_ca
   if extra_data.must_targets then
     -- must_targets: 必须先选择must_targets内的**所有**目标
     if not (#extra_data.must_targets <= #selected or
-      table.contains(extra_data.must_targets, to_select.id)) then return false end
+          table.contains(extra_data.must_targets, to_select.id)) then
+      return false
+    end
   end
   if extra_data.include_targets then
     -- include_targets: 必须先选择include_targets内的**其中一个**目标
     if not (table.hasIntersection(extra_data.include_targets, selected) or
-      table.contains(extra_data.include_targets, to_select.id)) then return false end
+          table.contains(extra_data.include_targets, to_select.id)) then
+      return false
+    end
   end
   if extra_data.exclusive_targets then
     -- exclusive_targets: **只能选择**exclusive_targets内的目标
@@ -259,7 +263,7 @@ Util.CanUseToSelf = function(self, player, card, extra_data)
   local tos = card:getFixedTargets(player, extra_data)
   return tos and table.find(tos, function(p)
     return not player:isProhibited(p, card)
-    and Util.CardTargetFilter(card.skill, player, p, {}, card.subcards, card, extra_data)
+        and Util.CardTargetFilter(card:getSkill(player), player, p, {}, card.subcards, card, extra_data)
   end) ~= nil
 end
 
@@ -298,8 +302,53 @@ Util.CanUseFixedTarget = function(self, player, card, extra_data)
   local tos = card:getFixedTargets(player, extra_data)
   return tos and table.find(tos, function(p)
     return not player:isProhibited(p, card)
-    and Util.CardTargetFilter(card.skill, player, p, {}, card.subcards, card, extra_data)
+        and Util.CardTargetFilter(card:getSkill(player), player, p, {}, card.subcards, card, extra_data)
   end) ~= nil
+end
+
+--使用闪以抵消杀
+---@param room Room
+---@param cardEffectData CardEffectData
+Util.SlashOffsetFunc = function(room, cardEffectData)
+  local params = { ---@type AskToUseCardParams
+    skill_name = "jink",
+    pattern = Fk.currentResponsePattern or "jink",
+    prompt = cardEffectData.extra_data.prompt,
+    cancelable = true,
+    event_data = cardEffectData
+  }
+  local use = room:askToUseCard(cardEffectData.to, params)
+  if use then
+    room:useCard(use)
+    if cardEffectData.isCancellOut then
+      return true
+    end
+  end
+  return false
+end
+
+--使用无懈以抵消锦囊
+---@param room Room
+---@param cardEffectData CardEffectData
+Util.TrickOffsetFunc = function(room, cardEffectData)
+  local params = { ---@type AskToUseCardParams
+    skill_name = "nullification",
+    pattern = Fk.currentResponsePattern or "nullification",
+    prompt = cardEffectData.extra_data.prompt,
+    cancelable = true,
+    extra_data = cardEffectData.extra_data,
+    event_data = cardEffectData
+  }
+  local use = room:askToNullification(cardEffectData.extra_data.players, params)
+  if use then
+    use.toCard = cardEffectData.card
+    use.responseToEvent = cardEffectData
+    room:useCard(use)
+    if cardEffectData.isCancellOut then
+      return true
+    end
+  end
+  return false
 end
 
 -- Table
@@ -337,6 +386,19 @@ function table.find(self, func)
     end
   end
   return nil
+end
+
+---@generic T
+---@param self T[]
+---@param func fun(element: T, index: integer, array: T[]): boolean?
+---@return integer
+function table.findIndex(self, func)
+  for i, v in ipairs(self) do
+    if func(v, i, self) then
+      return i
+    end
+  end
+  return -1
 end
 
 ---@generic T
@@ -459,6 +521,21 @@ function table.removeOne(self, element)
   return false
 end
 
+---@generic T
+---@param self T[]
+---@param list T[]
+---@return T[] --- 返回被删除的元素表
+function table.removeTable(self, list)
+  if next(self) == nil or next(list) == nil then return {} end
+  local removeTable = {}
+  for _, e in ipairs(list) do
+    if table.removeOne(self, e) then
+      table.insert(removeTable, e)
+    end
+  end
+  return removeTable
+end
+
 -- Note: only clone key and value, no metatable
 -- so dont use for class or instance
 ---@generic T
@@ -533,7 +610,7 @@ end
 ---@return T
 function table.connect(...)
   local ret = {}
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     table.insertTable(ret, v)
   end
   return ret
@@ -544,7 +621,7 @@ end
 ---@return T
 function table.connectIfNeed(...)
   local ret = {}
-  for _, v in ipairs({...}) do
+  for _, v in ipairs({ ... }) do
     table.insertTableIfNeed(ret, v)
   end
   return ret
@@ -565,7 +642,7 @@ function table.random(self, n)
   local n0 = n
   n = n or 1
   if #self == 0 then return n0 ~= nil and {} or nil end
-  local tmp = {table.unpack(self)}
+  local tmp = { table.unpack(self) }
   local ret = {}
   while n > 0 and #tmp > 0 do
     local i = math.random(1, #tmp)
@@ -694,7 +771,7 @@ function string:split(delimiter)
   local delim_from, delim_to = string.find(self, delimiter, from)
   while delim_from do
     table.insert(result, string.sub(self, from, delim_from - 1))
-    from  = delim_to + 1
+    from                 = delim_to + 1
     delim_from, delim_to = string.find(self, delimiter, from)
   end
   table.insert(result, string.sub(self, from))
@@ -708,7 +785,7 @@ end
 
 ---@param self string
 function string:endsWith(e)
-  return e == "" or self:sub(-#e) == e
+  return e == "" or self:sub(- #e) == e
 end
 
 FileIO = {
@@ -753,7 +830,6 @@ function Stack:pop()
   return ret
 end
 
-
 --- useful function to create enums
 ---
 --- only use it in a terminal
@@ -772,4 +848,5 @@ function switch(param, case_table)
   local def = case_table["default"]
   return def and def() or nil
 end
+
 return Util

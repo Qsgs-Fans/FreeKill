@@ -14,7 +14,13 @@ skill:addEffect("cardskill", {
   target_num = 1,
   on_effect = function(self, room, effect)
     if effect.from.dead or effect.to.dead or effect.to:isAllNude() then return end
-    local cid = room:askToChooseCard(effect.from, { target = effect.to, flag = "hej", skill_name = skill.name })
+    effect.extra_data = effect.extra_data or {}
+    local cid = room:askToChooseCard(effect.from, {
+      target = effect.to,
+      flag = "hej",
+      skill_name = skill.name,
+    })
+    effect.extra_data.snatch_card = cid
     room:obtainCard(effect.from, cid, false, fk.ReasonPrey, effect.from, skill.name)
   end,
 })
@@ -29,7 +35,7 @@ skill:addAI(Fk.Ltk.AI.newCardSkillStrategy {
       cards = effect.to:getCardIds("hej"),
       skill_name = skill.name,
       data = {
-        to_place = Card.PlayerHand,
+        toArea = Card.PlayerHand,
         target = effect.from,
         reason = fk.ReasonPrey,
         proposer = effect.from,

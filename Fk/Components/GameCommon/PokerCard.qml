@@ -14,8 +14,8 @@ BasicCard {
   Image {
     id: suitItem
     visible: parent.known
-    source: (parent.suit !== "" && parent.suit !== "nosuit") ?
-      SkinBank.searchBuiltinPic("/image/card/suit/", parent.suit) : ""
+    source: (parent.suit != "" && parent.number > 0) ?
+      SkinBank.searchBuiltinPic("/image/card/suit/", parent.suit === "nosuit" ? parent.color : parent.suit) : ""
     x: 3 * root.cardScale
     y: 19 * root.cardScale
     width: 21 * root.cardScale
@@ -33,20 +33,21 @@ BasicCard {
     height: 28 * root.cardScale
   }
 
-  Image {
+  Image { // 没点数的时候的suit位置
     id: colorItem
     visible: parent.known && (parent.suit === "" || parent.suit === "nosuit")
-      //  && number <= 0 // <- FIXME: 需要区分“黑色有点数”和“无色有点数”
+      && parent.number <= 0
     source: (visible && parent.color !== "") ? SkinBank.cardSuitDir + "/" + parent.color
                                       : ""
-    x: 1 * root.cardScale
-    width: sourceSize.width * root.cardScale
-    height: sourceSize.height * root.cardScale
+    x: 3 * root.cardScale
+    y: 9.5 * root.cardScale
+    width: 21 * root.cardScale
+    height: 17 * root.cardScale
   }
 
   function getColor() {
     if (suit != "")
       return (suit == "heart" || suit == "diamond") ? "red" : "black";
-    else return color;
+    else return color != "nocolor" ? "black" : color;
   }
 }

@@ -27,6 +27,7 @@ analepticSkill:addEffect("cardskill", {
           num = 1,
           recoverBy = effect.from,
           card = effect.card,
+          skillName = analepticSkill.name,
         })
       end
     else

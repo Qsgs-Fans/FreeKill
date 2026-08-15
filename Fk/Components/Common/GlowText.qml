@@ -5,6 +5,7 @@ import Qt5Compat.GraphicalEffects
 
 Item {
   property alias text: textItem.text
+  property alias textFormat: textItem.textFormat
   property alias color: textItem.color
   property alias font: textItem.font
   property alias fontSizeMode: textItem.fontSizeMode
@@ -15,6 +16,8 @@ Item {
   property alias wrapMode: textItem.wrapMode
   property alias elide: textItem.elide
   property alias lineHeight: textItem.lineHeight
+  property alias lineHeightMode: textItem.lineHeightMode
+  property alias textItem: textItem
   property alias glow: glowItem
 
   width: textItem.implicitWidth

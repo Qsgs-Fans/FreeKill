@@ -3,7 +3,15 @@ local skill = fk.CreateSkill {
 }
 
 skill:addEffect("cardskill", {
-  prompt = "#collateral_skill",
+  prompt = function (self, player, selected_cards, selected_targets, extra_data)
+    if #selected_targets == 0 then
+      return "#collateral_skill"
+    elseif #selected_targets == 1 then
+      return "#collateral_skill1:"..selected_targets[1].id
+    elseif #selected_targets == 2 then
+      return "#collateral_skill2:"..selected_targets[1].id..":"..selected_targets[2].id
+    end
+  end,
   mod_target_filter = function(self, player, to_select, selected, card, extra_data)
     if #selected == 0 then
       return to_select ~= player and #to_select:getEquipments(Card.SubtypeWeapon) > 0

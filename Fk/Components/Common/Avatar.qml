@@ -15,6 +15,7 @@ Image {
   clip: true
 
   property string general
+  // FIXME: 考虑到未来的拓展性，需要把pkgName放在外面
   property string pkgName: {
     const splited = general.split('__')[0];
     if (splited == general) return "";
@@ -24,7 +25,7 @@ Image {
   property bool detailed: false
 
   Rectangle {
-    visible: root.detailed && pkgName !== ""
+    visible: root.detailed && root.pkgName !== ""
     anchors.top: parent.top
     anchors.left: parent.left
     height: 16
@@ -33,7 +34,7 @@ Image {
     opacity: 0.8
 
     Text {
-      text: Lua.tr(pkgName)
+      text: Lua.tr(root.pkgName)
       x: 2; y: 1
       font.family: Config.libianName
       font.pixelSize: 14

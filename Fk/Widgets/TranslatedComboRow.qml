@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 
@@ -6,7 +7,7 @@ import Fk
 ActionRow {
   id: root
 
-  property var model
+  property var model: []
   property string value
   // property var currentIndex
 
@@ -39,6 +40,7 @@ ActionRow {
         currentIndex: combo.highlightedIndex
 
         delegate: ItemDelegate {
+          required property var modelData
           width: combo.width
           text: Lua.tr(modelData)
         }
@@ -53,7 +55,7 @@ ActionRow {
     }
 
     onCurrentIndexChanged: {
-      root.value = model[currentIndex];
+      root.value = model[currentIndex] ?? model[0];
     }
   }
 

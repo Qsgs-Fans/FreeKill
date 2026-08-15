@@ -7,10 +7,14 @@ import QtQuick.Layouts
 import Fk
 import Fk.Widgets as W
 
+import LunarLtk
+
 Item {
   id: root
   anchors.fill: parent
   property bool isChangeRoom: false
+  property var config: ({})
+
   signal finish()
 
   W.SideBarSwitcher {
@@ -19,9 +23,9 @@ Item {
     height: parent.height
     model: ListModel {
       ListElement { name: "General Settings" }
-      ListElement { name: "游戏模式选择" }
-      ListElement { name: "游戏设置" }
-      ListElement { name: "模式设置" }
+      ListElement { name: "Game Mode Select" }
+      ListElement { name: "Game Settings" }
+      ListElement { name: "Mode Settings" }
       ListElement { name: "Package Settings" }
       ListElement { name: "Ban General Settings" }
     }
@@ -37,8 +41,15 @@ Item {
     currentIndex: bar.currentIndex
     RoomGeneralSettings {
       id: roomGeneralSettings
+      config: root.config
+      onSettingsUpdated: {
+        boardgameSettings.updateSettingsUI();
+        gameModeSettings.updateSettingsUI();
+        root.updateFeasible();
+      }
     }
     GameModeSelectPage {
+      id: gameModeSelectPage
       onGameModeChanged: {
         roomGeneralSettings.refreshGameMode(gameMode);
         const getUIData = Lua.fn("GetUIDataOfSettings");
@@ -49,10 +60,11 @@ Item {
         const config = {
           playerNum: roomGeneralSettings.playerNum,
           timeout: Config.preferredTimeout,
-          gameMode: Config.preferedMode,
+          gameMode,
           _game: boardgameConf,
           _mode: gameModeConf,
         };
+        root.config = config;
 
         let needcopy = false;
 
@@ -63,31 +75,37 @@ Item {
 
         boardgameSettings.configName = boardgameName;
         boardgameSettings.gameModeName = gameMode;
-        boardgameSettings.config = config;
+        // boardgameSettings.config = config;
         boardgameSettings.needcopy = needcopy;
         boardgameSettings.loadSettingsUI(boardgameSettingsData);
 
         gameModeSettings.configName = `${boardgameName}:${gameMode}`;
         gameModeSettings.gameModeName = gameMode;
-        gameModeSettings.config = config;
+        // gameModeSettings.config = config;
         gameModeSettings.needcopy = needcopy;
         gameModeSettings.loadSettingsUI(gameSettingsData);
+
+        root.updateFeasible();
       }
     }
     LuaSettingsPage {
       id: boardgameSettings
       isBoardgame: true
+      config: root.config
       onSettingsUpdated: {
         boardgameSettings.updateSettingsUI();
         gameModeSettings.updateSettingsUI();
+        root.updateFeasible();
       }
     }
     LuaSettingsPage {
       id: gameModeSettings
       isBoardgame: false
+      config: root.config
       onSettingsUpdated: {
         boardgameSettings.updateSettingsUI();
         gameModeSettings.updateSettingsUI();
+        root.updateFeasible();
       }
     }
     Item {
@@ -113,10 +131,10 @@ Item {
       // anchors.rightMargin: 8
       spacing: 16
       W.ButtonContent {
+        id: okButton
         Layout.fillWidth: true
         Layout.preferredHeight: 40
         text: Lua.tr("OK")
-        enabled: Lua.evaluate(`Fk.game_modes['${Config.preferedMode}'] ~= nil`)
         onClicked: {
           Config.saveConf();
           root.finish();
@@ -127,7 +145,7 @@ Item {
           for (k in Config.curScheme.banPkg) {
             arr = Config.curScheme.banPkg[k];
             if (arr.length !== 0) {
-              const generals = Lua.call("GetGenerals", k);
+              const generals = Ltk.getGenerals(k);
               if (generals.length !== 0) {
                 disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
               }
@@ -180,5 +198,12 @@ Item {
         }
       }
     }
+  }
+
+  function updateFeasible() {
+    okButton.enabled = !!Lua.fn(`function(modeName, settings)
+      local mode = Fk.game_modes[modeName]
+      return mode and mode:feasible(settings)
+    end`)(gameModeSelectPage.gameMode, boardgameSettings.config)
   }
 }

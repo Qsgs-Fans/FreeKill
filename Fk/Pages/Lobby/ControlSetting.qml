@@ -58,4 +58,13 @@ W.PreferencePage {
     }
   }
 
+  W.PreferenceGroup {
+    W.SwitchRow {
+      title: Lua.tr("Hide Screen Name")
+      subTitle: Lua.tr("help: Hide Screen Name")
+      checked: Config.hideScreenName
+      onCheckedChanged: Config.hideScreenName = checked;
+    }
+  }
+
 }

@@ -10,6 +10,8 @@ import Fk.Components.GameCommon
 import Fk.Widgets as W
 import Fk.Pages.Lobby as L
 
+import LunarLtk
+
 Item {
   id: root
 
@@ -197,7 +199,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
-        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
+        overviewLoader.overviewSource = "LunarLtk.Pages";
         overviewLoader.overviewType = "GeneralPool";
         overviewDialog.open();
       }
@@ -212,13 +214,14 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
-        if (Lua.evaluate('not ClientInstance.gameStarted')) {
+        if (!Lua.client.gameStarted) {
           return;
         }
-        if (Lua.evaluate('Self.dead and (Self.rest <= 0)')) {
+        const self = Lua.selfPlayer;
+        if (self.dead && self.rest <= 0) {
           return;
         }
-        const surrenderCheck = Lua.call('CheckSurrenderAvailable');
+        const surrenderCheck = Lua.checkSurrenderAvailable();
         if (!surrenderCheck.length) {
           surrenderDialog.informativeText =
           Lua.tr('Surrender is disabled in this mode');
@@ -240,7 +243,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
-        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
+        overviewLoader.overviewSource = "LunarLtk.Pages";
         overviewLoader.overviewType = "Generals";
         overviewDialog.open();
         overviewLoader.item.loadPackages();
@@ -255,7 +258,7 @@ Item {
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
-        overviewLoader.overviewSource = "Fk.Pages.LunarLTK";
+        overviewLoader.overviewSource = "LunarLtk.Pages";
         overviewLoader.overviewType = "Cards";
         overviewDialog.open();
         overviewLoader.item.loadPackages();
@@ -319,8 +322,7 @@ Item {
     onButtonClicked: function (button, role) {
       switch (button) {
         case MessageDialog.Ok: {
-          const surrenderCheck =
-          Lua.call('CheckSurrenderAvailable');
+          const surrenderCheck = Lua.checkSurrenderAvailable();
           if (surrenderCheck.length &&
           !surrenderCheck.find(check => !check.passed)) {
 
@@ -351,7 +353,7 @@ Item {
     }
     Loader {
       id: overviewLoader
-      property string overviewSource: "Fk.Pages.LunarLTK"
+      property string overviewSource: "LunarLtk.Pages"
       property string overviewType: "GeneralPool"
       anchors.centerIn: parent
       width: parent.width / Config.winScale
@@ -494,26 +496,65 @@ Item {
             height: 30
             text: {
               let ret = screenName;
+              if (Config.hideScreenName) {
+                ret = seat !== -1 ? Lua.tr("seat#" + seat.toString()) : Lua.tr("Player") + (index + 1).toString();
+              }  // 如果有座位号，显示几号位；否则用序号
               if (observing) {
-                ret = '*旁观* ' + ret;
+                ret = '*' + Lua.tr('Observe') + '* ' + ret;
               }
               if (netState == 2) {
-                ret = '<font color="blue">*托管*</font> ' + ret;
+                ret = '<font color="blue">*' + Lua.tr('Trust') + '*</font> ' + ret;
               } else if (netState == 3) {
-                ret = '<font color="red">*逃跑*</font> ' + ret;
+                ret = '<font color="red">*' + Lua.tr('Run Away') + '*</font> ' + ret;
               } else if (netState == 5) {
-                ret = '<font color="blue">*人机*</font> ' + ret;
+                ret = '<font color="blue">*' + Lua.tr('Robot') + '*</font> ' + ret;
               } else if (netState == 6) {
-                ret = '<font color="gray">*离线*</font> ' + ret;
+                ret = '<font color="gray">*' + Lua.tr('Offline') + '*</font> ' + ret;
               }
               return ret;
             }
 
-            onClicked: {
-              if (!Config.observing) return;
-              if (observing) return;
-              if (screenName == Self.screenName) return;
-              Lua.evaluate(`ClientInstance:changeSelf(${pid})`)
+            W.ButtonContent {
+              id: viewButton
+              text: Lua.tr("Observe")
+              visible: Config.observing && !observing
+              enabled: screenName != Self.screenName
+              font.pixelSize: 16
+              anchors.top: parent.top
+              anchors.topMargin: 3
+              anchors.right: blockButton.left
+              anchors.rightMargin: 5
+              width: 80
+              height: parent.height - 6
+              onClicked: {
+                Lua.client.changeSelf(pid);
+              }
+            }
+            W.ButtonContent {
+              id: blockButton
+              text: {
+                const blocked = !Config.blockedUsers.includes(screenName);
+                return blocked ? Lua.tr("Block Chatter") : Lua.tr("Unblock Chatter");
+              }
+              visible: !Config.replaying
+              enabled: pid > 0 && pid != Self.id
+              font.pixelSize: 16
+              anchors.top: parent.top
+              anchors.topMargin: 3
+              anchors.right: parent.right
+              anchors.rightMargin: 2
+              width: 80
+              height: parent.height - 6
+              onClicked: {
+                const idx = Config.blockedUsers.indexOf(screenName);
+                if (idx === -1) {
+                  if (screenName === "") return;
+                  Config.blockedUsers.push(screenName);
+                } else {
+                  Config.blockedUsers.splice(idx, 1);
+                }
+                Config.blockedUsersChanged();
+              }
             }
           }
         }
@@ -530,7 +571,7 @@ Item {
     onAboutToShow: {
       drawerBar.currentIndex = rememberedIdx;
       playerListModel.clear();
-      const ps = Lua.call("GetPlayersAndObservers");
+      const ps = Lua.getPlayersAndObservers();
       ps.forEach(p => {
         playerListModel.append({
           pid: p.id,
@@ -540,6 +581,7 @@ Item {
           observing: p.observing,
           netState: p.state,
           avatar: p.avatar,
+          seat: p.seat,
         });
       });
     }
@@ -558,11 +600,11 @@ Item {
   }
 
   function canHandleCommand(cmd) {
-    return gameContent.canHandleCommand(cmd) || overlay.canHandleCommand(cmd);
+    return gameContent?.canHandleCommand(cmd) || overlay.canHandleCommand(cmd);
   }
 
   function handleCommand(sender, cmd, data) {
-    if (gameContent.canHandleCommand(cmd)) {
+    if (gameContent?.canHandleCommand(cmd)) {
       gameContent.handleCommand(sender, cmd, data);
     }
     if (overlay.canHandleCommand(cmd)) {
@@ -602,14 +644,14 @@ Item {
         case "Flower": {
           const fromId = pid;
           const toId = parseInt(splited[1]);
-          const component = Qt.createComponent("Fk.Components.LunarLTK.ChatAnim", type);
+          const component = Qt.createComponent("LunarLtk.Components.ChatAnim", type);
           if (component.status !== Component.Ready) {
             console.warn(component.errorString());
             return false;
           }
 
-          const fromGetter = room.getPhotoOrDashboard || room.getPhoto || null;
-          const toGetter = room.getPhoto || null;
+          const fromGetter = room.getPhotoOrDashboard || room.getPhotoOrObserver || room.getPhoto || null;
+          const toGetter = room.getPhotoOrObserver || room.getPhoto || null;
           if (!fromGetter || !toGetter) return false;
           const fromItem = fromGetter(fromId);
           const fromPos = mapFromItem(fromItem, fromItem.width / 2,
@@ -628,7 +670,7 @@ Item {
       }
     } else if (msg.startsWith("!") || msg.startsWith("~")) { // 胜利、阵亡
       const g = msg.slice(1);
-      const extension = Lua.call("GetGeneralData", g).extension;
+      const extension = Ltk.getGeneralData(g).extension;
       if (!Config.disableMsgAudio) {
         const path = SkinBank.getAudio(g, extension, msg.startsWith("!") ? "win" : "death");
         Backend.playSound(path);
@@ -653,7 +695,7 @@ Item {
         let dat;
         const tryPlaySound = (general) => {
           if (general) {
-            const dat = Lua.call("GetGeneralData", general);
+            const dat = Ltk.getGeneralData(general);
             const extension = dat.extension;
             const path = SkinBank.getAudio(skill + "_" + general, extension, "skill");
             if (path !== undefined) {
@@ -667,7 +709,7 @@ Item {
         // Try main general first, then deputy general
         if (!tryPlaySound(general)) {
           // finally normal skill
-          dat = Lua.call("GetSkillData", skill);
+          dat = Ltk.getSkillData(skill);
           extension = dat.extension;
           path = SkinBank.getAudio(skill, extension, "skill");
           Backend.playSound(path, i);
@@ -733,7 +775,7 @@ Item {
   }
 
   function resetRoomPage() {
-    Lua.call("ResetClientLua");
+    Lua.resetClientLua();
     gameLoader.sourceComponent = Qt.createComponent("Fk.Pages.Common", "WaitingRoom");
     log.clear();
     chat.clear();
@@ -741,7 +783,7 @@ Item {
   }
 
   function continueGame() {
-    Lua.call("ResetClientLua");
+    Lua.resetClientLua();
     gameLoader.sourceComponent = Qt.createComponent("Fk.Pages.Common", "WaitingRoom");
     log.clear();
     chat.clear();
@@ -752,7 +794,7 @@ Item {
     if (Config.replaying) {
       App.quitPage();
       Backend.controlReplayer("shutdown");
-    } else if (Config.observing || Lua.evaluate(`not ClientInstance.gameStarted`)) {
+    } else if (Config.observing || !Lua.client.gameStarted) {
       Cpp.notifyServer("QuitRoom", "");
     } else {
       quitDialog.open();
@@ -760,7 +802,7 @@ Item {
   }
 
   function trySaveRecord() {
-    Lua.call("SaveRecord");
+    Lua.saveRecord();
     App.showToast("OK.");
   }
 
@@ -794,6 +836,15 @@ Item {
     });
     overlay.addCallback(Command.ReplayerSpeedChange, (_, j) => {
       root.replayerSpeed = parseFloat(j);
+    });
+
+    overlay.addCallback("AddObserver", (_, d) => {
+      const wr = gameLoader.item;
+      if (wr && wr.addObserver) wr.addObserver(null, d);
+    });
+    overlay.addCallback("RemoveObserver", (_, d) => {
+      const wr = gameLoader.item;
+      if (wr && wr.removeObserver) wr.removeObserver(null, d);
     });
   }
 }

@@ -48,18 +48,59 @@ UI.CardNameBox = function(spec)
   else
     spec.all_choices = {spec.choices}
   end
-  spec.default_choice = spec.default_choice and spec.default_choice or spec.choices[1]
+  spec.default = spec.default and spec.default or spec.choices[1]
   spec.type = "cardname"
-  spec.qml_path = "packages/freekill-core/Fk/Components/LunarLTK/SkillInteraction/SkillCardName"
   return spec
 end
 
+-- 多选框
+-- 可以赋值的属性有：
+-- * choices: string[] 类型，保存可选项
+-- * cancelable: bool 是否可取消
+-- * detailed: bool 为真的话送详细信息
+-- * all_choices: string[] 类型，保存所有选项
 UI.CheckBox = function(spec)
-  spec.choices = type(spec.choices) == "table" and spec.choices or Util.DummyTable
+  spec.choices = type(spec.choices) == "table" and spec.choices or {}
   spec.all_choices = type(spec.all_choices) == "table" and spec.all_choices or spec.choices
   spec.detailed = spec.detailed or false
   spec.cancelable = spec.cancelable or false
   spec.type = "checkbox"
+  return spec
+end
+
+---@class OptionBoxParams
+---@field options string[]
+---@field all_options? string[]
+---@field single? boolean
+---@field direct_send? boolean 危险参数，按下一个选项会直接返回值，并且强制启用single，建议配合refresh_interaction一起使用
+---@field min_num? integer
+---@field max_num? integer
+-- * options: string[] 类型，保存可选项
+-- * all_options: string[] 类型，保存所有选项
+-- * cancelable: bool 是否可取消
+---@param spec OptionBoxParams
+---@return OptionBoxParams
+UI.OptionBox = function (spec)
+  if spec.type then error("can't define type first!") end
+
+  spec.options = type(spec.options) == "table" and spec.options or {}
+  spec.all_options = type(spec.all_options) == "table" and spec.all_options or spec.options
+  spec.direct_send = spec.direct_send or false
+  spec.single = (spec.single == nil or spec.direct_send) and true
+
+  spec.min_num = spec.min_num or 1
+  spec.max_num = spec.max_num or 1
+  if spec.min_num > spec.max_num then
+    spec.max_num = spec.min_num
+  end
+
+  spec.type = "optionbox"
+  return spec
+end
+
+-- spec可以填个ids: integer[]或者card_names: string[]显示一些卡牌。
+UI.ExpandItems = function(spec)
+  spec.type = "expandItems"
   return spec
 end
 

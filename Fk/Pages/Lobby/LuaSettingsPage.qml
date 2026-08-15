@@ -8,7 +8,7 @@ Item {
 
   property string configName
   property var dynamicChildObject: []
-  property var config: ({})
+  required property var config
   property bool isBoardgame: false
   property string gameModeName
   property bool needcopy: false // 有function时，会对settings进行拷贝（因为function求值的缘故）
@@ -31,13 +31,7 @@ Item {
   }
 
   function buildComponent(data, parent) {
-    const qml = data._qml;
-    let component;
-    if (qml.uri) {
-      component = Qt.createComponent(qml.uri, qml.name);
-    } else {
-      component = Qt.createComponent(Cpp.path + '/' + qml.url);
-    }
+    const component = Lua.createComponent(data._qml);
 
     if (component.status != Component.Ready) {
       return;
@@ -48,6 +42,10 @@ Item {
       if (!k.startsWith("_")) {
         propDict[k] = data[k];
       }
+    }
+
+    if (propDict["subTitle"]) {
+      propDict["subTitle"] = Lua.tr(propDict["subTitle"]);
     }
 
     if (propDict["title"]) {
@@ -110,7 +108,8 @@ Item {
     }
   }
 
-  function updateSettingsUI(key, newValue) {
+  function updateSettingsUI() {
+    if (!root.gameModeName) return;
     updatingData = true;
     const getUIData = Lua.fn("GetUIDataOfSettings");
     const settingsData = getUIData(root.gameModeName, root.config, root.isBoardgame) ?? [];
@@ -120,6 +119,10 @@ Item {
         if (!k.startsWith("_")) {
           propDict[k] = data[k];
         }
+      }
+
+      if (propDict["subTitle"]) {
+        propDict["subTitle"] = Lua.tr(propDict["subTitle"]);
       }
 
       if (propDict["title"]) {
@@ -140,6 +143,7 @@ Item {
     for (let i = 0; i < settingsData.length; i++) {
       const dat = settingsData[i];
       const obj = dynamicChildObject[i];
+      if (!obj) continue;
       assignDataToObject(dat, obj);
       // 这里假设obj必定是W.PreferenceGroup了
       for (let j = 0; j < dat["_children"].length; j++) {

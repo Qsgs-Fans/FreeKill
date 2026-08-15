@@ -38,27 +38,23 @@ jieyin:addEffect("active", {
 })
 
 
-jieyin:addAI({
+jieyin:addAI(Fk.Ltk.AI.newActiveStrategy {
   think = function(self, ai)
-    local cards = ai:getEnabledCards(".|.|.|hand|.|.|.")
-    local players = table.filter(ai.room.alive_players,function (p)
-      return p:isWounded() and p~=ai.player
-    end)
-    if #cards <= 1 then return {}, -1000 end
+    local cards = ai:getEnabledCards()
+    local targets = ai:getEnabledTargets()
+    if #cards <= 1 or #targets == 0 then return {}, -1000 end
 
-    --- 获取手牌中权重偏小的牌
-    local get_cards = ai:getChoiceCardsByKeepValue(cards, 2, function(value) return value <= 45 end)
-    local throw_cards = { get_cards[1], get_cards[2] }
+    cards = table.filter(cards, function(id)
+      return ai:getCardValue(id, "use_value") < 45 and ai:getCardValue(id, "keep_value") < 45
+    end)
+    local throw_cards = { cards[1], cards[2] }
     local benefits = {}
 
-    --- 遍历所有玩家，计算收益
-    for _, target in ipairs(players) do
+    for _, target in ipairs(targets) do
       local throw_cards_benefit, recover_benefit = 0, 0
-      --- 计算弃置手牌的收益
       throw_cards_benefit = ai:getBenefitOfEvents(function(logic)
         logic:throwCard(throw_cards, jieyin.name, ai.player, ai.player)
       end)
-      --- 计算回复血量的收益
       recover_benefit = ai:getBenefitOfEvents(function(logic)
         logic:recover {
           who = target,
@@ -81,7 +77,7 @@ jieyin:addAI({
     table.sort(benefits, function(a, b) return a[2] > b[2] end)
     if #benefits == 0 then return {}, -1000 end
 
-    return { targets = { benefits[1][1] }, cards = throw_cards }, benefits[1][2]
+    return { throw_cards, { benefits[1][1] } }, benefits[1][2]
   end,
 })
 

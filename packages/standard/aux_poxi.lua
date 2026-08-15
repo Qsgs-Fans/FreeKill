@@ -19,11 +19,10 @@ Fk:addPoxiMethod{
     if extra_data.prompt then
       return extra_data.prompt
     else
-      local ret = Fk:translate("#AskForChooseCards")
-      ret = ret:gsub("%%1", Fk:translate(extra_data.skillName or "AskForCardsChosen"))
-      ret = ret:gsub("%%2", math.floor(extra_data.min)) -- floor to avoid float number
-      ret = ret:gsub("%%3", math.floor(extra_data.max))
-      return ret .. ":" ..extra_data.to
+      return "#AskForChooseCards:" ..extra_data.to .. "::"
+      .. (extra_data.skillName or "AskForCardsChosen") .. ":"
+      .. math.floor(extra_data.min) .. ":"
+      .. math.floor(extra_data.max)
     end
   end,
   default_choice = function(data, extra_data)
@@ -32,7 +31,7 @@ Fk:addPoxiMethod{
       local cards = pile[2]
       local lim = extra_data.min - #ret
       if #cards > lim then
-        table.insertTable(ret, table.random(cards, lim))
+        table.insertTable(ret, RoomInstance:tableRandomPick(cards, lim))
         break
       end
       table.insertTable(ret, cards)

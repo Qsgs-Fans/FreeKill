@@ -5,7 +5,10 @@ import QtQuick
 // https://gist.github.com/jonmcclung/bae669101d17b103e94790341301c129
 // modified some code
 ListView {
-  function show(text, duration) {
+  function show(text, duration, maxNum) { // 显示 maxNum + 1 条
+    if (maxNum !== undefined && model.count > maxNum) {
+      model.remove(maxNum, model.count - maxNum);
+    }
     if (duration === undefined) {
       duration = 3000;
     }
@@ -17,8 +20,6 @@ ListView {
 
   z: Infinity
   spacing: 5
-  anchors.fill: parent
-  anchors.bottomMargin: 10
   verticalLayoutDirection: ListView.BottomToTop
 
   interactive: false
@@ -36,7 +37,7 @@ ListView {
     required property int index
     required property var listmodel
 
-    onFinish: {
+    onFinished: {
       listmodel.remove(index);
     }
 

@@ -2,7 +2,7 @@
 
 ---@class Base.RoomBase : Object
 ---@field public players Base.Player[] @ 房内参战角色们
----@field public observers Base.Player[] @ 看戏的
+---@field public observers [integer, fk.Player, integer][] @ 看戏的
 ---@field public current Base.Player @ 当前行动者
 ---@field public capacity integer @ 房间的最大参战人数
 ---@field public timeout integer @ 出牌时长上限
@@ -97,6 +97,12 @@ function RoomBase:serialize()
     players[p.id] = p:serialize()
   end
 
+  local observers = {}
+  for _, t in ipairs(self.observers) do
+    local p = t[2]
+    table.insert(observers, { p:getId(), p:getScreenName(), p:getAvatar(), false, p:getTotalGameTime() })
+  end
+
   return {
     circle = table.map(self.players, Util.IdMapper),
     current = self.current and self.current.id or nil,
@@ -106,6 +112,7 @@ function RoomBase:serialize()
     banners = cbor.encode(self.banners),
 
     players = players,
+    observers = observers,
   }
 end
 

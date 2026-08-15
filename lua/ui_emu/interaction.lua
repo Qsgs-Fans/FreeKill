@@ -5,6 +5,7 @@ local Item = (require 'ui_emu.base').Item
 ---@field public spec any 弹出的东西
 ---@field public skill_name string 技能名
 ---@field public data any skill.interaction.data
+---@field public refresh_data any
 local Interaction = Item:subclass("Interaction")
 
 function Interaction:initialize(scene, id, spec)
@@ -17,6 +18,7 @@ function Interaction:toData()
   local ret = Item.toData(self)
   ret.spec = self.spec
   ret.skill_name = self.skill_name
+  ret.refresh_data = self.refresh_data
   return ret
 end
 

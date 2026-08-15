@@ -534,11 +534,16 @@ fk.Room = function(t)
     table.insert(players, fk.ServerPlayer(obj))
   end
 
+  local observers = {}
+  for _, obj in ipairs(t.observers or {}) do
+    table.insert(observers, fk.ServerPlayer(obj))
+  end
+
   return setmetatable({
     id = t.id,
     players = fk.QList(players),
     ownerId = t.ownerId,
-    --[[ mut ]] observers = fk.QList({}),
+    --[[ mut ]] observers = fk.QList(observers),
     timeout = t.timeout,
 
     _settings = t.settings,

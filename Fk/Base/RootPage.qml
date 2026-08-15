@@ -125,6 +125,8 @@ W.PageBase {
 
   ToastManager {
     id: toast
+    anchors.fill: parent
+    anchors.bottomMargin: 10
   }
 
   Loader {
@@ -262,13 +264,18 @@ W.PageBase {
     // jsonData: { string userName, string general, string time, string msg }
     const current = mainStack.currentItem;  // lobby or room
     const pid = data.sender;
-    const userName = data.userName;
+    let userName = data.userName;
     const general = Lua.tr(data.general);
     const time = data.time;
     const msg = data.msg;
 
     if (Config.blockedUsers.indexOf(userName) !== -1) {
       return;
+    }
+
+    if (Config.hideScreenName) {
+      userName = "";
+      data.userName = "Player";
     }
 
     let text;

@@ -25,7 +25,9 @@ zhiheng:addAI(Fk.Ltk.AI.newActiveStrategy {
     local player = ai.player
     local cards = ai:getEnabledCards()
 
-    -- cards = ai:getChoiceCardsByKeepValue(cards, #cards, function(value) return value < 45 end)
+    cards = table.filter(cards, function(id)
+      return ai:getCardValue(id, "use_value") < 45 and ai:getCardValue(id, "keep_value") < 45
+    end)
 
     return { cards }, ai:getBenefitOfEvents(function(logic)
       logic:throwCard(cards, self.skill_name, player, player)

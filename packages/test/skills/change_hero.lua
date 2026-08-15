@@ -16,16 +16,25 @@ change_hero:addEffect("active", {
     return #selected < 1
   end,
   target_num = 1,
-  interaction = function(self)
-    return UI.ComboBox {
-      choices = { "mainGeneral",  "deputyGeneral", "Gender", "Kingdom" },
-    }
+  interaction = UI.OptionBox {
+    options = { "mainGeneral",  "deputyGeneral", "removeDeputyGeneral", "Gender", "Kingdom" },
+    direct_send = true
+  },
+  refresh_interaction = function(self, player, selected_cards, selected_targets)
+    if #selected_targets == 0 then return {} end
+    local arr = { "mainGeneral",  "deputyGeneral", "Gender", "Kingdom" }
+    if selected_targets[1].deputyGeneral ~= "" then
+      table.insert(arr, "removeDeputyGeneral")
+    end
+    return arr
   end,
   on_use = function(self, room, effect)
     local from = effect.from
     local target = effect.tos[1]
-    local choice = self.interaction.data
-    if choice:endsWith("General") then
+    local choice = effect.interaction_data
+    if choice == "removeDeputyGeneral" then
+      room:removeDeputy(target, {})
+    elseif choice:endsWith("General") then
       local generals = room:getNGenerals(8)
       local general = room:askToChooseGeneral(from, {generals = generals, n = 1})
       local origin = choice == "deputyGeneral" and target.deputyGeneral or target.general
@@ -37,7 +46,8 @@ change_hero:addEffect("active", {
       room:changeHero(target, general, false, choice == "deputyGeneral", true)
     elseif choice == "Gender" then
       local genders = { "male", "female", "bigender", "agender" }
-      room:setPlayerProperty(target, "gender", room:askToChoice(from, {choices = genders, skill_name = "change_hero"}))
+      local gender = room:askToChoice(from, {choices = genders, skill_name = "change_hero"})
+      room:changeGender(target, table.indexOf(genders, gender), true)
     elseif choice == "Kingdom" then
       local kingdoms = { "wei", "shu", "wu", "qun" }
       for _, g in pairs(Fk.generals) do
@@ -45,7 +55,15 @@ change_hero:addEffect("active", {
           table.insertIfNeed(kingdoms, g.kingdom)
         end
       end
-      room:setPlayerProperty(target, "kingdom", room:askToChoice(from, {choices = kingdoms, skill_name = "change_hero"}))
+      choice = room:askToChoice(from, {
+        choices = kingdoms,
+        skill_name = "change_hero",
+      })
+      if target.kingdom == "wild" then
+        room:changeRole(target, choice, true)
+      else
+        room:changeKingdom(target, choice, true)
+      end
     end
   end,
 })

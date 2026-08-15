@@ -1,7 +1,7 @@
 ---@type table<string, fun(self: Client, data: any)>
 fk.client_callback = {}
 
-dofile "lua/lunarltk/client/client.lua"
+dofile "ltk/client/client.lua"
 
 -- 总而言之就是会让roomScene.state变为responding或者playing的状态
 local pattern_refresh_commands = {
@@ -59,8 +59,16 @@ end
 function CreateLuaClient(cpp_client)
   ClientInstance = Client:new(cpp_client)
 end
+
 dofile "lua/client/client_util.lua"
+dofile "lua/client/i18n/init.lua"
 
 if FileIO.pwd():endsWith("packages/freekill-core") then
   FileIO.cd("../..")
+end
+
+-- 此为client.lua的末尾，客户端VM等待调试器
+-- 由于可能的bug，暂时不开启
+if fk._VscodeDbgEnabled == "client" then
+  fk._VscodeDbgWait(5927)
 end

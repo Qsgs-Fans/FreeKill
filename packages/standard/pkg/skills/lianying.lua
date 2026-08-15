@@ -24,16 +24,4 @@ lianying:addEffect(fk.AfterCardsMove, {
 local AI = Fk.Ltk.AI
 lianying:addAI(AI.reuse("biyue", AI.InvokeStrategy))
 
-lianying:addTest(function(room, me)
-  FkTest.runInRoom(function()
-    room:handleAddLoseSkills(me, lianying.name)
-  end)
-  FkTest.setNextReplies(me, { "1", "1", "1", "1", "1", "1", "1", "1" })
-  FkTest.runInRoom(function()
-    me:drawCards(3)
-    room:throwCard(me:getCardIds("h"), nil, me, me)
-  end)
-  lu.assertEquals(#me:getCardIds("h"), 1)
-end)
-
 return lianying

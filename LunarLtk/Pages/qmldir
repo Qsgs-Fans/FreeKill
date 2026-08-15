@@ -1,0 +1,10 @@
+module LunarLtk.Pages
+
+# 便民设施，用于搓乱七八糟美化
+RoomBase 1.0 RoomBase.qml
+
+# 此为游戏全屏主页面
+Room 1.0 Room.qml
+CardsOverview 1.0 CardsOverview.qml
+GeneralsOverview 1.0 GeneralsOverview.qml
+GeneralPoolOverview 1.0 GeneralPoolOverview.qml

@@ -69,7 +69,7 @@ W.PageBase {
             Config.password = serverCfg?.password ?? "1234";
             App.setBusy(true);
             Config.addFavorite(Config.serverAddr, Config.serverPort, "",
-              Config.screenName, Config.password);
+            Config.screenName, Config.password);
             Backend.startServer(9527);
 
             Backend.joinServer("127.0.0.1", 9527);
@@ -90,15 +90,15 @@ W.PageBase {
           Layout.fillWidth: true
           text: qsTr("PackageManage")
           onClicked: {
-            App.enterNewPage("Fk.Pages.Common", "PackageManage")
+            App.enterNewPage(Qt.createComponent("Fk.Pages.Common", "PackageManage"));
           }
         }
 
         Button {
           Layout.fillWidth: true
-          text: qsTr("管理资源包")
+          text: qsTr("ResourcePackManage")
           onClicked: {
-            App.enterNewPage("Fk.Pages.Common", "ResourcePackManage")
+            App.enterNewPage(Qt.createComponent("Fk.Pages.Common", "ResourcePackManage"));
           }
         }
 
@@ -223,10 +223,78 @@ W.PageBase {
 
   function enterLobby(sender, data) {
     Config.lastLoginServer = Config.serverAddr;
-    App.enterNewPage("Fk.Pages.Lobby", "Lobby")
+    App.enterNewPage(Qt.createComponent("Fk.Pages.Lobby", "Lobby"));
     App.setBusy(false);
-    Cpp.notifyServer("RefreshRoomList", "");
+    if (Cpp.quickStartMode !== "") {
+      quickStartTimer.start();
+    } else {
+      Cpp.notifyServer("RefreshRoomList", "");
+    }
     Config.saveConf();
+  }
+
+  // 快速启动定时器：等待Lobby页面加载完毕后自动创建房间
+  Timer {
+    id: quickStartTimer
+    interval: 20
+    repeat: false
+    onTriggered: {
+      const gameMode = Cpp.quickStartMode;
+      if (!gameMode) return;
+
+      App.setBusy(true);
+      Config.quickStartMode = gameMode;
+      const boardgameName = Lua.evaluate(`Fk:getBoardGame('${gameMode}').name`);
+      const boardgameConf = Db.getModeSettings(boardgameName);
+      const gameModeConf = Db.getModeSettings(boardgameName + ':' + gameMode);
+      let k, arr;
+
+      let disabledGenerals = [];
+      for (k in Config.curScheme.banPkg) {
+        arr = Config.curScheme.banPkg[k];
+        if (arr.length !== 0) {
+          const generals = Ltk.getGenerals(k);
+          if (generals.length !== 0) {
+            disabledGenerals.push(...generals.filter(g => !arr.includes(g)));
+          }
+        }
+      }
+      for (k in Config.curScheme.normalPkg) {
+        arr = Config.curScheme.normalPkg[k] ?? [];
+        if (arr.length !== 0)
+        disabledGenerals.push(...arr);
+      }
+
+      let disabledPack = Config.curScheme.banCardPkg.slice();
+      for (k in Config.curScheme.banPkg) {
+        if (Config.curScheme.banPkg[k].length === 0)
+        disabledPack.push(k);
+      }
+      Config.serverHiddenPacks.forEach(p => {
+        if (!disabledPack.includes(p)) {
+          disabledPack.push(p);
+        }
+      });
+
+      const data = Cpp.quickStartConfig;
+      let playerNum = data["playerNum"] ?? 2;
+
+      ClientInstance.notifyServer("CreateRoom", [
+        Lua.tr("Quick Start"),
+        playerNum,
+        data.timeout ?? Config.preferredTimeout,
+        {
+          gameMode,
+          roomName: Lua.tr("Quick Start"),
+          password: "",
+          _game: data.boardgameConf ?? boardgameConf,
+          _mode: data.gameModeConf ?? gameModeConf,
+          disabledPack: boardgameName === "lunarltk" ? disabledPack : [],
+          disabledGenerals: boardgameName === "lunarltk" ? disabledGenerals : [],
+          _quickStart: Cpp.quickStartConfig,
+        }
+      ]);
+    }
   }
 
   function setDetectedServer(sender, data) {
@@ -247,6 +315,27 @@ W.PageBase {
     }
   }
 
+  // 快速启动：自动执行单机启动流程
+  Timer {
+    id: autoStartTimer
+    interval: 100
+    repeat: false
+    onTriggered: {
+      if (Cpp.quickStartMode === "") return;
+      Config.serverAddr = "127.0.0.1";
+      Config.serverPort = 9527;
+      const serverCfg = Config.findFavorite("127.0.0.1", 9527);
+      Config.screenName = serverCfg?.username ?? "player";
+      Config.password = serverCfg?.password ?? "1234";
+      App.setBusy(true);
+      Config.addFavorite(Config.serverAddr, Config.serverPort, "",
+      Config.screenName, Config.password);
+      Backend.startServer(9527);
+      Backend.joinServer("127.0.0.1", 9527);
+      ClientInstance.setLoginInfo(Config.screenName, Config.password);
+    }
+  }
+
   Component.onCompleted: {
     lady.source = Config.ladyImg;
 
@@ -254,5 +343,9 @@ W.PageBase {
 
     addCallback(Command.ServerDetected, setDetectedServer);
     addCallback(Command.GetServerDetail, getServerDetail);
+
+    if (Cpp.quickStartMode !== "") {
+      autoStartTimer.start();
+    }
   }
 }

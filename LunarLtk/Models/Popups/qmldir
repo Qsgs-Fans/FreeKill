@@ -1,0 +1,12 @@
+module LunarLtk.Models.Popups
+
+AGModel 1.0 AGModel.qml
+PoxiModel 1.0 PoxiModel.qml
+PlayerCardModel 1.0 PlayerCardModel.qml
+MoveCardInBoardModel 1.0 MoveCardInBoardModel.qml
+GameOverModel 1.0 GameOverModel.qml
+ArrangeCardsModel 1.0 ArrangeCardsModel.qml
+ChoicesModel 1.0 ChoicesModel.qml
+ChooseGeneralModel 1.0 ChooseGeneralModel.qml
+ChooseInitialGeneralModel 1.0 ChooseInitialGeneralModel.qml
+ChooseCardsAndChoiceModel 1.0 ChooseCardsAndChoiceModel.qml

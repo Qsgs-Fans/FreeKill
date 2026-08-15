@@ -197,11 +197,11 @@ Fk:loadTranslationTable({
   -- ["Copy Audio Text"] = "复制语音文本",
 
   ["$WelcomeToLobby"] = "Welcome to FreeKill lobby!",
-  ["GameMode"] = "Game mode: ",
-  ["LuckCardNum"] = "Luck card count: ",
-  ["ResponseTime"] = "Operation time (sec): ",
-  ["GeneralBoxNum"] = "Character selection count: ",
-  ["CardPackages"] = "Enabled card pacakges: ",
+  ["GameMode"] = "Game mode",
+  ["LuckCardNum"] = "Luck card count",
+  ["ResponseTime"] = "Operation time (sec)",
+  ["GeneralBoxNum"] = "Character selection count",
+  ["CardPackages"] = "Enabled card pacakges",
   ["IncludeFreeAssign"] = "<font color=\"red\">Free assign enabled</font>",
   ["IncludeDeputy"] = "<font color=\"red\">Deputy character enabled</font>",
 
@@ -230,7 +230,6 @@ Fk:loadTranslationTable({
 
   -- [" thinking..."] = " 思考中...",
   ["AskForGeneral"] = "Choosing character",
-  ["AskForGuanxing"] = "Stargazing",
   ["AskForExchange"] = "Exchaging",
   ["AskForChoice"] = "Making choice",
   ["AskForChoices"] = "Making choice",
@@ -243,8 +242,8 @@ Fk:loadTranslationTable({
   ["#AskForChooseGenerals"] = "%1：please choose %2 character(s)",
   ["AskForCardChosen"] = "Choosing card",
   ["AskForCardsChosen"] = "Choosing card",
-  ["#AskForChooseCard"] = "%1: please choose a card from %src",
-  ["#AskForChooseCards"] = "%1: please choose %2~%3 cards from %src",
+  ["#AskForChooseCard"] = "%arg: please choose a card from %src",
+  ["#AskForChooseCards"] = "%arg: please choose %arg2~%arg3 cards from %src",
   ["$ChooseCard"] = "Choose a card",
   ["$ChooseCards"] = "Choose %1~%2 cards",
   ["$Hand"] = "Hand",
@@ -535,11 +534,13 @@ Fk:loadTranslationTable({
   -- damage, heal and lose HP
   ["#Damage"] = "%to dealt %arg %arg2 DMG to %from",
   ["#DamageWithNoFrom"] = "%from took %arg %arg2 DMG",
-  ["#LoseHP"] = "%from lost %arg HP",
-  ["#HealHP"] = "%from healed %arg HP",
+  ["#LoseHP"] = "%from lost %arg HP %arg2",
+  ["#HealHP"] = "%from healed %arg HP %arg2",
   ["#ShowHPAndMaxHP"] = "%from now has %arg HP (max HP = %arg2)",
   ["#LoseMaxHP"] = "%from lost %arg max HP",
   ["#HealMaxHP"] = "%from healed %arg max HP",
+  ["#LoseShield"] = "%from lost %arg shield",
+  ["#AddShield"] = "%from gained %arg shield",
 
   -- dying and death
   ["#EnterDying"] = "%from is dying now",

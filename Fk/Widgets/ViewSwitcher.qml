@@ -16,6 +16,8 @@ ListView {
   highlight: Rectangle { color: "#C4C4C5"; radius: 8 }
   highlightMoveDuration: 200
 
+  property color fontColor: "black"
+
   onModelChanged: {
     root.width = model.length * 100;
   }
@@ -26,8 +28,10 @@ ListView {
     y: 4
 
     Text {
+      id: txt
       text: modelData
       anchors.centerIn: parent
+      color: root.fontColor
       font.pixelSize: 16
       font.bold: true
     }

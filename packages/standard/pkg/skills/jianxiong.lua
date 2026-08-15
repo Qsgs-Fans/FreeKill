@@ -17,10 +17,9 @@ jianxiong:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = function(self, ai)
     ---@type DamageData
     local data = ai.room.logic:getCurrentEvent().data
-    local val = ai:getBenefitOfEvents(function(logic)
+    return ai:getBenefitOfEvents(function(logic)
       logic:obtainCard(data.to, data.card, true, fk.ReasonJustMove, data.to, jianxiong.name)
-    end)
-    return val > 0
+    end) >= 0
   end,
 })
 

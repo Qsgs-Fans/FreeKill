@@ -9,6 +9,9 @@ QtObject {
   readonly property string path: typeof AppPath !== 'undefined' ? AppPath : '/';
   readonly property string locale: typeof SysLocale !== 'undefined' ? SysLocale : 'zh_CN';
   readonly property bool debug: typeof Debugging !== 'undefined' ? Debugging : true;
+  readonly property var self: typeof Self !== 'undefined' ? Self : {};
+  readonly property string quickStartMode: typeof Backend !== 'undefined' ? Backend.quickStartMode : "";
+  readonly property var quickStartConfig: typeof _quickStartConfig !== 'undefined' ? _quickStartConfig : ({});
 
   function notifyServer(command, data) {
     ClientInstance.notifyServer(command, data);

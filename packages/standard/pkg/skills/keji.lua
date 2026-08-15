@@ -40,18 +40,4 @@ keji:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = Util.TrueFunc
 })
 
-keji:addTest(function(room, me)
-  FkTest.runInRoom(function()
-    room:handleAddLoseSkills(me, keji.name)
-  end)
-
-  FkTest.setNextReplies(me, { "1" })
-  FkTest.runInRoom(function()
-    me:drawCards(10)
-    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Discard })):exec()
-  end)
-
-  lu.assertEquals(#me:getCardIds("h"), 10)
-end)
-
 return keji

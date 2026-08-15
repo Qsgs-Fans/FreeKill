@@ -3,11 +3,11 @@
 Fk:loadTranslationTable{
   ["standard_cards"] = "标+EX",
 
-  ["unknown_card"] = '<font color="#B5BA00"><b>未知牌</b></font>',
-  ["log_spade"] = '♠',
-  ["log_heart"] = '<font color="#CC3131">♥</font>',
-  ["log_club"] = '♣',
-  ["log_diamond"] = '<font color="#CC3131">♦</font>',
+  ["unknown_card"] = "<font color='#B5BA00'><b>未知牌</b></font>",
+  ["log_spade"] = "♠",
+  ["log_heart"] = "<font color='#CC3131'>♥</font>",
+  ["log_club"] = "♣",
+  ["log_diamond"] = "<font color='#CC3131'>♦</font>",
   ["log_nosuit"] = "X",
   ["log_unknown"] = "?",
   ["unknown"] = "未知",
@@ -16,9 +16,9 @@ Fk:loadTranslationTable{
   ["club"] = "梅花",
   ["diamond"] = "方块",
   ["nosuit"] = "无花色",
-  ["black"] = '黑色',
-  ["red"] = '<font color="#CC3131">红色</font>',
-  ["nocolor"] = '<font color="grey">无色</font>',
+  ["black"] = "黑色",
+  ["red"] = "<font color='#CC3131'>红色</font>",
+  ["nocolor"] = "<font color='grey'>无色</font>",
   ["suit"] = "花色",
   ["color"] = "颜色",
   ["number"] = "点数",
@@ -92,6 +92,7 @@ Fk:loadTranslationTable{
 
   ["peach"] = "桃",
   [":peach"] = "基本牌<br /><b>时机</b>：出牌阶段/一名角色处于濒死状态时<br /><b>目标</b>：已受伤的你/处于濒死状态的角色<br /><b>效果</b>：目标角色回复1点体力。",
+  ["peach_skill"] = "桃",
   ["#peach_skill"] = "你回复1点体力",
   ["#peach_dying"] = "%dest 回复1点体力",
 
@@ -107,15 +108,19 @@ Fk:loadTranslationTable{
 
   ["duel"] = "决斗",
   [":duel"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：一名其他角色<br /><b>效果</b>：由目标角色开始，其与你轮流打出一张【杀】，直到其与你中的一名角色未打出【杀】。未打出【杀】的角色受到其与你中的另一名角色造成的1点伤害。",
-  ["#duel_skill"] = "选择一名其他角色，由其开始，其与你轮流打出一张【杀】，直到其与你中的一名角色未打出【杀】。<br />未打出【杀】的角色受到其与你中的另一名角色造成的1点伤害",
+  ["#duel_skill"] = "选择一名角色，其与你轮流打出一张【杀】，未打出者受到对方造成的1点伤害",
 
   ["collateral"] = "借刀杀人",
   [":collateral"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：装备区里有武器牌且攻击范围内有【杀】的合法目标的一名其他角色A（你需要选择一名A攻击范围内的【杀】的合法目标B）<br /><b>效果</b>：A需对B使用一张【杀】，否则将装备区里的武器牌交给你。",
   ["#collateral-slash"] = "借刀杀人：你需对 %dest 使用【杀】，否则将你的装备区里的武器牌交给 %src",
-  ["#collateral_skill"] = "选择装备区里有武器牌且攻击范围内有【杀】的合法目标的一名其他角色A，<br />再选择一名A攻击范围内的【杀】的合法目标B。A需对B使用【杀】，否则将装备区里的武器牌交给你",
+  ["collateral_skill"] = "借刀杀人",
+  ["#collateral_skill"] = "选择一名有武器的角色，和其攻击范围内另一名角色，令前者对后者使用【杀】，否则将武器交给你",
+  ["#collateral_skill1"] = "再选择另一名角色，令 %src 对其使用一张【杀】，否则将武器交给你",
+  ["#collateral_skill2"] = "令 %src 对 %dest 使用一张【杀】，否则将武器交给你",
 
   ["ex_nihilo"] = "无中生有",
   [":ex_nihilo"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：你<br /><b>效果</b>：目标角色摸两张牌。",
+  ["ex_nihilo_skill"] = "无中生有",
   ["#ex_nihilo_skill"] = "你摸两张牌",
 
   ["nullification"] = "无懈可击",
@@ -131,11 +136,12 @@ Fk:loadTranslationTable{
 
   ["god_salvation"] = "桃园结义",
   [":god_salvation"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：所有角色<br /><b>效果</b>：每名目标角色回复1点体力。",
+  ["god_salvation_skill"] = "桃园结义",
   ["#god_salvation_skill"] = "所有角色回复1点体力",
 
   ["amazing_grace"] = "五谷丰登",
   [":amazing_grace"] = "锦囊牌<br /><b>时机</b>：出牌阶段<br /><b>目标</b>：所有角色<br /><b>效果</b>：亮出牌堆顶等于目标角色数的牌，每名目标角色获得其中一张牌，结算结束后将其余的牌置入弃牌堆。",
-  ["amazing_grace_skill"] = "五谷选牌",
+  ["amazing_grace_skill"] = "五谷丰登",
   ["Please choose cards"] = "请选择一张卡牌",
   ["#amazing_grace_skill"] = "亮出牌堆顶等于所有角色数的牌，每名角色获得其中一张牌",
 
@@ -148,44 +154,44 @@ Fk:loadTranslationTable{
   ["#indulgence_skill"] = "选择一名其他角色，将此牌置于其判定区内。其判定阶段判定：<br />若结果不为<font color='#CC3131'>♥</font>，其跳过出牌阶段",
 
   ["crossbow"] = "诸葛连弩",
-  [":crossbow"] = "装备牌·武器<br /><b>攻击范围</b>：１<br /><b>武器技能</b>：锁定技，你于出牌阶段内使用【杀】无次数限制。",
+  [":crossbow"] = "装备牌·武器<br /><b>攻击范围</b>：1<br /><b>武器技能</b>：锁定技，你于出牌阶段内使用【杀】无次数限制。",
   ["#crossbow_skill"] = "诸葛连弩",
 
   ["qinggang_sword"] = "青釭剑",
-  [":qinggang_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：锁定技，你的【杀】无视目标角色的防具。",
+  [":qinggang_sword"] = "装备牌·武器<br /><b>攻击范围</b>：2<br /><b>武器技能</b>：锁定技，你的【杀】无视目标角色的防具。",
   ["#qinggang_sword_skill"] = "青釭剑",
 
   ["ice_sword"] = "寒冰剑",
-  [":ice_sword"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，然后依次弃置其两张牌。",
+  [":ice_sword"] = "装备牌·武器<br /><b>攻击范围</b>：2<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，若该角色有牌，你可以防止此伤害，然后依次弃置其两张牌。",
   ["#ice_sword_skill"] = "寒冰剑",
 
   ["double_swords"] = "雌雄双股剑",
-  [":double_swords"] = "装备牌·武器<br /><b>攻击范围</b>：２<br /><b>武器技能</b>：当你指定异性角色为【杀】的目标后，你可以令其选择一项：弃置一张手牌，或令你摸一张牌。",
+  [":double_swords"] = "装备牌·武器<br /><b>攻击范围</b>：2<br /><b>武器技能</b>：当你指定异性角色为【杀】的目标后，你可以令其选择一项：弃置一张手牌，或令你摸一张牌。",
   ["#double_swords_skill"] = "雌雄双股剑",
   ["#double_swords-invoke"] = "雌雄双股剑：你需弃置一张手牌，否则 %src 摸一张牌",
 
   ["blade"] = "青龙偃月刀",
-  [":blade"] = "装备牌·武器<br /><b>攻击范围</b>：３<br /><b>武器技能</b>：当你使用的【杀】被【闪】抵消后，你可以对该角色再使用一张【杀】（不能选择额外目标）。",
+  [":blade"] = "装备牌·武器<br /><b>攻击范围</b>：3<br /><b>武器技能</b>：当你使用的【杀】被【闪】抵消后，你可以对该角色再使用一张【杀】（不能选择额外目标）。",
   ["#blade_skill"] = "青龙偃月刀",
   ["#blade_slash"] = "青龙偃月刀：你可以对 %src 再使用一张【杀】",
 
   ["spear"] = "丈八蛇矛",
-  [":spear"] = "装备牌·武器<br /><b>攻击范围</b>：３<br /><b>武器技能</b>：你可以将两张手牌当【杀】使用或打出。",
+  [":spear"] = "装备牌·武器<br /><b>攻击范围</b>：3<br /><b>武器技能</b>：你可以将两张手牌当【杀】使用或打出。",
   ["spear_skill&"] = "丈八矛",
   [":spear_skill&"] = "你可以将两张手牌当【杀】使用或打出。",
   ["#spear_skill&"] = "你可以将两张手牌当【杀】使用或打出",
 
   ["axe"] = "贯石斧",
-  [":axe"] = "装备牌·武器<br /><b>攻击范围</b>：３<br /><b>武器技能</b>：当你使用的【杀】被【闪】抵消后，你可以弃置两张牌，则此【杀】继续造成伤害。",
+  [":axe"] = "装备牌·武器<br /><b>攻击范围</b>：3<br /><b>武器技能</b>：当你使用的【杀】被【闪】抵消后，你可以弃置两张牌，则此【杀】继续造成伤害。",
   ["#axe_skill"] = "贯石斧",
   ["#axe-invoke"] = "贯石斧：你可以弃置两张牌，令你对 %dest 使用的【杀】依然生效",
 
   ["halberd"] = "方天画戟",
-  [":halberd"] = "装备牌·武器<br /><b>攻击范围</b>：４<br /><b>武器技能</b>：锁定技，你使用最后的手牌【杀】可以额外选择至多两名目标。",
+  [":halberd"] = "装备牌·武器<br /><b>攻击范围</b>：4<br /><b>武器技能</b>：锁定技，你使用最后的手牌【杀】可以额外选择至多两名目标。",
   ["#halberd_skill"] = "方天画戟",
 
   ["kylin_bow"] = "麒麟弓",
-  [":kylin_bow"] = "装备牌·武器<br /><b>攻击范围</b>：５<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。",
+  [":kylin_bow"] = "装备牌·武器<br /><b>攻击范围</b>：5<br /><b>武器技能</b>：当你使用【杀】对目标角色造成伤害时，你可以弃置其装备区里的一张坐骑牌。",
   ["#kylin_bow_skill"] = "麒麟弓",
 
   ["eight_diagram"] = "八卦阵",

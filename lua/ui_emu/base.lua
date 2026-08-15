@@ -75,6 +75,8 @@ function Item:interact() end
   例如RoomScene中已经创建了表达卡牌和技能的Item，因此在Handler的逻辑编写中，
   应当避免再去使用getCards或者getSkills这样获取原始属性的函数，而是直接访问Item
   例如：
+
+    local cardItem = scene:getAllItems("CardItem")[cid]
 --]]
 ---@class Scene: Object
 ---@field public parent RequestHandler
@@ -128,7 +130,9 @@ end
 -- 模拟一次UI交互，修改相关item的属性即可
 -- 同时修改自己parent的changeData
 function Scene:update(elemType, id, newData)
-  local item = self.items[elemType][id]
+  local tab = self.items[elemType]
+  if type(tab) ~= "table" then return end
+  local item = tab[id]
   if not item then return end
   local changed = item:setData(newData)
   -- changed = true

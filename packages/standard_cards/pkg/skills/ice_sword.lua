@@ -30,7 +30,7 @@ skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
       skill_name = skill.name,
       data = {
         min = math.min(#data.to:getCardIds("he"), 2),
-        to_place = Card.DiscardPile,
+        toArea = Card.DiscardPile,
         reason = fk.ReasonDiscard,
         proposer = player,
       },

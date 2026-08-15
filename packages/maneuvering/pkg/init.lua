@@ -176,6 +176,7 @@ Fk:loadTranslationTable{
 
   ["analeptic"] = "酒",
   [":analeptic"] = "基本牌<br/><b>时机</b>：出牌阶段/你处于濒死状态时<br/><b>目标</b>：你<br/><b>效果</b>：目标角色本回合使用的下一张【杀】将要造成的伤害+1/目标角色回复1点体力。",
+  ["analeptic_skill"] = "酒",
   ["#analeptic_skill"] = "你于此回合内使用的下一张【杀】的伤害值基数+1",
 
   ["iron_chain"] = "铁索连环",

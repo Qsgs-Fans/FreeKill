@@ -234,7 +234,7 @@ Flickable {
     */
 
     Component.onCompleted: {
-      const mode_data = Lua.call("GetGameModes");
+      const mode_data = Lua.getGameModes();
       mode_data.forEach(d => {
         gameModeList.append(d);
       });

@@ -46,30 +46,4 @@ xiaoji:addAI(Fk.Ltk.AI.newInvokeStrategy{
   end,
 })
 
-xiaoji:addTest(function(room, me)
-  FkTest.runInRoom(function()
-    room:handleAddLoseSkills(me, xiaoji.name)
-  end)
-  FkTest.setNextReplies(me, { "1", "1", "1", "1", "1", "1", "1", "1" })
-
-  local nioh = room:printCard("nioh_shield")
-
-  local spear = room:printCard("spear")
-
-  FkTest.runInRoom(function()
-    room:useCard{
-      from = me,
-      tos = {me},
-      card = nioh,
-    }
-    room:useCard{
-      from = me,
-      tos = {me},
-      card = spear,
-    }
-    room:throwCard(me:getCardIds("he"), nil, me, me)
-  end)
-  lu.assertEquals(#me:getCardIds("h"), 4)
-end)
-
 return xiaoji

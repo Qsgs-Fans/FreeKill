@@ -17,8 +17,9 @@ virtual_viewas:addEffect("viewas", {
     if #self.subcards > 0 then
       return false
     else
+      local exp = Exppattern:Parse(self.card_filter.pattern)
       return #selected < self.card_filter.n[2] and table.contains(self.card_filter.cards, to_select) and
-        Fk:getCardById(to_select):matchPattern(self.card_filter.pattern)
+        exp:match(Fk:getCardById(to_select))
     end
   end,
   interaction = function(self)

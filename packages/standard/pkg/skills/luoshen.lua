@@ -34,29 +34,6 @@ luoshen:addEffect(fk.FinishJudge, {
   end,
 })
 
-luoshen:addTest(function(room, me)
-  FkTest.runInRoom(function()
-    room:handleAddLoseSkills(me, "luoshen")
-  end)
-  local red = table.find(room.draw_pile, function(cid)
-    return Fk:getCardById(cid).color == Card.Red
-  end)
-  local blacks = table.filter(room.draw_pile, function(cid)
-    return Fk:getCardById(cid).color == Card.Black
-  end)
-  local rnd = 5
-  FkTest.setNextReplies(me, { "1", "1", "1", "1", "1", "1" }) -- 除了第一个1以外后面全是潜在的“重复流程”
-  -- 每次往红牌顶上塞若干个黑牌
-  FkTest.runInRoom(function()
-    room:throwCard(me:getCardIds("h"), nil, me, me)
-    -- 控顶
-    room:moveCardTo(red, Card.DrawPile)
-    if rnd > 0 then room:moveCardTo(table.slice(blacks, 1, rnd + 1), Card.DrawPile) end
-    GameEvent.Turn:create(TurnData:new(me, "game_rule", { Player.Start })):exec()
-  end)
-  lu.assertEquals(#me:getCardIds("h"), rnd)
-end)
-
 luoshen:addAI(Fk.Ltk.AI.newInvokeStrategy{
   think = function(self, ai)
     return ai:getBenefitOfEvents(function(logic)

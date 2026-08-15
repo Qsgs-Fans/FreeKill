@@ -204,6 +204,8 @@ function Request:ask()
   if self._asked then return end
 
   local room = self.room
+  room.current_request = self
+
   -- 0. 设置计时器，防止因无人回复一直等下去
   room.room:setRequestTimer(self.timeout * 1000 + 500)
 
@@ -361,6 +363,7 @@ function Request:_finish()
       self.result[p.id] = (not self.accept_cancel) and self.default_reply[p.id] or ""
     end
   end
+  room.current_request = nil
   room.last_request = self
 
   for _, isHuman in pairs(self.send_success) do

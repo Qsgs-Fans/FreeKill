@@ -7,6 +7,7 @@
 ---@field public global_trigger TriggerSkill[] @ 所有的全局触发技
 ---@field public global_status_skill table<class, Skill[]> @ 所有的全局状态技
 ---@field public ui_packages table<string, UIPackage> @ UI
+---@field public quickStartConfig table<string, string | number | table> @ 快速启动参数，用于调试
 local Engine = class("Base.Engine")
 
 function Engine:initialize()
@@ -40,6 +41,7 @@ function Engine:addSkill(skill)
     old.package and old.package.name or "unknown_pack",
     skill.package and skill.package.name or "unknown_pack"))
   end
+  assert(not skill.name:find(":", 1, true), "Skill [" .. skill.name .. "] contains colon, which is not allowed.")
   self.skills[skill.name] = skill
 
   for _, sk in ipairs{ skill, table.unpack(skill.related_skills) } do
@@ -92,43 +94,6 @@ function Engine:getSkillName(name, lang, player, with_effectable)
   end
 end
 
---- 根据字符串获得这个技能或者这张牌的（动态）描述
----@param name string @ 要获得描述的名字
----@param lang? string @ 要使用的语言，默认读取config
----@param player? Player @ 绑定角色，用于获取技能的动态描述
----@return string @ 描述
-function Engine:getDescription(name, lang, player)
-  local skill = self.skills[name]
-  if player and skill then
-    local dynamicDesc
-    if skill.skeleton then
-      dynamicDesc = skill.skeleton:getDynamicDescription(player, lang)
-    end
-    if type(dynamicDesc) ~= "string" or dynamicDesc == "" then
-      dynamicDesc = skill:getDynamicDescription(player, lang)
-    end
-    if type(dynamicDesc) == "string" and dynamicDesc ~= "" then
-      local descFormatter = function(desc)
-        local descSplit = desc:split(":")
-        local descFormatted = Fk:translate(":" .. descSplit[1], lang)
-        if descFormatted ~= ":" .. descSplit[1] then
-          for i = 2, #descSplit do
-            local curDesc = Fk:translate(descSplit[i], lang)
-            descFormatted = descFormatted:gsub("{" .. (i - 1) .. "}", curDesc)
-          end
-
-          return descFormatted
-        end
-
-        return desc
-      end
-
-      return descFormatter(dynamicDesc)
-    end
-  end
-
-  return Fk:translate(":" .. name, lang)
-end
 
 local UIPackage = require "core.ui_package"
 ---@param uipak UIPackageSpec
@@ -154,5 +119,8 @@ function Engine:getUIPackage(name)
   return self.ui_packages[name]
 end
 
+-- 当包都加载完成后，engine可以做点什么
+function Engine:postLoad()
+end
 
 return Engine

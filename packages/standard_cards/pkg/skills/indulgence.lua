@@ -11,7 +11,7 @@ skill:addEffect("cardskill", {
   target_num = 1,
   on_effect = function(self, room, effect)
     local to = effect.to
-    local judge = {
+    local judge = { ---@class JudgeData
       who = to,
       reason = "indulgence",
       pattern = ".|.|^heart",

@@ -10,9 +10,9 @@ guanxing:addEffect(fk.EventPhaseStart, {
   on_use = function(self, event, target, player, data)
     local room = player.room
     room:askToGuanxing(player, {
-    cards = room:getNCards(math.min(5, #room.alive_players)),
-    skill_name = guanxing.name,
-  })
+      cards = room:getNCards(math.min(5, #room.alive_players)),
+      skill_name = guanxing.name,
+    })
   end,
 })
 

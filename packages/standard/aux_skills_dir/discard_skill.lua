@@ -12,7 +12,7 @@ _skill:addEffect('active', {
 
     if Fk:currentRoom():getCardArea(to_select) == Card.PlayerSpecial then
       local pile = ""
-      for p, t in pairs(Self.special_cards) do
+      for p, t in pairs(player.special_cards) do
         if table.contains(t, to_select) then
           pile = p
           break
@@ -26,7 +26,7 @@ _skill:addEffect('active', {
 
     local status_skills = Fk:currentRoom().status_skills[ProhibitSkill] or Util.DummyTable
     for _, skill in ipairs(status_skills) do
-      if skill:prohibitDiscard(Self, card) then
+      if skill:prohibitDiscard(player, card) then
         return false
       end
     end
@@ -34,7 +34,7 @@ _skill:addEffect('active', {
       ---@type MaxCardsSkill[]
       status_skills = Fk:currentRoom().status_skills[MaxCardsSkill] or Util.DummyTable
       for _, sk in ipairs(status_skills) do
-        if sk:excludeFrom(Self, card) then
+        if sk:excludeFrom(player, card) then
           return false
         end
       end
@@ -75,11 +75,8 @@ _skill:addAI(Fk.Ltk.AI.newDiscardStrategy {
     local data = ai.data[4] -- extra_data
     local available_cards = ai:getEnabledCards()
 
-    if ai.data[3] --[[ cancelable ]] then return {}, 0 end
-    -- TODO: cancelable分支下可能由于某些技能导致自己有点想要弃牌（如扔掉狮子）
-
     local num = data.num
-    local min_num = data.min_num
+    local min_num = ai.data[3] and 0 or data.min_num
 
     ai:sortCards(available_cards, "keep_value")
     if ai._debug then
@@ -91,8 +88,11 @@ _skill:addAI(Fk.Ltk.AI.newDiscardStrategy {
           return ("%s(id=%s, v=%s)"):format(log, id, v)
         end), ","))
     end
-    -- TODO: 收益忘了，乱写的
-    return table.slice(available_cards, 1, min_num + 1), -10 * min_num
+    local cards = table.slice(available_cards, 1, min_num + 1)
+    local benefit = -ai:getBenefitOfEvents(function(logic)
+      logic:moveCardTo(cards, Card.DiscardPile, nil, fk.ReasonDiscard, ai.data[1], nil, false, ai.player)
+    end)
+    return cards, benefit
   end,
 })
 

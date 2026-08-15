@@ -229,6 +229,7 @@ W.PageBase {
     id: morePagesDrawer
     width: 0.6 * Config.winWidth
     height: Config.winHeight
+    interactive: mainStack.currentItem === root
     edge: Qt.RightEdge
 
     dim: false
@@ -412,6 +413,13 @@ W.PageBase {
     }
   }
 
+  function observeRoomOnly(roomId, pw) {
+    Config.replaying = false;
+    Config.observing = true;
+    App.setBusy(true);
+    Cpp.notifyServer("ObserveRoom", [roomId, pw]);
+  }
+
   Danmu {
     id: danmu
     width: parent.width
@@ -465,38 +473,46 @@ W.PageBase {
   }
 
   function handleEnterRoom(sender, data) {
-    // jsonData: int capacity, int timeout
+    // jsonData: int capacity, int timeout, settings
     Config.roomCapacity = data[0];
     Config.roomTimeout = data[1] - 1;
     const roomSettings = data[2];
-    Config.heg = roomSettings.gameMode.includes('heg_mode');
+    Config.heg = String(roomSettings.gameMode || "").includes('heg_mode');
 
     let displayName = roomSettings.roomName;
     if (roomSettings.roomId !== undefined) {
       displayName += "[{id}]".replace("{id}", roomSettings.roomId);
     }
     Config.headerName = Lua.tr("Current room: %1").arg(displayName);
-    App.enterNewPage("Fk.Pages.Common", "RoomPage", {
+    Config.observing = !!roomSettings.isObserver;
+    App.enterNewPage(Qt.createComponent("Fk.Pages.Common", "RoomPage"), {
       gameComponent: Qt.createComponent("Fk.Pages.Common", "WaitingRoom"),
     });
     App.setBusy(false);
   }
 
+  Timer {
+    id: quickAddRobotTimer
+    interval: 500
+    repeat: false
+    onTriggered: {
+      const num = Lua.call("GetCompNum") ?? {};
+      const cur = num.curComp ?? 0;
+      const needRobots = Math.max(1, num.minComp ?? 0) - cur;
+      if (needRobots > 0) {
+        for (let i = 0; i < needRobots; i++) {
+          Cpp.notifyServer("AddRobot", "");
+        }
+      }
+    }
+  }
+
   function handleClickButton(data) {
     const { popup, qml } = data;
+    const comp = Lua.createComponent(qml);
     if (!popup) {
-      if (qml.uri && qml.name) {
-        App.enterNewPage(qml.uri, qml.name);
-      } else {
-        App.enterNewPage(Cpp.path + "/" + qml.url);
-      }
+      App.enterNewPage(comp);
     } else {
-      let comp;
-      if (qml.uri && qml.name) {
-        comp = Qt.createComponent(qml.uri, qml.name);
-      } else {
-        comp = Qt.createComponent(Cpp.path + "/" + qml.url);
-      }
       lobby_drawer.sourceComponent = comp;
       lobby_drawer.open();
     }
@@ -521,6 +537,10 @@ W.PageBase {
   }
 
   Component.onCompleted: {
+    Lua.client = Lua.createProxy("ClientInstance");
+    Lua.selfPlayer = Lua.createProxy("Self");
+    Lua.fk = Lua.createProxy("Fk");
+
     addCallback(Command.UpdateRoomList, updateRoomList);
     addCallback(Command.UpdatePlayerNum, updatePlayerNum);
 
@@ -584,22 +604,6 @@ W.PageBase {
         pages: v.pages,
       });
     }
-    // const preferredOrder = [];
-    // for (const v of customPagesSpecs) {
-    //   morePagesModel.append({
-    //     pkname: v.name,
-    //     pages: v.pages,
-    //   });
-    //   for (const vp of v.pages) {
-    //     const vi = Config.preferredButtons.indexOf(vp.name)
-    //     if (vi !== -1) {
-    //       preferredOrder[vi] = vp;
-    //     }
-    //   }
-    // }
-    // for (const vp of preferredOrder) {
-    //   preferredButtonsModel.append(vp);
-    // }
     rearrangePreferred();
 
     Db.tryInitModeSettings();

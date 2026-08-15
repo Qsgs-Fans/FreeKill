@@ -5,6 +5,7 @@ InvisibleItemArea {
 
   function remove(toRemove, compareFn) {
     let result = [];
+    compareFn = compareFn ?? ((a, b) => a === b);
     for (let j = 0; j < toRemove.length; j++) {
       for (let i = items.length - 1; i >= 0; i--) {
         if (compareFn(toRemove[j], items[i])) {

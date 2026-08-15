@@ -59,6 +59,7 @@ skill:addEffect("cardskill", {
     local to = effect.to
 
     local chosen = room:askToAG(to, { id_list = effect.extra_data.AGFilled, cancelable = false, skill_name = self.name })
+    room:disableAG()
     room:takeAG(to, chosen, room.players)
     table.insert(effect.extra_data.AGResult, {effect.to.id, chosen})
     room:moveCardTo(chosen, Card.PlayerHand, effect.to, fk.ReasonPrey, self.name, nil, true, effect.to)

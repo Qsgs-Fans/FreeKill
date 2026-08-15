@@ -14,6 +14,8 @@ skill:addEffect("cardskill", {
     local to = effect.to
     if to:isKongcheng() then return end
 
+    effect.extra_data = effect.extra_data or {}
+
     local params = { ---@type AskToCardsParams
       min_num = 1,
       max_num = 1,
@@ -25,6 +27,8 @@ skill:addEffect("cardskill", {
     }
     local showCard = room:askToCards(to, params)[1]
     to:showCards(showCard)
+
+    effect.extra_data.fire_attack_show = { showCard }
 
     showCard = Fk:getCardById(showCard)
     params = { ---@type AskToDiscardParams
@@ -38,7 +42,7 @@ skill:addEffect("cardskill", {
     }
 
     --火攻特化的特殊效果
-    if effect.extra_data and effect.extra_data.extra_effect then
+    if effect.extra_data.extra_effect then
       local extra_effects = effect.extra_data.extra_effect or {}
       for k, func in pairs(extra_effects) do
         if type(func) == "function" then
@@ -52,6 +56,9 @@ skill:addEffect("cardskill", {
 
     local cards = room:askToDiscard(from, params)
     if #cards > 0 and not to.dead then
+
+      effect.extra_data.fire_attack_discard = cards
+
       room:damage({
         from = from,
         to = to,

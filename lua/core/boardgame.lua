@@ -1,8 +1,9 @@
 ---@class QmlComponent
----@field uri? string
----@field name? string
----@field url? string
----@field prop? { [string]: any }
+---@field uri? string QML模块uri
+---@field name? string QML模块名
+---@field url? string QML文件路径
+---@field prop? { [string]: any } 属性字典
+---@field model? QmlComponent? 如果需要model就创建
 
 ---@class BoardGameSpec
 ---@field name string

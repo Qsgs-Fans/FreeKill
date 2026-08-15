@@ -18,6 +18,7 @@ guicai:addEffect(fk.AskForRetrial, {
       skill_name = guicai.name,
       pattern = tostring(Exppattern{ id = ids}),
       prompt = "#guicai-ask::"..target.id,
+      expand_pile = player:getHandlyIds(false),
       cancelable = true,
     })
     if #cards > 0 then

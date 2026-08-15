@@ -41,6 +41,13 @@ exChooseSkill:addEffect('active', {
       end
     end
   end,
+  card_tip = function (self, player, to_select, selected, selected_targets, card, selectable, extra_data)
+    if self.cardTipName then
+      local cardTip = Fk.card_tips[self.cardTipName]
+      assert(cardTip)
+      return cardTip.card_tip(self, player, to_select, selected, selected_targets, card, selectable, extra_data)
+    end
+  end,
   target_tip = function(self, player, to_select, selected, selected_cards, card, selectable, extra_data)
     if self.targetTipName then
       local targetTip = Fk.target_tips[self.targetTipName]

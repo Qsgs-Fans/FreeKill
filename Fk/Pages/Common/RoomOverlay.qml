@@ -29,24 +29,35 @@ W.PageBase {
 
   Button {
     id: menuButton
+    visible: !("menuButton" in (root.gameContent?.item ?? {})) && !root.overlayOpened
     anchors.top: parent.top
     anchors.topMargin: 12
     anchors.right: parent.right
     anchors.rightMargin: 12
     text: Lua.tr("Menu")
-    visible: !root.overlayOpened
-    onClicked: {
-      if (root.overlayOpened){
-        root.closeOverlay();
-      } else {
-        root.openOverlay();
-      }
-    }
+    onClicked: root.toggleOverlay();
   }
 
   Shortcut {
     sequence: "Escape"
-    onActivated: menuButton.clicked();
+    onActivated: root.toggleOverlay();
+  }
+
+  Connections {
+    target: root.gameContent?.item
+    // WARNING实在压制不住，忍着吧
+    // enabled: "menuButtonClicked" in (root.gameContent?.item ?? {})
+    function onMenuButtonClicked() {
+      root.toggleOverlay();
+    }
+  }
+
+  function toggleOverlay() {
+    if (root.overlayOpened){
+      root.closeOverlay();
+    } else {
+      root.openOverlay();
+    }
   }
 
   function openOverlay() {

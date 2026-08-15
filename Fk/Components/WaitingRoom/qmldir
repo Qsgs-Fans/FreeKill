@@ -1,3 +1,10 @@
 module Fk.Components.WaitingRoom
 
-WaitingPhoto 1.0 WaitingPhoto.qml
+AvatarCardItem 1.0 AvatarCardItem.qml
+WButton 1.0 WButton.qml
+WChatBubble 1.0 WChatBubble.qml
+WAvatar 1.0 WAvatar.qml
+TitleItem 1.0 TitleItem.qml
+ObserveButton 1.0 ObserveButton.qml
+WBanner 1.0 WBanner.qml
+WMenu 1.0 WMenu.qml

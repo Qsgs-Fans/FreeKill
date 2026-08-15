@@ -76,10 +76,13 @@ function ModManager:loadPackages()
   ---@type string[]
   local _disable_packs = json.decode(fk.GetDisabledPacks())
 
+  fk.qInfo("[ModManager] Loading extensions...")
+
   for _, dir in ipairs(directories) do
     if (not string.find(dir, ".disabled")) and not table.contains(_disable_packs, dir)
       and FileIO.isDir("packages/" .. dir)
       and FileIO.exists("packages/" .. dir .. "/init.lua") then
+
       local pack = Pcall(require, string.format("packages.%s", dir))
       -- Note that instance of Package is a table too
       -- so dont use type(pack) == "table" here
@@ -98,6 +101,15 @@ function ModManager:loadPackages()
       end
     end
   end
+
+  local completeLog
+  if #self.extension_names > 0 then
+    completeLog = string.format("[ModManager] Loaded %d extension(s):", #self.extension_names) ..
+      "\n - " .. table.concat(self.extension_names, ", ")
+  else
+    completeLog = "No extension loaded."
+  end
+  fk.qInfo(completeLog)
 
   if UsingNewCore then
     FileIO.cd("packages/freekill-core")
@@ -144,7 +156,7 @@ function ModManager:getBoardGame(name)
     client_klass = Client,
     engine = Fk,
     page = {
-      uri = "Fk.Pages.LunarLTK",
+      uri = "LunarLtk.Pages",
       name = "Room",
     }
   }

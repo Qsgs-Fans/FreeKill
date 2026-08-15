@@ -5,8 +5,7 @@ import Fk
 // 一些Qml代码可能常用到的封装函数 省得写一堆notify
 
 QtObject {
-  function enterNewPage(uri, name, prop) {
-    const component = Qt.createComponent(uri, name);
+  function enterNewPage(component, prop) {
     Mediator.notify(null, Command.PushPage, {
       component,
       prop,
@@ -16,14 +15,9 @@ QtObject {
   function changeRoomPage(data) {
     let c;
     if (!(data instanceof Object)) {
-      c = Qt.createComponent("Fk.Pages.LunarLTK", "Room");
+      c = Qt.createComponent("LunarLtk.Pages", "Room");
     } else {
-      if (data.uri && data.name) {
-        // TODO 还不可用，需要让Lua能添加import path
-        c = Qt.createComponent(data.uri, data.name);
-      } else {
-        c = Qt.createComponent(Cpp.path + "/" + data.url);
-      }
+      c = Lua.createComponent(data);
     }
 
     Mediator.notify(null, Command.ChangeRoomPage, c);

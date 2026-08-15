@@ -90,6 +90,7 @@ Fk:loadTranslationTable({
   ["god_salvation"] = "Đào Viên Kết Nghĩa",
   [":god_salvation"] = "Lá công cụ<br /><b>thời điểm</b>:giai đoạn ra bài<br /><b>mục tiêu</b>:tất cả<br /><b>hiệu quả</b>:mỗi mục tiêu hồi 1 máu. ",
   ["#god_salvation_skill"] = "Tất cả người chơi hồi 1 máu",
+  ["god_salvation_skill"] = "Đào Viên Kết Nghĩa",
   ["amazing_grace"] = "Ngũ Cốc Phong Đăng",
   [":amazing_grace"] = "Lá công cụ<br /><b>thời điểm</b>:giai đoạn ra bài<br /><b>mục tiêu</b>:tất cả<br /><b>hiệu quả</b>:lật ra số lá từ đỉnh chồng bài rút bằng số mục tiêu, mỗi mục tiêu thu lấy 1 lá trong số đó, sau khi kết toán, đưa những lá còn lại vào chồng bài bỏ. ",
   ["amazing_grace_skill"] = "Ngũ Cốc Phong Đăng",

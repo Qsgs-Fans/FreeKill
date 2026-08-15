@@ -12,26 +12,96 @@ W.PageBase {
   id: root
 
   property var currentEnabled: []
+  property var fullAvailableList: []
+  property var fullEnabledList: []
 
   ListModel { id: availablePackModel }
   ListModel { id: enabledPackModel }
 
+  function rebuildListModels() {
+    let keyword = searchField.text.trim().toLowerCase();
+    availablePackModel.clear();
+    enabledPackModel.clear();
+    const availList = keyword === "" ? fullAvailableList :
+      fullAvailableList.filter(n => n.toLowerCase().includes(keyword));
+    const enableList = keyword === "" ? fullEnabledList :
+      fullEnabledList.filter(n => n.toLowerCase().includes(keyword));
+    availList.forEach(p => availablePackModel.append({ name: p }));
+    enableList.forEach(p => enabledPackModel.append({ name: p }));
+  }
+
+  function applyFilter() { rebuildListModels(); }
+
+  // 将可用包移动到已启用列表（头部）
+  function enablePack(name) {
+    const idx = fullAvailableList.indexOf(name);
+    if (idx !== -1) fullAvailableList.splice(idx, 1);
+    if (fullEnabledList.indexOf(name) === -1)
+      fullEnabledList.unshift(name);
+    applyFilter();
+  }
+
+  // 将已启用包移动到可用列表（头部）
+  function disablePack(name) {
+    const idx = fullEnabledList.indexOf(name);
+    if (idx !== -1) fullEnabledList.splice(idx, 1);
+    if (fullAvailableList.indexOf(name) === -1)
+      fullAvailableList.unshift(name);
+    applyFilter();
+  }
+
+  // 在已启用列表中上移一条（根据名称在 full 列表里的位置操作）
+  function moveEnabledUp(name) {
+    const fi = fullEnabledList.indexOf(name);
+    if (fi > 0) {
+      const tmp = fullEnabledList[fi - 1];
+      fullEnabledList[fi - 1] = name;
+      fullEnabledList[fi] = tmp;
+      applyFilter();
+    }
+  }
+
+  function moveEnabledToTop(name) {
+    const fi = fullEnabledList.indexOf(name);
+    if (fi > 0) {
+      fullEnabledList.splice(fi, 1);
+      fullEnabledList.unshift(name);
+      applyFilter();
+    }
+  }
+
+  function moveEnabledDown(name) {
+    const fi = fullEnabledList.indexOf(name);
+    if (fi !== -1 && fi < fullEnabledList.length - 1) {
+      const tmp = fullEnabledList[fi + 1];
+      fullEnabledList[fi + 1] = name;
+      fullEnabledList[fi] = tmp;
+      applyFilter();
+    }
+  }
+
+  function moveEnabledToBottom(name) {
+    const fi = fullEnabledList.indexOf(name);
+    if (fi !== -1 && fi < fullEnabledList.length - 1) {
+      fullEnabledList.splice(fi, 1);
+      fullEnabledList.push(name);
+      applyFilter();
+    }
+  }
 
   Component.onCompleted: {
     availablePackModel.clear();
     enabledPackModel.clear();
-    let allPacks = Backend.ls(AppPath + "/resource_pak/").filter(dir => {
-      let full_dir = AppPath + "/resource_pak/" + dir
-      if (OS === "Win"){
-        full_dir = full_dir.replace("file:///", "file://");
-      }
-      return Backend.isDir(full_dir);
+    let allPacks = Backend.ls(Cpp.path + "/resource_pak/").filter(dir => {
+      let full_dir = Cpp.path + "/resource_pak/" + dir
+      return Fs.isDir(Fs.convertUrlToPath(full_dir));
     });
     currentEnabled = Config.enabledResourcePacks || [];
     let enabledSet = new Set(currentEnabled.filter(p => allPacks.indexOf(p) !== -1));
     let available = allPacks.filter(p => !enabledSet.has(p));
-    currentEnabled.forEach(p => { if (allPacks.indexOf(p) !== -1) enabledPackModel.append({ name: p }); });
-    available.forEach(p => availablePackModel.append({ name: p }));
+    fullEnabledList = currentEnabled.filter(p => allPacks.indexOf(p) !== -1);
+    fullAvailableList = available;
+    applyFilter();
   }
 
   ToolBar {
@@ -46,6 +116,11 @@ W.PageBase {
           for (let i = 0; i < enabledPackModel.count; ++i) {
             enabledList.push(enabledPackModel.get(i).name);
           }
+          // 过滤状态下已启用列表被筛掉的部分也要合并回来
+          for (let i = 0; i < fullEnabledList.length; ++i) {
+            if (enabledList.indexOf(fullEnabledList[i]) === -1)
+              enabledList.push(fullEnabledList[i]);
+          }
           let isSame = enabledList.length === currentEnabled.length &&
           enabledList.every((v, i) => v === currentEnabled[i]);
           if (isSame) {
@@ -56,12 +131,19 @@ W.PageBase {
         }
       }
       Label {
-        text: "新月杀资源包管理器" // TODO: qsTr
+        text: qs.Tr("Resource Package Manager")
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
+      TextField {
+        id: searchField
+        placeholderText: qs.Tr("Search Resource Packs")
+        Layout.preferredWidth: 220
+        clip: true
+        onTextChanged: applyFilter()
+      }
       ToolButton {
-        text: "撤销更改";
+        text:  qs.Tr("Undo Changes");
         onClicked: root.Component.onCompleted()
       }
     }
@@ -70,7 +152,7 @@ W.PageBase {
   MessageDialog {
     id: quitDialog
     title: qsTr("Quit")
-    informativeText: "你还有未保存的设置，确定退出吗？"
+    informativeText: qs.Tr("Unsaved settings. Are you sure to exit?")
     buttons: MessageDialog.Ok | MessageDialog.Cancel
     onButtonClicked: function (button) {
       switch (button) {
@@ -107,7 +189,7 @@ W.PageBase {
         anchors.margins: 32
         spacing: 24
         Label {
-          text: "可用资源包"
+          text: qsTr("Available Resource Packs")
           font.bold: true
           font.pixelSize: 20
           horizontalAlignment: Text.AlignHCenter
@@ -136,13 +218,12 @@ W.PageBase {
               Text { text: name; font.bold: true; font.pixelSize: 16 }
             }
             onClicked: {
-              enabledPackModel.insert(0, { name: name });
-              availablePackModel.remove(index);
+              root.enablePack(name);
             }
 
           }
           footer: Label {
-            text: "共 " + availablePackModel.count + " 个可用资源包"
+            text: qsTr("%1 Resource Packs Available").arg(availablePackModel.count)
             horizontalAlignment: Text.AlignHCenter
             Layout.alignment: Qt.AlignHCenter
           }
@@ -165,7 +246,7 @@ W.PageBase {
         anchors.margins: 32
         spacing: 24
         Label {
-          text: "已启用资源包（优先级高在上）"
+          text: qsTr("Enabled Resource Packs (Highest Priority at Top)")
           font.bold: true
           font.pixelSize: 20
           horizontalAlignment: Text.AlignHCenter
@@ -208,10 +289,10 @@ W.PageBase {
                 text: "↑"
                 enabled: index > 0
                 onClicked: {
-                  enabledPackModel.move(index, index - 1, 1);
+                  root.moveEnabledUp(name);
                 }
                 onPressAndHold: { // 长按置首
-                  enabledPackModel.move(index, 0, 1);
+                  root.moveEnabledToTop(name);
                 }
               }
 
@@ -221,10 +302,10 @@ W.PageBase {
                 text: "↓"
                 enabled: index < enabledPackModel.count - 1
                 onClicked: {
-                  enabledPackModel.move(index, index + 1, 1);
+                  root.moveEnabledDown(name);
                 }
                 onPressAndHold: { // 长按置尾
-                  enabledPackModel.move(index, enabledPackModel.count - 1, 1);
+                  root.moveEnabledToBottom(name);
                 }
               }
 
@@ -233,8 +314,7 @@ W.PageBase {
                 id: unloadButton
                 text: "×"
                 onClicked: {
-                  availablePackModel.insert(0, { name: name });
-                  enabledPackModel.remove(index);
+                  root.disablePack(name);
                 }
               }
             }
@@ -248,7 +328,7 @@ W.PageBase {
             } */
           }
           footer: Label {
-            text: "共 " + enabledPackModel.count + " 个已启用资源包"
+            text: qsTr("%1 Resource Packs Enabled").arg(enabledPackModel.count)
             horizontalAlignment: Text.AlignHCenter
             Layout.alignment: Qt.AlignHCenter
           }
@@ -264,13 +344,10 @@ W.PageBase {
     spacing: 20
     Button {
       width: 150
-      text: "保存"
+      text: qsTr("Save")
       onClicked: {
-        let enabledList = [];
-        for (let i = 0; i < enabledPackModel.count; ++i) {
-          enabledList.push(enabledPackModel.get(i).name);
-        }
-        Config.enabledResourcePacks = enabledList;
+        // 使用完整列表保存，确保搜索筛选掉的条目也被保留
+        Config.enabledResourcePacks = root.fullEnabledList.slice();
         Config.saveConf();
         App.quitPage();
       }

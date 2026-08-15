@@ -12,6 +12,9 @@ class = require "middleclass"
 -- 老json只能待命了
 json = require "json"
 
+-- 调用此函数可创建单独的随机数发生器 行为与math.random一致，但保存单独的状态。
+fk.rand = require "xoshiro256starstar"
+
 cbor = require "server.rpc.cbor"
 
 -- 初始化随机数种子
@@ -22,20 +25,20 @@ Util = require "core.util"
 dofile "lua/core/debug.lua"
 
 -- 加载游戏核心类
-Engine = require "lunarltk.core.engine"
-Package = require "lunarltk.core.package"
-General = require "lunarltk.core.general"
-CardSkeleton = require "lunarltk.core.card_skeleton"
-Card = require "lunarltk.core.card"
-Exppattern = require "lunarltk.core.exppattern"
-SkillSkeleton = require "lunarltk.core.skill_skeleton"
-Skill = require "lunarltk.core.skill"
-UsableSkill = require "lunarltk.core.skill_type.usable_skill"
-StatusSkill = require "lunarltk.core.skill_type.status_skill"
-Player = require "lunarltk.core.player"
+Engine = require "ltk.core.engine"
+Package = require "ltk.core.package"
+General = require "ltk.core.general"
+CardSkeleton = require "ltk.core.card_skeleton"
+Card = require "ltk.core.card"
+Exppattern = require "ltk.core.exppattern"
+SkillSkeleton = require "ltk.core.skill_skeleton"
+Skill = require "ltk.core.skill"
+UsableSkill = require "ltk.core.skill_type.usable_skill"
+StatusSkill = require "ltk.core.skill_type.status_skill"
+Player = require "ltk.core.player"
 GameMode = require "core.game_mode"
 RequestHandler = require "core.request_handler"
-AbstractRoom = require "lunarltk.core.room.abstract_room"
+AbstractRoom = require "ltk.core.room.abstract_room"
 UI = require "ui-util"
 GameEvent = require "server.gameevent"
 
@@ -66,8 +69,18 @@ os = {
   difftime = os.difftime,
   getms = os.getms,
 }
+local _open = io.open
 io = {
-  lines = io.lines
+  open = function(f, mode)
+    local errmsg = "Refusing open file that not in game directory"
+    assert(not f:startsWith("/"), errmsg)
+    assert(not f:startsWith(".."), errmsg)
+    assert(not f:find(":"), errmsg)
+    if mode and mode ~= "r" and mode ~= "rb" then
+      error("Cannot open a file with read-only mode")
+    end
+    return _open(f, mode)
+  end,
 }
 package = nil
 -- load = nil
@@ -85,5 +98,25 @@ end
 dofile "lua/fk_ex.lua"
 
 Fk = Engine:new()
-dofile "lua/lunarltk/init.lua"
-Fk:load()
+dofile "ltk/init.lua"
+
+-- C++注入的快速启动配置（仅单机模式存在）
+if __quickStartConfig then
+  Fk.quickStartConfig = json.decode(__quickStartConfig)
+  __quickStartConfig = nil
+end
+Fk:loadPackages()
+
+local boardgameCount = 0
+for _, game in pairs(Fk.boardgames) do
+  local engine = game.engine
+  engine:postLoad()
+  boardgameCount = boardgameCount + 1
+end
+fk.qInfo(string.format("[Core] Loaded %d boardgame(s).", boardgameCount))
+
+local gamemodeCount = 0
+for _ in pairs(Fk.game_modes) do
+  gamemodeCount = gamemodeCount + 1
+end
+fk.qInfo(string.format("[Core] Loaded %d game mode(s).", gamemodeCount))

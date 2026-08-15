@@ -45,7 +45,7 @@ skill:addAI(Fk.Ltk.AI.newInvokeStrategy{
       cards = ride_tab,
       skill_name = skill.name,
       data = {
-        to_place = Card.DiscardPile,
+        toArea = Card.DiscardPile,
         reason = fk.ReasonDiscard,
         proposer = player,
       },

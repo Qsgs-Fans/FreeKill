@@ -558,6 +558,7 @@ Fk:loadTranslationTable{
 
   ["game_rule"] = "游戏规则",
   ["replace_equip"] = "替换装备",
+  ["gamerule_aborted"] = "废除",
   ["#EquipmentChoice"] = "%arg",
   ["#GameRuleReplaceEquipment"] = "请选择要置入的区域",
 }

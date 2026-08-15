@@ -19,14 +19,6 @@ end
 ---@param command string
 ---@param data any
 function ServerPlayerBase:doNotify(command, data)
-  if type(data) == "string" then
-    local err, dat = pcall(json.decode, data)
-    if err ~= false then
-      fk.qWarning("Don't use json.encode. Pass value directly to ServerPlayer:doNotify.\n"..debug.traceback())
-      data = dat
-    end
-  end
-
   local cbordata = cbor.encode(data)
 
   local room = self.room
@@ -63,11 +55,34 @@ end
 function ServerPlayerBase:reconnect()
   local room = self.room
 
+  local sp = self._splayer
   local summary = room:serialize(self)
+
+  -- 可能断线时在别人视角思考；先找到正在思考的视角
+  local thinker = table.find(room.players, function(p)
+    return table.contains(p._observers, sp)
+  end)
+  ---@cast thinker -nil
+
+  -- 然后将视角设为自己 因为刚刚重连嘛
+  table.removeOne(thinker._observers, sp)
+  table.insert(self._observers, sp)
+
+  -- 至此方可正常用doNotify
   self:doNotify("Reconnect", summary)
   self:doNotify("RoomOwner", { room.room:getOwner():getId() })
 
   room:broadcastProperty(self, "state")
+
+  -- 如果是直接顶号的话，部分情况Request会继续执行但是客户端没有交互信息
+  -- 所以如果有这种情况的话，再发送一次给重连的玩家
+  local req = room.current_request
+  if req and table.contains(req.players, thinker) and
+    sp:thinking() and not req.result[thinker.id] then
+
+    sp:setThinking(false)
+    req:_sendPacket(thinker)
+  end
 end
 
 function ServerPlayerBase:serialize()

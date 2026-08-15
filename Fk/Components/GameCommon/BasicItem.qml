@@ -9,6 +9,7 @@ Item {
   property bool selectable: true
   property bool selected: false
   property bool draggable: false
+  property bool pressed: false
   property alias dragging: drag.active
   property alias dragCenter: drag.centroid.position
   property alias hoverHandler: hover
@@ -45,6 +46,10 @@ Item {
       } else if (btn === Qt.RightButton) {
         parent.rightClicked();
       }
+    }
+
+    onPressedChanged: {
+      root.pressed = pressed
     }
 
     onLongPressed: {

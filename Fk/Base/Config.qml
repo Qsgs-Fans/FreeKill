@@ -53,6 +53,7 @@ QtObject {
   property int preferredTimeout
 
   property bool enableSuperDrag
+  property bool hideScreenName
 
   property bool firstRun: true
 
@@ -79,9 +80,9 @@ QtObject {
   property list<string> blockedUsers: []
   property int totalTime: 0 // FIXME: only for notifying
 
-  onObservingChanged: Lua.call("SetObserving", observing);
-  onReplayingChanged: Lua.call("SetReplaying", replaying);
-  onReplayingShowCardsChanged: Lua.call("SetReplayingShowCards", replayingShowCards);
+  onObservingChanged: Lua.setObserving(observing);
+  onReplayingChanged: Lua.setReplaying(replaying);
+  onReplayingShowCardsChanged: Lua.setReplayingShowCards(replayingShowCards);
 
   // onDisabledGeneralsChanged: {
   //   disableGeneralSchemes[disableSchemeIdx] = disabledGenerals;
@@ -170,6 +171,7 @@ QtObject {
     noSelfNullification = conf.noSelfNullification ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     enableSuperDrag = conf.enableSuperDrag ?? false;
+    hideScreenName = conf.hideScreenName ?? false;
     firstRun = conf.firstRun ?? true;
     // disabledGenerals = conf.disabledGenerals ?? [];
     // disableGeneralSchemes = conf.disableGeneralSchemes ?? [ disabledGenerals ];
@@ -221,6 +223,7 @@ QtObject {
     conf.noSelfNullification = noSelfNullification;
     conf.preferredTimeout = preferredTimeout;
     conf.enableSuperDrag = enableSuperDrag;
+    conf.hideScreenName = hideScreenName;
     conf.firstRun = firstRun;
     // conf.disabledGenerals = disabledGenerals;
     // conf.disableGeneralSchemes = disableGeneralSchemes;

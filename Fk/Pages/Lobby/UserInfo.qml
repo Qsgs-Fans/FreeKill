@@ -17,6 +17,7 @@ ColumnLayout {
     }
     Text {
       text: Self.screenName
+      visible: !Config.hideScreenName
       font.pixelSize: 18
     }
   }

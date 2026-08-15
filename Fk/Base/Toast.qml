@@ -14,6 +14,7 @@ Rectangle {
   readonly property real defaultTime: 3000
   property real time: defaultTime
   readonly property real fadeTime: 300
+  property alias message: message
 
   anchors.horizontalCenter: parent != null ? parent.horizontalCenter
                                            : undefined
@@ -23,7 +24,7 @@ Rectangle {
 
   opacity: 0
 
-  signal finish()
+  signal finished()
 
   Text {
     id: message
@@ -55,7 +56,7 @@ Rectangle {
 
     onRunningChanged: {
       if (!running) {
-        root.finish();
+        root.finished();
       }
     }
   }

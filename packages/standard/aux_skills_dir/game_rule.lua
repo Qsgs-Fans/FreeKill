@@ -96,13 +96,15 @@ gameRule:addEffect(fk.GameOverJudge, {
   priority = 0,
   can_trigger = can_trigger,
   on_trigger = function(self, event, target, player, data)
+    if player.rest > 0 then return end
+
     local room = player.room
     if room:getTag("SkipGameRule") then
       room:setTag("SkipGameRule", false)
       return false
     end
 
-    local winner = Fk.game_modes[room:getSettings('gameMode')]:getWinner(player)
+    local winner = room:getGameMode():getWinner(player)
     if winner ~= "" then
       room:gameOver(winner)
       return true
@@ -121,16 +123,10 @@ gameRule:addEffect(fk.BuryVictim, {
     end
 
     player:bury()
-    room:doBroadcastNotify("UpdateMarkArea", {
-      id = player.id,
-      change = {
-        visible = false,
-      },
-    })
     if room.tag["SkipNormalDeathProcess"] or player.rest > 0 or (data.extra_data and data.extra_data.skip_reward_punish) then
       return false
     end
-    Fk.game_modes[room:getSettings('gameMode')]:deathRewardAndPunish(player, data.killer)
+    room:getGameMode():deathRewardAndPunish(player, data.killer)
   end,
 })
 
