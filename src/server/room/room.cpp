@@ -713,6 +713,7 @@ void Room::kickPlayer(ServerPlayer *player, const QByteArray &jsonData) {
   if (p && !isStarted()) {
     removePlayer(p);
     addRejectId(i);
+    p->doNotify("ErrorMsg", "You are kicked from room!");
     QTimer::singleShot(30000, this, [=, this] {
         removeRejectId(i);
         });

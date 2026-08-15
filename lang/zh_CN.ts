@@ -184,6 +184,10 @@
     <translation>管理拓展包</translation>
   </message>
   <message>
+    <source>ResourcePackManage</source>
+    <translation>管理资源包</translation>
+  </message>
+  <message>
     <source>Quit Game</source>
     <translation>退出游戏</translation>
   </message>
@@ -447,6 +451,10 @@
     <translation>房主拒绝你加入。</translation>
   </message>
   <message>
+    <source>You are kicked from room!</source>
+    <translation>你被踢出房间！</translation>
+  </message>
+  <message>
     <source>server is full!</source>
     <translation>服务器已满！</translation>
   </message>
@@ -493,6 +501,105 @@
   <message>
     <source>Upgrade All</source>
     <translation>全部更新</translation>
+  </message>
+</context>
+
+<context>
+  <name>ResourcePackManage</name>
+  <message>
+    <source>Resource Package Manager</source>
+    <translation>新月杀资源包管理器</translation>
+  </message>
+  <message>
+    <source>Search Resource Packs</source>
+    <translation>搜索资源包…</translation>
+  </message>
+  <message>
+    <source>Undo Changes</source>
+    <translation>撤销更改</translation>
+  </message>
+  <message>
+    <source>Unsaved settings. Are you sure to exit?</source>
+    <translation>你还有未保存的设置，确定退出吗？</translation>
+  </message>
+  <message>
+    <source>Available Resource Packs</source>
+    <translation>可用资源包</translation>
+  </message>
+  <message>
+    <source>%1 Resource Packs Available</source>
+    <translation>共%1个可用资源包</translation>
+  </message>
+  <message>
+    <source>Enabled Resource Packs (Highest Priority at Top)</source>
+    <translation>已启用资源包（优先级高在上）</translation>
+  </message>
+  <message>
+    <source>%1 Resource Packs Enabled</source>
+    <translation>共%1个已启用资源包</translation>
+  </message>
+  <message>
+    <source>Save</source>
+    <translation>保存</translation>
+  </message>
+</context>
+
+<context>
+  <name>PackageDownload</name>
+  <message>
+    <source>Fix</source>
+    <translation>修复</translation>
+  </message>
+  <message>
+    <source>DownloadMsg</source>
+    <translation>正在与服务器同步拓展包。&lt;br>请耐心等待，&lt;b>
+        必须在所有拓展包完成下载后才可以关闭该页面&lt;/b>。&lt;br>&lt;br>
+        若下载途中有&lt;font color='red'>错误&lt;/font>产生，&lt;b>
+        则将无法进入服务器&lt;/b>，请截图并寻求帮助。</translation>
+  </message>
+  <message>
+    <source>CoreChanged</source>
+    <translation>&lt;br>&lt;br>游戏核心包freekill-core发生更新，必须重启游戏才能生效，请点击按钮关闭游戏后手动重新打开。</translation>
+  </message>
+  <message>
+    <source>Done. Click to exit.</source>
+    <translation>已完成，点击关闭游戏</translation>
+  </message>
+  <message>
+    <source>Done. Click to return.</source>
+    <translation>已完成，点击返回</translation>
+  </message>
+  <message>
+    <source>Fix All and Exit</source>
+    <translation>修复全部内容并退出</translation>
+  </message>
+  <message>
+    <source>Download Error: %1</source>
+    <translation>&lt;font color='red'>（错误: %1）&lt;/font></translation>
+  </message>
+  <message>
+    <source>Workspace has unsaved changes</source>
+    <translation>工作区有未保存的人为修改</translation>
+  </message>
+  <message>
+    <source>Directory exists and is not empty</source>
+    <translation>目录已存在且非空</translation>
+  </message>
+  <message>
+    <source>No such file or directory</source>
+    <translation>文件或目录不存在</translation>
+  </message>
+  <message>
+    <source>Repository URL is inaccessible</source>
+    <translation>无法访问仓库URL</translation>
+  </message>
+  <message>
+    <source>Requested version not found</source>
+    <translation>服务器所需的版本不存在</translation>
+  </message>
+  <message>
+    <source>Network error</source>
+    <translation>网络错误</translation>
   </message>
 </context>
 
