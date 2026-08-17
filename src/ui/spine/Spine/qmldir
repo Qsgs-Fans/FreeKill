@@ -1,0 +1,6 @@
+module Spine
+depends QtQuick 2.0
+depends QtQml 6.0
+typeinfo plugins.qmltypes
+
+SkeletonAnimation 1.0 SkeletonAnimation.qml

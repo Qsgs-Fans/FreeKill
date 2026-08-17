@@ -26,6 +26,7 @@ using namespace fkShell;
   // #include <QNativeInterface>
  #endif
  #include "ui/qmlbackend.h"
+ #include "ui/spine/spineregister.h"
 #endif
 
 #include <QTextStream>
@@ -476,6 +477,9 @@ int freekill_main(int argc, char *argv[]) {
 
   root->setContextProperty(
       "AppPath", QUrl::fromLocalFile(QDir::currentPath()));
+
+  // 注册 Spine 动画类型（Spine 1.0 模块）
+  registerSpineQmlTypes();
 
   // 加载GUI了，如果core有的话用core的
   if (Pacman->shouldUseCore() &&

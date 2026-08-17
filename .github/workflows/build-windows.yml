@@ -38,8 +38,10 @@ jobs:
       shell: bash
       run: |
         cd src
-        find -name "*.cpp" -exec sed -i '1i #include "pch.h"' "{}" \;
-        find -name "*.h" -exec sed -i '1i #include "pch.h"' "{}" \;
+        # spine 目录不参与 PCH 插入：spine-c 是纯 C 源码，头文件不能被塞入 C++ 的 pch.h；
+        # spine 后端 .cpp 已通过 CMakeLists 的 SKIP_PRECOMPILE_HEADERS + QT_NO_KEYWORDS 单独处理。
+        find -name "*.cpp" -not -path "./spine-versions/*" -not -path "./spine-c/*" -not -path "./ui/spine/*" -exec sed -i '1i #include "pch.h"' "{}" \;
+        find -name "*.h" -not -path "./spine-versions/*" -not -path "./spine-c/*" -not -path "./ui/spine/*" -exec sed -i '1i #include "pch.h"' "{}" \;
         sed -i '1d' pch.h
         sed -i '1d' main.cpp
         sed -i '/pch.h/d' CMakeLists.txt
