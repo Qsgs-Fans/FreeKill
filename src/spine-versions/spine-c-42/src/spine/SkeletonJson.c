@@ -1,0 +1,1802 @@
+/******************************************************************************
+ * Spine Runtimes License Agreement
+ * Last updated July 28, 2023. Replaces all prior versions.
+ *
+ * Copyright (c) 2013-2023, Esoteric Software LLC
+ *
+ * Integration of the Spine Runtimes into software or otherwise creating
+ * derivative works of the Spine Runtimes is permitted under the terms and
+ * conditions of Section 2 of the Spine Editor License Agreement:
+ * http://esotericsoftware.com/spine-editor-license
+ *
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software or
+ * otherwise create derivative works of the Spine Runtimes (collectively,
+ * "Products"), provided that each user of the Products must obtain their own
+ * Spine Editor license and redistribution of the Products in any form must
+ * include this license and copyright notice.
+ *
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THE
+ * SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *****************************************************************************/
+
+#include "Json.h"
+#include <spine/Version.h>
+#include <spine/Array.h>
+#include <spine/AtlasAttachmentLoader.h>
+#include <spine/SkeletonJson.h>
+#include <spine/extension.h>
+#include <stdio.h>
+
+typedef struct {
+	const char *parent;
+	const char *skin;
+	int slotIndex;
+	sp42MeshAttachment *mesh;
+	int inheritTimeline;
+} _sp42LinkedMesh;
+
+typedef struct {
+	sp42SkeletonJson super;
+	int ownsLoader;
+
+	int linkedMeshCount;
+	int linkedMeshCapacity;
+	_sp42LinkedMesh *linkedMeshes;
+} _sp42SkeletonJson;
+
+sp42SkeletonJson *sp42SkeletonJson_createWithLoader(sp42AttachmentLoader *attachmentLoader) {
+	sp42SkeletonJson *self = SUPER(NEW(_sp42SkeletonJson));
+	self->scale = 1;
+	self->attachmentLoader = attachmentLoader;
+	return self;
+}
+
+sp42SkeletonJson *sp42SkeletonJson_create(sp42Atlas *atlas) {
+	sp42AtlasAttachmentLoader *attachmentLoader = sp42AtlasAttachmentLoader_create(atlas);
+	sp42SkeletonJson *self = sp42SkeletonJson_createWithLoader(SUPER(attachmentLoader));
+	SUB_CAST(_sp42SkeletonJson, self)->ownsLoader = 1;
+	return self;
+}
+
+void sp42SkeletonJson_dispose(sp42SkeletonJson *self) {
+	_sp42SkeletonJson *internal = SUB_CAST(_sp42SkeletonJson, self);
+	if (internal->ownsLoader) sp42AttachmentLoader_dispose(self->attachmentLoader);
+	FREE(internal->linkedMeshes);
+	FREE(self->error);
+	FREE(self);
+}
+
+void _sp42SkeletonJson_setError(sp42SkeletonJson *self, Json42 *root, const char *value1, const char *value2) {
+	char message[256];
+	int length;
+	FREE(self->error);
+	strcpy(message, value1);
+	length = (int) strlen(value1);
+	if (value2) strncat(message + length, value2, 255 - length);
+	MALLOC_STR(self->error, message);
+	if (root) Json42_dispose(root);
+}
+
+static float toColor(const char *value, int index) {
+	char digits[3];
+	char *error;
+	int color;
+
+	if ((size_t) index >= strlen(value) / 2) return -1;
+	value += index * 2;
+
+	digits[0] = *value;
+	digits[1] = *(value + 1);
+	digits[2] = '\0';
+	color = (int) strtoul(digits, &error, 16);
+	if (*error != 0) return -1;
+	return color / (float) 255;
+}
+
+static void toColor2(sp42Color *color, const char *value, int /*bool*/ hasAlpha) {
+	color->r = toColor(value, 0);
+	color->g = toColor(value, 1);
+	color->b = toColor(value, 2);
+	if (hasAlpha) color->a = toColor(value, 3);
+	else
+		color->a = 1.0f;
+}
+
+static void
+setBezier(sp42CurveTimeline *timeline, int frame, int value, int bezier, float time1, float value1, float cx1, float cy1,
+		  float cx2, float cy2, float time2, float value2) {
+	sp42Timeline_setBezier(SUPER(timeline), bezier, frame, value, time1, value1, cx1, cy1, cx2, cy2, time2, value2);
+}
+
+static int readCurve(Json42 *curve, sp42CurveTimeline *timeline, int bezier, int frame, int value, float time1, float time2,
+					 float value1, float value2, float scale) {
+	float cx1, cy1, cx2, cy2;
+	if (curve->type == Json42_String && strcmp(curve->valueString, "stepped") == 0) {
+		sp42CurveTimeline_setStepped(timeline, frame);
+		return bezier;
+	}
+	curve = Json42_getItemAtIndex(curve, value << 2);
+	cx1 = curve->valueFloat;
+	curve = curve->next;
+	cy1 = curve->valueFloat * scale;
+	curve = curve->next;
+	cx2 = curve->valueFloat;
+	curve = curve->next;
+	cy2 = curve->valueFloat * scale;
+	setBezier(timeline, frame, value, bezier, time1, value1, cx1, cy1, cx2, cy2, time2, value2);
+	return bezier + 1;
+}
+
+static sp42Timeline *readTimeline(Json42 *keyMap, sp42CurveTimeline1 *timeline, float defaultValue, float scale) {
+	float time = Json42_getFloat(keyMap, "time", 0);
+	float value = Json42_getFloat(keyMap, "value", defaultValue) * scale;
+	int frame, bezier = 0;
+	for (frame = 0;; ++frame) {
+		Json42 *nextMap, *curve;
+		float time2, value2;
+		sp42CurveTimeline1_setFrame(timeline, frame, time, value);
+		nextMap = keyMap->next;
+		if (nextMap == NULL) break;
+		time2 = Json42_getFloat(nextMap, "time", 0);
+		value2 = Json42_getFloat(nextMap, "value", defaultValue) * scale;
+		curve = Json42_getItem(keyMap, "curve");
+		if (curve != NULL) bezier = readCurve(curve, timeline, bezier, frame, 0, time, time2, value, value2, scale);
+		time = time2;
+		value = value2;
+		keyMap = nextMap;
+	}
+	/* timeline.shrink(); // BOZO */
+	return SUPER(timeline);
+}
+
+static sp42Timeline *
+readTimeline2(Json42 *keyMap, sp42CurveTimeline2 *timeline, const char *name1, const char *name2, float defaultValue,
+			  float scale) {
+	float time = Json42_getFloat(keyMap, "time", 0);
+	float value1 = Json42_getFloat(keyMap, name1, defaultValue) * scale;
+	float value2 = Json42_getFloat(keyMap, name2, defaultValue) * scale;
+	int frame, bezier = 0;
+	for (frame = 0;; ++frame) {
+		Json42 *nextMap, *curve;
+		float time2, nvalue1, nvalue2;
+		sp42CurveTimeline2_setFrame(timeline, frame, time, value1, value2);
+		nextMap = keyMap->next;
+		if (nextMap == NULL) break;
+		time2 = Json42_getFloat(nextMap, "time", 0);
+		nvalue1 = Json42_getFloat(nextMap, name1, defaultValue) * scale;
+		nvalue2 = Json42_getFloat(nextMap, name2, defaultValue) * scale;
+		curve = Json42_getItem(keyMap, "curve");
+		if (curve != NULL) {
+			bezier = readCurve(curve, timeline, bezier, frame, 0, time, time2, value1, nvalue1, scale);
+			bezier = readCurve(curve, timeline, bezier, frame, 1, time, time2, value2, nvalue2, scale);
+		}
+		time = time2;
+		value1 = nvalue1;
+		value2 = nvalue2;
+		keyMap = nextMap;
+	}
+	/* timeline.shrink(); // BOZO */
+	return SUPER(timeline);
+}
+
+static sp42Sequence *readSequence(Json42 *item) {
+	sp42Sequence *sequence;
+	if (item == NULL) return NULL;
+	sequence = sp42Sequence_create(Json42_getInt(item, "count", 0));
+	sequence->start = Json42_getInt(item, "start", 1);
+	sequence->digits = Json42_getInt(item, "digits", 0);
+	sequence->setupIndex = Json42_getInt(item, "setupIndex", 0);
+	return sequence;
+}
+
+static void _sp42SkeletonJson_addLinkedMesh(sp42SkeletonJson *self, sp42MeshAttachment *mesh, const char *skin, int slotIndex,
+										  const char *parent, int inheritDeform) {
+	_sp42LinkedMesh *linkedMesh;
+	_sp42SkeletonJson *internal = SUB_CAST(_sp42SkeletonJson, self);
+
+	if (internal->linkedMeshCount == internal->linkedMeshCapacity) {
+		_sp42LinkedMesh *linkedMeshes;
+		internal->linkedMeshCapacity *= 2;
+		if (internal->linkedMeshCapacity < 8) internal->linkedMeshCapacity = 8;
+		linkedMeshes = MALLOC(_sp42LinkedMesh, internal->linkedMeshCapacity);
+		memcpy(linkedMeshes, internal->linkedMeshes, sizeof(_sp42LinkedMesh) * internal->linkedMeshCount);
+		FREE(internal->linkedMeshes);
+		internal->linkedMeshes = linkedMeshes;
+	}
+
+	linkedMesh = internal->linkedMeshes + internal->linkedMeshCount++;
+	linkedMesh->mesh = mesh;
+	linkedMesh->skin = skin;
+	linkedMesh->slotIndex = slotIndex;
+	linkedMesh->parent = parent;
+	linkedMesh->inheritTimeline = inheritDeform;
+}
+
+static void cleanUpTimelines(sp42TimelineArray *timelines) {
+	int i, n;
+	for (i = 0, n = timelines->size; i < n; ++i)
+		sp42Timeline_dispose(timelines->items[i]);
+	sp42TimelineArray_dispose(timelines);
+}
+
+static int findSlotIndex(sp42SkeletonJson *json, const sp42SkeletonData *skeletonData, const char *slotName, sp42TimelineArray *timelines) {
+	sp42SlotData *slot = sp42SkeletonData_findSlot(skeletonData, slotName);
+	if (slot) return slot->index;
+	cleanUpTimelines(timelines);
+	_sp42SkeletonJson_setError(json, NULL, "Slot not found: ", slotName);
+	return -1;
+}
+
+static int findIkConstraintIndex(sp42SkeletonJson *json, const sp42SkeletonData *skeletonData, const sp42IkConstraintData *constraint, sp42TimelineArray *timelines) {
+	if (constraint) {
+		int i;
+		for (i = 0; i < skeletonData->ikConstraintsCount; ++i)
+			if (skeletonData->ikConstraints[i] == constraint) return i;
+	}
+	cleanUpTimelines(timelines);
+	_sp42SkeletonJson_setError(json, NULL, "IK constraint not found: ", constraint->name);
+	return -1;
+}
+
+static int findTransformConstraintIndex(sp42SkeletonJson *json, const sp42SkeletonData *skeletonData, const sp42TransformConstraintData *constraint, sp42TimelineArray *timelines) {
+	if (constraint) {
+		int i;
+		for (i = 0; i < skeletonData->transformConstraintsCount; ++i)
+			if (skeletonData->transformConstraints[i] == constraint) return i;
+	}
+	cleanUpTimelines(timelines);
+	_sp42SkeletonJson_setError(json, NULL, "Transform constraint not found: ", constraint->name);
+	return -1;
+}
+
+static int findPathConstraintIndex(sp42SkeletonJson *json, const sp42SkeletonData *skeletonData, const sp42PathConstraintData *constraint, sp42TimelineArray *timelines) {
+	if (constraint) {
+		int i;
+		for (i = 0; i < skeletonData->pathConstraintsCount; ++i)
+			if (skeletonData->pathConstraints[i] == constraint) return i;
+	}
+	cleanUpTimelines(timelines);
+	_sp42SkeletonJson_setError(json, NULL, "Path constraint not found: ", constraint->name);
+	return -1;
+}
+
+int findPhysicsConstraintIndex(sp42SkeletonJson *json, const sp42SkeletonData *skeletonData, const sp42PhysicsConstraintData *constraint, sp42TimelineArray *timelines) {
+	if (constraint) {
+		int i;
+		for (i = 0; i < skeletonData->physicsConstraintsCount; ++i)
+			if (skeletonData->physicsConstraints[i] == constraint) return i;
+	}
+	cleanUpTimelines(timelines);
+	_sp42SkeletonJson_setError(json, NULL, "Physics constraint not found: ", constraint->name);
+	return -1;
+}
+
+static sp42Animation *_sp42SkeletonJson_readAnimation(sp42SkeletonJson *self, Json42 *root, sp42SkeletonData *skeletonData) {
+	sp42TimelineArray *timelines = sp42TimelineArray_create(8);
+
+	float scale = self->scale, duration;
+	Json42 *bones = Json42_getItem(root, "bones");
+	Json42 *slots = Json42_getItem(root, "slots");
+	Json42 *ik = Json42_getItem(root, "ik");
+	Json42 *transform = Json42_getItem(root, "transform");
+	Json42 *paths = Json42_getItem(root, "path");
+	Json42 *physics = Json42_getItem(root, "physics");
+	Json42 *attachmentsJson = Json42_getItem(root, "attachments");
+	Json42 *drawOrderJson = Json42_getItem(root, "drawOrder");
+	Json42 *events = Json42_getItem(root, "events");
+	Json42 *boneMap, *slotMap, *keyMap, *nextMap, *curve, *timelineMap;
+	Json42 *attachmentsMap, *constraintMap;
+	int frame, bezier, i, n;
+	sp42Color color, color2, newColor, newColor2;
+
+	/* Slot timelines. */
+	for (slotMap = slots ? slots->child : 0; slotMap; slotMap = slotMap->next) {
+		int slotIndex = findSlotIndex(self, skeletonData, slotMap->name, timelines);
+		if (slotIndex == -1) return NULL;
+
+		for (timelineMap = slotMap->child; timelineMap; timelineMap = timelineMap->next) {
+			int frames = timelineMap->size;
+			if (strcmp(timelineMap->name, "attachment") == 0) {
+				sp42AttachmentTimeline *timeline = sp42AttachmentTimeline_create(frames, slotIndex);
+				for (keyMap = timelineMap->child, frame = 0; keyMap; keyMap = keyMap->next, ++frame) {
+					sp42AttachmentTimeline_setFrame(timeline, frame, Json42_getFloat(keyMap, "time", 0),
+												  Json42_getItem(keyMap, "name") ? Json42_getItem(keyMap, "name")->valueString : NULL);
+				}
+				sp42TimelineArray_add(timelines, SUPER(timeline));
+
+			} else if (strcmp(timelineMap->name, "rgba") == 0) {
+				float time;
+				sp42RGBATimeline *timeline = sp42RGBATimeline_create(frames, frames << 2, slotIndex);
+				keyMap = timelineMap->child;
+				time = Json42_getFloat(keyMap, "time", 0);
+				toColor2(&color, Json42_getString(keyMap, "color", 0), 1);
+
+				for (frame = 0, bezier = 0;; ++frame) {
+					float time2;
+					sp42RGBATimeline_setFrame(timeline, frame, time, color.r, color.g, color.b, color.a);
+					nextMap = keyMap->next;
+					if (!nextMap) {
+						/* timeline.shrink(); // BOZO */
+						break;
+					}
+					time2 = Json42_getFloat(nextMap, "time", 0);
+					toColor2(&newColor, Json42_getString(nextMap, "color", 0), 1);
+					curve = Json42_getItem(keyMap, "curve");
+					if (curve) {
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, color.r, newColor.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, color.g, newColor.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, color.b, newColor.b,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 3, time, time2, color.a, newColor.a,
+										   1);
+					}
+					time = time2;
+					color = newColor;
+					keyMap = nextMap;
+				}
+				sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+			} else if (strcmp(timelineMap->name, "rgb") == 0) {
+				float time;
+				sp42RGBTimeline *timeline = sp42RGBTimeline_create(frames, frames * 3, slotIndex);
+				keyMap = timelineMap->child;
+				time = Json42_getFloat(keyMap, "time", 0);
+				toColor2(&color, Json42_getString(keyMap, "color", 0), 1);
+
+				for (frame = 0, bezier = 0;; ++frame) {
+					float time2;
+					sp42RGBTimeline_setFrame(timeline, frame, time, color.r, color.g, color.b);
+					nextMap = keyMap->next;
+					if (!nextMap) {
+						/* timeline.shrink(); // BOZO */
+						break;
+					}
+					time2 = Json42_getFloat(nextMap, "time", 0);
+					toColor2(&newColor, Json42_getString(nextMap, "color", 0), 1);
+					curve = Json42_getItem(keyMap, "curve");
+					if (curve) {
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, color.r, newColor.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, color.g, newColor.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, color.b, newColor.b,
+										   1);
+					}
+					time = time2;
+					color = newColor;
+					keyMap = nextMap;
+				}
+				sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+			} else if (strcmp(timelineMap->name, "alpha") == 0) {
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child,
+															SUPER(sp42AlphaTimeline_create(frames,
+																						 frames, slotIndex)),
+															0, 1));
+			} else if (strcmp(timelineMap->name, "rgba2") == 0) {
+				float time;
+				sp42RGBA2Timeline *timeline = sp42RGBA2Timeline_create(frames, frames * 7, slotIndex);
+				keyMap = timelineMap->child;
+				time = Json42_getFloat(keyMap, "time", 0);
+				toColor2(&color, Json42_getString(keyMap, "light", 0), 1);
+				toColor2(&color2, Json42_getString(keyMap, "dark", 0), 0);
+
+				for (frame = 0, bezier = 0;; ++frame) {
+					float time2;
+					sp42RGBA2Timeline_setFrame(timeline, frame, time, color.r, color.g, color.b, color.a, color2.g,
+											 color2.g, color2.b);
+					nextMap = keyMap->next;
+					if (!nextMap) {
+						/* timeline.shrink(); // BOZO */
+						break;
+					}
+					time2 = Json42_getFloat(nextMap, "time", 0);
+					toColor2(&newColor, Json42_getString(nextMap, "light", 0), 1);
+					toColor2(&newColor2, Json42_getString(nextMap, "dark", 0), 0);
+					curve = Json42_getItem(keyMap, "curve");
+					if (curve) {
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, color.r, newColor.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, color.g, newColor.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, color.b, newColor.b,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 3, time, time2, color.a, newColor.a,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 4, time, time2, color2.r, newColor2.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 5, time, time2, color2.g, newColor2.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 6, time, time2, color2.b, newColor2.b,
+										   1);
+					}
+					time = time2;
+					color = newColor;
+					color2 = newColor2;
+					keyMap = nextMap;
+				}
+				sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+			} else if (strcmp(timelineMap->name, "rgb2") == 0) {
+				float time;
+				sp42RGBA2Timeline *timeline = sp42RGBA2Timeline_create(frames, frames * 6, slotIndex);
+				keyMap = timelineMap->child;
+				time = Json42_getFloat(keyMap, "time", 0);
+				toColor2(&color, Json42_getString(keyMap, "light", 0), 0);
+				toColor2(&color2, Json42_getString(keyMap, "dark", 0), 0);
+
+				for (frame = 0, bezier = 0;; ++frame) {
+					float time2;
+					sp42RGBA2Timeline_setFrame(timeline, frame, time, color.r, color.g, color.b, color.a, color2.r,
+											 color2.g, color2.b);
+					nextMap = keyMap->next;
+					if (!nextMap) {
+						/* timeline.shrink(); // BOZO */
+						break;
+					}
+					time2 = Json42_getFloat(nextMap, "time", 0);
+					toColor2(&newColor, Json42_getString(nextMap, "light", 0), 0);
+					toColor2(&newColor2, Json42_getString(nextMap, "dark", 0), 0);
+					curve = Json42_getItem(keyMap, "curve");
+					if (curve) {
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, color.r, newColor.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, color.g, newColor.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, color.b, newColor.b,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 3, time, time2, color2.r, newColor2.r,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 4, time, time2, color2.g, newColor2.g,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 5, time, time2, color2.b, newColor2.b,
+										   1);
+					}
+					time = time2;
+					color = newColor;
+					color2 = newColor2;
+					keyMap = nextMap;
+				}
+				sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+			} else {
+				cleanUpTimelines(timelines);
+				_sp42SkeletonJson_setError(self, NULL, "Invalid timeline type for a slot: ", timelineMap->name);
+				return NULL;
+			}
+		}
+	}
+
+	/* Bone timelines. */
+	for (boneMap = bones ? bones->child : 0; boneMap; boneMap = boneMap->next) {
+		int boneIndex = -1;
+		for (i = 0; i < skeletonData->bonesCount; ++i) {
+			if (strcmp(skeletonData->bones[i]->name, boneMap->name) == 0) {
+				boneIndex = i;
+				break;
+			}
+		}
+		if (boneIndex == -1) {
+			cleanUpTimelines(timelines);
+			_sp42SkeletonJson_setError(self, NULL, "Bone not found: ", boneMap->name);
+			return NULL;
+		}
+
+		for (timelineMap = boneMap->child; timelineMap; timelineMap = timelineMap->next) {
+			int frames = timelineMap->size;
+			if (frames == 0) continue;
+
+			if (strcmp(timelineMap->name, "rotate") == 0) {
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child,
+															SUPER(sp42RotateTimeline_create(frames,
+																						  frames,
+																						  boneIndex)),
+															0, 1));
+			} else if (strcmp(timelineMap->name, "translate") == 0) {
+				sp42TranslateTimeline *timeline = sp42TranslateTimeline_create(frames, frames << 1,
+																		   boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline2(timelineMap->child, SUPER(timeline), "x", "y", 0, scale));
+			} else if (strcmp(timelineMap->name, "translatex") == 0) {
+				sp42TranslateXTimeline *timeline = sp42TranslateXTimeline_create(frames, frames,
+																			 boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 0, scale));
+			} else if (strcmp(timelineMap->name, "translatey") == 0) {
+				sp42TranslateYTimeline *timeline = sp42TranslateYTimeline_create(frames, frames,
+																			 boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 0, scale));
+			} else if (strcmp(timelineMap->name, "scale") == 0) {
+				sp42ScaleTimeline *timeline = sp42ScaleTimeline_create(frames, frames << 1,
+																   boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline2(timelineMap->child, SUPER(timeline), "x", "y", 1, 1));
+			} else if (strcmp(timelineMap->name, "scalex") == 0) {
+				sp42ScaleXTimeline *timeline = sp42ScaleXTimeline_create(frames, frames, boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 1, 1));
+			} else if (strcmp(timelineMap->name, "scaley") == 0) {
+				sp42ScaleYTimeline *timeline = sp42ScaleYTimeline_create(frames, frames, boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 1, 1));
+			} else if (strcmp(timelineMap->name, "shear") == 0) {
+				sp42ShearTimeline *timeline = sp42ShearTimeline_create(frames, frames << 1,
+																   boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline2(timelineMap->child, SUPER(timeline), "x", "y", 0, 1));
+			} else if (strcmp(timelineMap->name, "shearx") == 0) {
+				sp42ShearXTimeline *timeline = sp42ShearXTimeline_create(frames, frames, boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 0, 1));
+			} else if (strcmp(timelineMap->name, "sheary") == 0) {
+				sp42ShearYTimeline *timeline = sp42ShearYTimeline_create(frames, frames, boneIndex);
+				sp42TimelineArray_add(timelines, readTimeline(timelineMap->child, SUPER(timeline), 0, 1));
+			} else if (strcmp(timelineMap->name, "inherit") == 0) {
+				sp42InheritTimeline *timeline = sp42InheritTimeline_create(frames, boneIndex);
+				keyMap = timelineMap->child;
+				for (frame = 0;; frame++) {
+					float time = Json42_getFloat(keyMap, "time", 0);
+					const char *value = Json42_getString(keyMap, "inherit", "normal");
+					sp42Inherit inherit = SP_INHERIT_NORMAL;
+					if (strcmp(value, "normal") == 0) inherit = SP_INHERIT_NORMAL;
+					else if (strcmp(value, "onlyTranslation") == 0)
+						inherit = SP_INHERIT_ONLYTRANSLATION;
+					else if (strcmp(value, "noRotationOrReflection") == 0)
+						inherit = SP_INHERIT_NOROTATIONORREFLECTION;
+					else if (strcmp(value, "noScale") == 0)
+						inherit = SP_INHERIT_NOSCALE;
+					else if (strcmp(value, "noScaleOrReflection") == 0)
+						inherit = SP_INHERIT_NOSCALEORREFLECTION;
+					sp42InheritTimeline_setFrame(timeline, frame, time, inherit);
+					nextMap = keyMap->next;
+					if (!nextMap) break;
+				}
+				sp42TimelineArray_add(timelines, SUPER(timeline));
+			} else {
+				cleanUpTimelines(timelines);
+				_sp42SkeletonJson_setError(self, NULL, "Invalid timeline type for a bone: ", timelineMap->name);
+				return NULL;
+			}
+		}
+	}
+
+	/* IK constraint timelines. */
+	for (constraintMap = ik ? ik->child : 0; constraintMap; constraintMap = constraintMap->next) {
+		sp42IkConstraintData *constraint;
+		sp42IkConstraintTimeline *timeline;
+		int constraintIndex;
+		float time, mix, softness;
+		keyMap = constraintMap->child;
+		if (keyMap == NULL) continue;
+
+		constraint = sp42SkeletonData_findIkConstraint(skeletonData, constraintMap->name);
+		constraintIndex = findIkConstraintIndex(self, skeletonData, constraint, timelines);
+		if (constraintIndex == -1) return NULL;
+		timeline = sp42IkConstraintTimeline_create(constraintMap->size, constraintMap->size << 1, constraintIndex);
+
+		time = Json42_getFloat(keyMap, "time", 0);
+		mix = Json42_getFloat(keyMap, "mix", 1);
+		softness = Json42_getFloat(keyMap, "softness", 0) * scale;
+
+		for (frame = 0, bezier = 0;; ++frame) {
+			float time2, mix2, softness2;
+			int bendDirection = Json42_getInt(keyMap, "bendPositive", 1) ? 1 : -1;
+			sp42IkConstraintTimeline_setFrame(timeline, frame, time, mix, softness, bendDirection,
+											Json42_getInt(keyMap, "compress", 0) ? 1 : 0,
+											Json42_getInt(keyMap, "stretch", 0) ? 1 : 0);
+			nextMap = keyMap->next;
+			if (!nextMap) {
+				/* timeline.shrink(); // BOZO */
+				break;
+			}
+
+			time2 = Json42_getFloat(nextMap, "time", 0);
+			mix2 = Json42_getFloat(nextMap, "mix", 1);
+			softness2 = Json42_getFloat(nextMap, "softness", 0) * scale;
+			curve = Json42_getItem(keyMap, "curve");
+			if (curve) {
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, mix, mix2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, softness, softness2, scale);
+			}
+
+			time = time2;
+			mix = mix2;
+			softness = softness2;
+			keyMap = nextMap;
+		}
+
+		sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+	}
+
+	/* Transform constraint timelines. */
+	for (constraintMap = transform ? transform->child : 0; constraintMap; constraintMap = constraintMap->next) {
+		sp42TransformConstraintData *constraint;
+		sp42TransformConstraintTimeline *timeline;
+		int constraintIndex;
+		float time, mixRotate, mixShearY, mixX, mixY, mixScaleX, mixScaleY;
+		keyMap = constraintMap->child;
+		if (keyMap == NULL) continue;
+
+		constraint = sp42SkeletonData_findTransformConstraint(skeletonData, constraintMap->name);
+		constraintIndex = findTransformConstraintIndex(self, skeletonData, constraint, timelines);
+		if (constraintIndex == -1) return NULL;
+		timeline = sp42TransformConstraintTimeline_create(constraintMap->size, constraintMap->size * 6, constraintIndex);
+
+		time = Json42_getFloat(keyMap, "time", 0);
+		mixRotate = Json42_getFloat(keyMap, "mixRotate", 1);
+		mixShearY = Json42_getFloat(keyMap, "mixShearY", 1);
+		mixX = Json42_getFloat(keyMap, "mixX", 1);
+		mixY = Json42_getFloat(keyMap, "mixY", mixX);
+		mixScaleX = Json42_getFloat(keyMap, "mixScaleX", 1);
+		mixScaleY = Json42_getFloat(keyMap, "mixScaleY", mixScaleX);
+
+		for (frame = 0, bezier = 0;; ++frame) {
+			float time2, mixRotate2, mixShearY2, mixX2, mixY2, mixScaleX2, mixScaleY2;
+			sp42TransformConstraintTimeline_setFrame(timeline, frame, time, mixRotate, mixX, mixY, mixScaleX, mixScaleY,
+												   mixShearY);
+			nextMap = keyMap->next;
+			if (!nextMap) {
+				/* timeline.shrink(); // BOZO */
+				break;
+			}
+
+			time2 = Json42_getFloat(nextMap, "time", 0);
+			mixRotate2 = Json42_getFloat(nextMap, "mixRotate", 1);
+			mixShearY2 = Json42_getFloat(nextMap, "mixShearY", 1);
+			mixX2 = Json42_getFloat(nextMap, "mixX", 1);
+			mixY2 = Json42_getFloat(nextMap, "mixY", mixX2);
+			mixScaleX2 = Json42_getFloat(nextMap, "mixScaleX", 1);
+			mixScaleY2 = Json42_getFloat(nextMap, "mixScaleY", mixScaleX2);
+			curve = Json42_getItem(keyMap, "curve");
+			if (curve) {
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, mixRotate, mixRotate2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, mixX, mixX2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, mixY, mixY2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 3, time, time2, mixScaleX, mixScaleX2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 4, time, time2, mixScaleY, mixScaleY2, 1);
+				bezier = readCurve(curve, SUPER(timeline), bezier, frame, 5, time, time2, mixShearY, mixShearY2, 1);
+			}
+
+			time = time2;
+			mixRotate = mixRotate2;
+			mixX = mixX2;
+			mixY = mixY2;
+			mixScaleX = mixScaleX2;
+			mixScaleY = mixScaleY2;
+			mixScaleX = mixScaleX2;
+			keyMap = nextMap;
+		}
+
+		sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+	}
+
+	/** Path constraint timelines. */
+	for (constraintMap = paths ? paths->child : 0; constraintMap; constraintMap = constraintMap->next) {
+		sp42PathConstraintData *constraint = sp42SkeletonData_findPathConstraint(skeletonData, constraintMap->name);
+		int constraintIndex = findPathConstraintIndex(self, skeletonData, constraint, timelines);
+		if (constraintIndex == -1) return NULL;
+		for (timelineMap = constraintMap->child; timelineMap; timelineMap = timelineMap->next) {
+			const char *timelineName;
+			int frames;
+			keyMap = timelineMap->child;
+			if (keyMap == NULL) continue;
+			frames = timelineMap->size;
+			timelineName = timelineMap->name;
+			if (strcmp(timelineName, "position") == 0) {
+				sp42PathConstraintPositionTimeline *timeline = sp42PathConstraintPositionTimeline_create(frames,
+																									 frames,
+																									 constraintIndex);
+				sp42TimelineArray_add(timelines, readTimeline(keyMap, SUPER(timeline), 0,
+															constraint->positionMode == SP_POSITION_MODE_FIXED ? scale : 1));
+			} else if (strcmp(timelineName, "spacing") == 0) {
+				sp42CurveTimeline1 *timeline = SUPER(
+						sp42PathConstraintSpacingTimeline_create(frames, frames, constraintIndex));
+				sp42TimelineArray_add(timelines, readTimeline(keyMap, timeline, 0,
+															constraint->spacingMode == SP_SPACING_MODE_LENGTH ||
+																			constraint->spacingMode == SP_SPACING_MODE_FIXED
+																	? scale
+																	: 1));
+			} else if (strcmp(timelineName, "mix") == 0) {
+				sp42PathConstraintMixTimeline *timeline = sp42PathConstraintMixTimeline_create(frames,
+																						   frames * 3,
+																						   constraintIndex);
+				float time = Json42_getFloat(keyMap, "time", 0);
+				float mixRotate = Json42_getFloat(keyMap, "mixRotate", 1);
+				float mixX = Json42_getFloat(keyMap, "mixX", 1);
+				float mixY = Json42_getFloat(keyMap, "mixY", mixX);
+				for (frame = 0, bezier = 0;; ++frame) {
+					float time2, mixRotate2, mixX2, mixY2;
+					sp42PathConstraintMixTimeline_setFrame(timeline, frame, time, mixRotate, mixX, mixY);
+					nextMap = keyMap->next;
+					if (!nextMap) {
+						/* timeline.shrink(); // BOZO */
+						break;
+					}
+
+					time2 = Json42_getFloat(nextMap, "time", 0);
+					mixRotate2 = Json42_getFloat(nextMap, "mixRotate", 1);
+					mixX2 = Json42_getFloat(nextMap, "mixX", 1);
+					mixY2 = Json42_getFloat(nextMap, "mixY", mixX2);
+					curve = Json42_getItem(keyMap, "curve");
+					if (curve != NULL) {
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, mixRotate, mixRotate2,
+										   1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 1, time, time2, mixX, mixX2, 1);
+						bezier = readCurve(curve, SUPER(timeline), bezier, frame, 2, time, time2, mixY, mixY2, 1);
+					}
+					time = time2;
+					mixRotate = mixRotate2;
+					mixX = mixX2;
+					mixY = mixY2;
+					keyMap = nextMap;
+				}
+				sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+			}
+		}
+	}
+
+	/** Physics constraint timelines. */
+	for (constraintMap = physics ? physics->child : 0; constraintMap; constraintMap = constraintMap->next) {
+		int index = -1;
+		if (constraintMap->name && strlen(constraintMap->name) > 0) {
+			sp42PhysicsConstraintData *constraint = sp42SkeletonData_findPhysicsConstraint(skeletonData, constraintMap->name);
+			index = findPhysicsConstraintIndex(self, skeletonData, constraint, timelines);
+			if (index == -1) return NULL;
+		}
+		for (timelineMap = constraintMap->child; timelineMap; timelineMap = timelineMap->next) {
+			keyMap = timelineMap->child;
+			if (keyMap == NULL) continue;
+			const char *timelineName = timelineMap->name;
+			int frames = timelineMap->size;
+			if (strcmp(timelineName, "reset") == 0) {
+				sp42PhysicsConstraintResetTimeline *timeline = sp42PhysicsConstraintResetTimeline_create(frames, index);
+				for (frame = 0; keyMap != NULL; keyMap = keyMap->next, frame++) {
+					sp42PhysicsConstraintResetTimeline_setFrame(timeline, frame, Json42_getFloat(keyMap, "time", 0));
+				}
+				sp42TimelineArray_add(timelines, SUPER(timeline));
+				continue;
+			}
+
+			sp42PhysicsConstraintTimeline *timeline = NULL;
+			if (strcmp(timelineName, "inertia") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_INERTIA);
+			} else if (strcmp(timelineName, "strength") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_STRENGTH);
+			} else if (strcmp(timelineName, "damping") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_DAMPING);
+			} else if (strcmp(timelineName, "mass") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_MASS);
+			} else if (strcmp(timelineName, "wind") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_WIND);
+			} else if (strcmp(timelineName, "gravity") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_GRAVITY);
+			} else if (strcmp(timelineName, "mix") == 0) {
+				timeline = sp42PhysicsConstraintTimeline_create(frames, frames, index, SP_TIMELINE_PHYSICSCONSTRAINT_MIX);
+			} else {
+				continue;
+			}
+			sp42TimelineArray_add(timelines, readTimeline(keyMap, SUPER(timeline), 0, 1));
+		}
+	}
+
+	/* Attachment timelines. */
+	for (attachmentsMap = attachmentsJson ? attachmentsJson->child : 0; attachmentsMap; attachmentsMap = attachmentsMap->next) {
+		sp42Skin *skin = sp42SkeletonData_findSkin(skeletonData, attachmentsMap->name);
+		for (slotMap = attachmentsMap->child; slotMap; slotMap = slotMap->next) {
+			Json42 *attachmentMap;
+			int slotIndex = findSlotIndex(self, skeletonData, slotMap->name, timelines);
+			if (slotIndex == -1) return NULL;
+
+			for (attachmentMap = slotMap->child; attachmentMap; attachmentMap = attachmentMap->next) {
+				sp42Attachment *baseAttachment = sp42Skin_getAttachment(skin, slotIndex, attachmentMap->name);
+				if (!baseAttachment) {
+					cleanUpTimelines(timelines);
+					_sp42SkeletonJson_setError(self, 0, "Attachment not found: ", attachmentMap->name);
+					return NULL;
+				}
+
+				for (timelineMap = attachmentMap->child; timelineMap; timelineMap = timelineMap->next) {
+					int frames;
+					const char *timelineName;
+					keyMap = timelineMap->child;
+					if (keyMap == NULL) continue;
+					frames = timelineMap->size;
+					timelineName = timelineMap->name;
+					if (!strcmp("deform", timelineName)) {
+						float *tempDeform;
+						sp42VertexAttachment *vertexAttachment;
+						int weighted, deformLength;
+						sp42DeformTimeline *timeline;
+						float time;
+
+						vertexAttachment = SUB_CAST(sp42VertexAttachment, baseAttachment);
+						weighted = vertexAttachment->bones != 0;
+						deformLength = weighted ? vertexAttachment->verticesCount / 3 * 2 : vertexAttachment->verticesCount;
+						tempDeform = MALLOC(float, deformLength);
+
+						timeline = sp42DeformTimeline_create(timelineMap->size, deformLength, timelineMap->size,
+														   slotIndex,
+														   vertexAttachment);
+
+						time = Json42_getFloat(keyMap, "time", 0);
+						for (frame = 0, bezier = 0;; ++frame) {
+							Json42 *vertices = Json42_getItem(keyMap, "vertices");
+							float *deform;
+							float time2;
+
+							if (!vertices) {
+								if (weighted) {
+									deform = tempDeform;
+									memset(deform, 0, sizeof(float) * deformLength);
+								} else
+									deform = vertexAttachment->vertices;
+							} else {
+								int v, start = Json42_getInt(keyMap, "offset", 0);
+								Json42 *vertex;
+								deform = tempDeform;
+								memset(deform, 0, sizeof(float) * start);
+								if (self->scale == 1) {
+									for (vertex = vertices->child, v = start; vertex; vertex = vertex->next, ++v)
+										deform[v] = vertex->valueFloat;
+								} else {
+									for (vertex = vertices->child, v = start; vertex; vertex = vertex->next, ++v)
+										deform[v] = vertex->valueFloat * self->scale;
+								}
+								memset(deform + v, 0, sizeof(float) * (deformLength - v));
+								if (!weighted) {
+									float *verticesValues = vertexAttachment->vertices;
+									for (v = 0; v < deformLength; ++v)
+										deform[v] += verticesValues[v];
+								}
+							}
+							sp42DeformTimeline_setFrame(timeline, frame, time, deform);
+							nextMap = keyMap->next;
+							if (!nextMap) {
+								/* timeline.shrink(); // BOZO */
+								break;
+							}
+							time2 = Json42_getFloat(nextMap, "time", 0);
+							curve = Json42_getItem(keyMap, "curve");
+							if (curve) {
+								bezier = readCurve(curve, SUPER(timeline), bezier, frame, 0, time, time2, 0, 1, 1);
+							}
+							time = time2;
+							keyMap = nextMap;
+						}
+						FREE(tempDeform);
+
+						sp42TimelineArray_add(timelines, SUPER(SUPER(timeline)));
+					} else if (!strcmp(timelineName, "sequence")) {
+						sp42SequenceTimeline *timeline = sp42SequenceTimeline_create(frames, slotIndex, baseAttachment);
+						float lastDelay = 0;
+						for (frame = 0; keyMap != NULL; keyMap = keyMap->next, frame++) {
+							float delay = Json42_getFloat(keyMap, "delay", lastDelay);
+							float time = Json42_getFloat(keyMap, "time", 0);
+							const char *modeString = Json42_getString(keyMap, "mode", "hold");
+							int index = Json42_getInt(keyMap, "index", 0);
+							int mode = SP_SEQUENCE_MODE_HOLD;
+							if (!strcmp(modeString, "once")) mode = SP_SEQUENCE_MODE_ONCE;
+							if (!strcmp(modeString, "loop")) mode = SP_SEQUENCE_MODE_LOOP;
+							if (!strcmp(modeString, "pingpong")) mode = SP_SEQUENCE_MODE_PINGPONG;
+							if (!strcmp(modeString, "onceReverse")) mode = SP_SEQUENCE_MODE_ONCEREVERSE;
+							if (!strcmp(modeString, "loopReverse")) mode = SP_SEQUENCE_MODE_LOOPREVERSE;
+							if (!strcmp(modeString, "pingpongReverse")) mode = SP_SEQUENCE_MODE_PINGPONGREVERSE;
+							sp42SequenceTimeline_setFrame(timeline, frame, time, mode, index, delay);
+							lastDelay = delay;
+						}
+						sp42TimelineArray_add(timelines, SUPER(timeline));
+					}
+				}
+			}
+		}
+	}
+
+	/* Draw order timeline. */
+	if (drawOrderJson) {
+		sp42DrawOrderTimeline *timeline = sp42DrawOrderTimeline_create(drawOrderJson->size, skeletonData->slotsCount);
+		for (keyMap = drawOrderJson->child, frame = 0; keyMap; keyMap = keyMap->next, ++frame) {
+			int ii;
+			int *drawOrder = 0;
+			Json42 *offsets = Json42_getItem(keyMap, "offsets");
+			if (offsets) {
+				Json42 *offsetMap;
+				int *unchanged = MALLOC(int, skeletonData->slotsCount - offsets->size);
+				int originalIndex = 0, unchangedIndex = 0;
+
+				drawOrder = MALLOC(int, skeletonData->slotsCount);
+				for (ii = skeletonData->slotsCount - 1; ii >= 0; --ii)
+					drawOrder[ii] = -1;
+
+				for (offsetMap = offsets->child; offsetMap; offsetMap = offsetMap->next) {
+					int slotIndex = findSlotIndex(self, skeletonData, Json42_getString(offsetMap, "slot", 0), timelines);
+					if (slotIndex == -1) return NULL;
+
+					/* Collect unchanged items. */
+					while (originalIndex != slotIndex)
+						unchanged[unchangedIndex++] = originalIndex++;
+					/* Set changed items. */
+					drawOrder[originalIndex + Json42_getInt(offsetMap, "offset", 0)] = originalIndex;
+					originalIndex++;
+				}
+				/* Collect remaining unchanged items. */
+				while (originalIndex < skeletonData->slotsCount)
+					unchanged[unchangedIndex++] = originalIndex++;
+				/* Fill in unchanged items. */
+				for (ii = skeletonData->slotsCount - 1; ii >= 0; ii--)
+					if (drawOrder[ii] == -1) drawOrder[ii] = unchanged[--unchangedIndex];
+				FREE(unchanged);
+			}
+			sp42DrawOrderTimeline_setFrame(timeline, frame, Json42_getFloat(keyMap, "time", 0), drawOrder);
+			FREE(drawOrder);
+		}
+
+		sp42TimelineArray_add(timelines, SUPER(timeline));
+	}
+
+	/* Event timeline. */
+	if (events) {
+		sp42EventTimeline *timeline = sp42EventTimeline_create(events->size);
+		for (keyMap = events->child, frame = 0; keyMap; keyMap = keyMap->next, ++frame) {
+			sp42Event *event;
+			const char *stringValue;
+			sp42EventData *eventData = sp42SkeletonData_findEvent(skeletonData, Json42_getString(keyMap, "name", 0));
+			if (!eventData) {
+				cleanUpTimelines(timelines);
+				_sp42SkeletonJson_setError(self, 0, "Event not found: ", Json42_getString(keyMap, "name", 0));
+				return NULL;
+			}
+			event = sp42Event_create(Json42_getFloat(keyMap, "time", 0), eventData);
+			event->intValue = Json42_getInt(keyMap, "int", eventData->intValue);
+			event->floatValue = Json42_getFloat(keyMap, "float", eventData->floatValue);
+			stringValue = Json42_getString(keyMap, "string", eventData->stringValue);
+			if (stringValue) MALLOC_STR(event->stringValue, stringValue);
+			if (eventData->audioPath) {
+				event->volume = Json42_getFloat(keyMap, "volume", 1);
+				event->balance = Json42_getFloat(keyMap, "volume", 0);
+			}
+			sp42EventTimeline_setFrame(timeline, frame, event);
+		}
+		sp42TimelineArray_add(timelines, SUPER(timeline));
+	}
+
+	duration = 0;
+	for (i = 0, n = timelines->size; i < n; ++i)
+		duration = MAX(duration, sp42Timeline_getDuration(timelines->items[i]));
+	return sp42Animation_create(root->name, timelines, duration);
+}
+
+static void
+_readVertices(sp42SkeletonJson *self, Json42 *attachmentMap, sp42VertexAttachment *attachment, int verticesLength) {
+	Json42 *entry;
+	float *vertices;
+	int i, n, nn, entrySize;
+	sp42FloatArray *weights;
+	sp42IntArray *bones;
+
+	attachment->worldVerticesLength = verticesLength;
+
+	entry = Json42_getItem(attachmentMap, "vertices");
+	entrySize = entry->size;
+	vertices = MALLOC(float, entrySize);
+	for (entry = entry->child, i = 0; entry; entry = entry->next, ++i)
+		vertices[i] = entry->valueFloat;
+
+	if (verticesLength == entrySize) {
+		if (self->scale != 1)
+			for (i = 0; i < entrySize; ++i)
+				vertices[i] *= self->scale;
+		attachment->verticesCount = verticesLength;
+		attachment->vertices = vertices;
+
+		attachment->bonesCount = 0;
+		attachment->bones = 0;
+		return;
+	}
+
+	weights = sp42FloatArray_create(verticesLength * 3 * 3);
+	bones = sp42IntArray_create(verticesLength * 3);
+
+	for (i = 0, n = entrySize; i < n;) {
+		int boneCount = (int) vertices[i++];
+		sp42IntArray_add(bones, boneCount);
+		for (nn = i + boneCount * 4; i < nn; i += 4) {
+			sp42IntArray_add(bones, (int) vertices[i]);
+			sp42FloatArray_add(weights, vertices[i + 1] * self->scale);
+			sp42FloatArray_add(weights, vertices[i + 2] * self->scale);
+			sp42FloatArray_add(weights, vertices[i + 3]);
+		}
+	}
+
+	attachment->verticesCount = weights->size;
+	attachment->vertices = weights->items;
+	FREE(weights);
+	attachment->bonesCount = bones->size;
+	attachment->bones = bones->items;
+	FREE(bones);
+
+	FREE(vertices);
+}
+
+sp42SkeletonData *sp42SkeletonJson_readSkeletonDataFile(sp42SkeletonJson *self, const char *path) {
+	int length;
+	sp42SkeletonData *skeletonData;
+	const char *json = _sp42Util_readFile(path, &length);
+	if (length == 0 || !json) {
+		_sp42SkeletonJson_setError(self, 0, "Unable to read skeleton file: ", path);
+		return NULL;
+	}
+	skeletonData = sp42SkeletonJson_readSkeletonData(self, json);
+	FREE(json);
+	return skeletonData;
+}
+
+static int string_starts_with(const char *str, const char *needle) {
+	int lenStr, lenNeedle, i;
+	if (!str) return 0;
+	lenStr = (int) strlen(str);
+	lenNeedle = (int) strlen(needle);
+	if (lenStr < lenNeedle) return 0;
+	for (i = 0; i < lenNeedle; i++) {
+		if (str[i] != needle[i]) return 0;
+	}
+	return -1;
+}
+
+sp42SkeletonData *sp42SkeletonJson_readSkeletonData(sp42SkeletonJson *self, const char *json) {
+	int i, ii;
+	sp42SkeletonData *skeletonData;
+	Json42 *root, *skeleton, *bones, *boneMap, *ik, *transform, *pathJson, *physics, *slots, *skins, *animations, *events;
+	_sp42SkeletonJson *internal = SUB_CAST(_sp42SkeletonJson, self);
+
+	FREE(self->error);
+	self->error = 0;
+	internal->linkedMeshCount = 0;
+
+	root = Json42_create(json);
+	if (!root) {
+		_sp42SkeletonJson_setError(self, 0, "Invalid skeleton JSON: ", Json42_getError());
+		return NULL;
+	}
+
+	skeletonData = sp42SkeletonData_create();
+
+	skeleton = Json42_getItem(root, "skeleton");
+	if (skeleton) {
+		MALLOC_STR(skeletonData->hash, Json42_getString(skeleton, "hash", "0"));
+		MALLOC_STR(skeletonData->version, Json42_getString(skeleton, "spine", "0"));
+		if (!string_starts_with(skeletonData->version, SPINE_VERSION_STRING)) {
+			char errorMsg[255];
+			snprintf(errorMsg, 255, "Skeleton version %s does not match runtime version %s", skeletonData->version, SPINE_VERSION_STRING);
+			_sp42SkeletonJson_setError(self, 0, errorMsg, NULL);
+			return NULL;
+		}
+		skeletonData->x = Json42_getFloat(skeleton, "x", 0);
+		skeletonData->y = Json42_getFloat(skeleton, "y", 0);
+		skeletonData->width = Json42_getFloat(skeleton, "width", 0);
+		skeletonData->height = Json42_getFloat(skeleton, "height", 0);
+		skeletonData->referenceScale = Json42_getFloat(skeleton, "referenceScale", 100) * self->scale;
+		skeletonData->fps = Json42_getFloat(skeleton, "fps", 30);
+		skeletonData->imagesPath = Json42_getString(skeleton, "images", 0);
+		if (skeletonData->imagesPath) {
+			char *tmp = NULL;
+			MALLOC_STR(tmp, skeletonData->imagesPath);
+			skeletonData->imagesPath = tmp;
+		}
+		skeletonData->audioPath = Json42_getString(skeleton, "audio", 0);
+		if (skeletonData->audioPath) {
+			char *tmp = NULL;
+			MALLOC_STR(tmp, skeletonData->audioPath);
+			skeletonData->audioPath = tmp;
+		}
+	}
+
+	/* Bones. */
+	bones = Json42_getItem(root, "bones");
+	skeletonData->bones = MALLOC(sp42BoneData *, bones->size);
+	for (boneMap = bones->child, i = 0; boneMap; boneMap = boneMap->next, ++i) {
+		sp42BoneData *data;
+		const char *inherit;
+		const char *color;
+
+		sp42BoneData *parent = 0;
+		const char *parentName = Json42_getString(boneMap, "parent", 0);
+		if (parentName) {
+			parent = sp42SkeletonData_findBone(skeletonData, parentName);
+			if (!parent) {
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Parent bone not found: ", parentName);
+				return NULL;
+			}
+		}
+
+		data = sp42BoneData_create(skeletonData->bonesCount, Json42_getString(boneMap, "name", 0), parent);
+		data->length = Json42_getFloat(boneMap, "length", 0) * self->scale;
+		data->x = Json42_getFloat(boneMap, "x", 0) * self->scale;
+		data->y = Json42_getFloat(boneMap, "y", 0) * self->scale;
+		data->rotation = Json42_getFloat(boneMap, "rotation", 0);
+		data->scaleX = Json42_getFloat(boneMap, "scaleX", 1);
+		data->scaleY = Json42_getFloat(boneMap, "scaleY", 1);
+		data->shearX = Json42_getFloat(boneMap, "shearX", 0);
+		data->shearY = Json42_getFloat(boneMap, "shearY", 0);
+		inherit = Json42_getString(boneMap, "inherit", "normal");
+		data->inherit = SP_INHERIT_NORMAL;
+		if (strcmp(inherit, "normal") == 0) data->inherit = SP_INHERIT_NORMAL;
+		else if (strcmp(inherit, "onlyTranslation") == 0)
+			data->inherit = SP_INHERIT_ONLYTRANSLATION;
+		else if (strcmp(inherit, "noRotationOrReflection") == 0)
+			data->inherit = SP_INHERIT_NOROTATIONORREFLECTION;
+		else if (strcmp(inherit, "noScale") == 0)
+			data->inherit = SP_INHERIT_NOSCALE;
+		else if (strcmp(inherit, "noScaleOrReflection") == 0)
+			data->inherit = SP_INHERIT_NOSCALEORREFLECTION;
+		data->skinRequired = Json42_getInt(boneMap, "skin", 0) ? 1 : 0;
+
+		color = Json42_getString(boneMap, "color", 0);
+		if (color) toColor2(&data->color, color, -1);
+
+		data->icon = Json42_getString(boneMap, "icon", "");
+		if (data->icon) {
+			char *tmp = NULL;
+			MALLOC_STR(tmp, data->icon);
+			data->icon = tmp;
+		}
+		data->visible = Json42_getInt(boneMap, "visible", -1) ? -1 : 0;
+
+		skeletonData->bones[i] = data;
+		skeletonData->bonesCount++;
+	}
+
+	/* Slots. */
+	slots = Json42_getItem(root, "slots");
+	if (slots) {
+		Json42 *slotMap;
+		skeletonData->slots = MALLOC(sp42SlotData *, slots->size);
+		for (slotMap = slots->child, i = 0; slotMap; slotMap = slotMap->next, ++i) {
+			sp42SlotData *data;
+			const char *color;
+			const char *dark;
+			Json42 *item;
+
+			const char *boneName = Json42_getString(slotMap, "bone", 0);
+			sp42BoneData *boneData = sp42SkeletonData_findBone(skeletonData, boneName);
+			if (!boneData) {
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Slot bone not found: ", boneName);
+				return NULL;
+			}
+
+			char *slotName = (char *) Json42_getString(slotMap, "name", NULL);
+			data = sp42SlotData_create(i, slotName, boneData);
+
+			color = Json42_getString(slotMap, "color", 0);
+			if (color) {
+				sp42Color_setFromFloats(&data->color,
+									  toColor(color, 0),
+									  toColor(color, 1),
+									  toColor(color, 2),
+									  toColor(color, 3));
+			}
+
+			dark = Json42_getString(slotMap, "dark", 0);
+			if (dark) {
+				data->darkColor = sp42Color_create();
+				sp42Color_setFromFloats(data->darkColor,
+									  toColor(dark, 0),
+									  toColor(dark, 1),
+									  toColor(dark, 2),
+									  1.0f);
+			}
+
+			item = Json42_getItem(slotMap, "attachment");
+			if (item) sp42SlotData_setAttachmentName(data, item->valueString);
+
+			item = Json42_getItem(slotMap, "blend");
+			if (item) {
+				if (strcmp(item->valueString, "additive") == 0)
+					data->blendMode = SP_BLEND_MODE_ADDITIVE;
+				else if (strcmp(item->valueString, "multiply") == 0)
+					data->blendMode = SP_BLEND_MODE_MULTIPLY;
+				else if (strcmp(item->valueString, "screen") == 0)
+					data->blendMode = SP_BLEND_MODE_SCREEN;
+			}
+
+			data->visible = Json42_getInt(slotMap, "visible", -1);
+			skeletonData->slots[i] = data;
+			skeletonData->slotsCount++;
+		}
+	}
+
+	/* IK constraints. */
+	ik = Json42_getItem(root, "ik");
+	if (ik) {
+		Json42 *constraintMap;
+		skeletonData->ikConstraints = MALLOC(sp42IkConstraintData *, ik->size);
+		for (constraintMap = ik->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
+			const char *targetName;
+
+			sp42IkConstraintData *data = sp42IkConstraintData_create(Json42_getString(constraintMap, "name", 0));
+			data->order = Json42_getInt(constraintMap, "order", 0);
+			data->skinRequired = Json42_getInt(constraintMap, "skin", 0) ? 1 : 0;
+
+			boneMap = Json42_getItem(constraintMap, "bones");
+			data->bonesCount = boneMap->size;
+			data->bones = MALLOC(sp42BoneData *, boneMap->size);
+			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
+				data->bones[ii] = sp42SkeletonData_findBone(skeletonData, boneMap->valueString);
+				if (!data->bones[ii]) {
+					sp42IkConstraintData_dispose(data);
+					sp42SkeletonData_dispose(skeletonData);
+					_sp42SkeletonJson_setError(self, root, "IK bone not found: ", boneMap->valueString);
+					return NULL;
+				}
+			}
+
+			targetName = Json42_getString(constraintMap, "target", 0);
+			data->target = sp42SkeletonData_findBone(skeletonData, targetName);
+			if (!data->target) {
+				sp42IkConstraintData_dispose(data);
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Target bone not found: ", targetName);
+				return NULL;
+			}
+
+			data->bendDirection = Json42_getInt(constraintMap, "bendPositive", 1) ? 1 : -1;
+			data->compress = Json42_getInt(constraintMap, "compress", 0) ? 1 : 0;
+			data->stretch = Json42_getInt(constraintMap, "stretch", 0) ? 1 : 0;
+			data->uniform = Json42_getInt(constraintMap, "uniform", 0) ? 1 : 0;
+			data->mix = Json42_getFloat(constraintMap, "mix", 1);
+			data->softness = Json42_getFloat(constraintMap, "softness", 0) * self->scale;
+
+			skeletonData->ikConstraints[i] = data;
+			skeletonData->ikConstraintsCount++;
+		}
+	}
+
+	/* Transform constraints. */
+	transform = Json42_getItem(root, "transform");
+	if (transform) {
+		Json42 *constraintMap;
+		skeletonData->transformConstraints = MALLOC(sp42TransformConstraintData *, transform->size);
+		for (constraintMap = transform->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
+			const char *name;
+
+			sp42TransformConstraintData *data = sp42TransformConstraintData_create(
+					Json42_getString(constraintMap, "name", 0));
+			data->order = Json42_getInt(constraintMap, "order", 0);
+			data->skinRequired = Json42_getInt(constraintMap, "skin", 0) ? 1 : 0;
+
+			boneMap = Json42_getItem(constraintMap, "bones");
+			data->bonesCount = boneMap->size;
+			data->bones = MALLOC(sp42BoneData *, boneMap->size);
+			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
+				data->bones[ii] = sp42SkeletonData_findBone(skeletonData, boneMap->valueString);
+				if (!data->bones[ii]) {
+					sp42TransformConstraintData_dispose(data);
+					sp42SkeletonData_dispose(skeletonData);
+					_sp42SkeletonJson_setError(self, root, "Transform bone not found: ", boneMap->valueString);
+					return NULL;
+				}
+			}
+
+			name = Json42_getString(constraintMap, "target", 0);
+			data->target = sp42SkeletonData_findBone(skeletonData, name);
+			if (!data->target) {
+				sp42TransformConstraintData_dispose(data);
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Target bone not found: ", name);
+				return NULL;
+			}
+
+			data->local = Json42_getInt(constraintMap, "local", 0);
+			data->relative = Json42_getInt(constraintMap, "relative", 0);
+			data->offsetRotation = Json42_getFloat(constraintMap, "rotation", 0);
+			data->offsetX = Json42_getFloat(constraintMap, "x", 0) * self->scale;
+			data->offsetY = Json42_getFloat(constraintMap, "y", 0) * self->scale;
+			data->offsetScaleX = Json42_getFloat(constraintMap, "scaleX", 0);
+			data->offsetScaleY = Json42_getFloat(constraintMap, "scaleY", 0);
+			data->offsetShearY = Json42_getFloat(constraintMap, "shearY", 0);
+
+			data->mixRotate = Json42_getFloat(constraintMap, "mixRotate", 1);
+			data->mixX = Json42_getFloat(constraintMap, "mixX", 1);
+			data->mixY = Json42_getFloat(constraintMap, "mixY", data->mixX);
+			data->mixScaleX = Json42_getFloat(constraintMap, "mixScaleX", 1);
+			data->mixScaleY = Json42_getFloat(constraintMap, "mixScaleY", data->mixScaleX);
+			data->mixShearY = Json42_getFloat(constraintMap, "mixShearY", 1);
+
+			skeletonData->transformConstraints[i] = data;
+			skeletonData->transformConstraintsCount++;
+		}
+	}
+
+	/* Path constraints */
+	pathJson = Json42_getItem(root, "path");
+	if (pathJson) {
+		Json42 *constraintMap;
+		skeletonData->pathConstraints = MALLOC(sp42PathConstraintData *, pathJson->size);
+		for (constraintMap = pathJson->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
+			const char *name;
+			const char *item;
+
+			sp42PathConstraintData *data = sp42PathConstraintData_create(Json42_getString(constraintMap, "name", 0));
+			data->order = Json42_getInt(constraintMap, "order", 0);
+			data->skinRequired = Json42_getInt(constraintMap, "skin", 0) ? 1 : 0;
+
+			boneMap = Json42_getItem(constraintMap, "bones");
+			data->bonesCount = boneMap->size;
+			data->bones = MALLOC(sp42BoneData *, boneMap->size);
+			for (boneMap = boneMap->child, ii = 0; boneMap; boneMap = boneMap->next, ++ii) {
+				data->bones[ii] = sp42SkeletonData_findBone(skeletonData, boneMap->valueString);
+				if (!data->bones[ii]) {
+					sp42PathConstraintData_dispose(data);
+					sp42SkeletonData_dispose(skeletonData);
+					_sp42SkeletonJson_setError(self, root, "Path bone not found: ", boneMap->valueString);
+					return NULL;
+				}
+			}
+
+			name = Json42_getString(constraintMap, "target", 0);
+			data->target = sp42SkeletonData_findSlot(skeletonData, name);
+			if (!data->target) {
+				sp42PathConstraintData_dispose(data);
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Target slot not found: ", name);
+				return NULL;
+			}
+
+			item = Json42_getString(constraintMap, "positionMode", "percent");
+			if (strcmp(item, "fixed") == 0) data->positionMode = SP_POSITION_MODE_FIXED;
+			else if (strcmp(item, "percent") == 0)
+				data->positionMode = SP_POSITION_MODE_PERCENT;
+
+			item = Json42_getString(constraintMap, "spacingMode", "length");
+			if (strcmp(item, "length") == 0) data->spacingMode = SP_SPACING_MODE_LENGTH;
+			else if (strcmp(item, "fixed") == 0)
+				data->spacingMode = SP_SPACING_MODE_FIXED;
+			else if (strcmp(item, "percent") == 0)
+				data->spacingMode = SP_SPACING_MODE_PERCENT;
+			else
+				data->spacingMode = SP_SPACING_MODE_PROPORTIONAL;
+
+			item = Json42_getString(constraintMap, "rotateMode", "tangent");
+			if (strcmp(item, "tangent") == 0) data->rotateMode = SP_ROTATE_MODE_TANGENT;
+			else if (strcmp(item, "chain") == 0)
+				data->rotateMode = SP_ROTATE_MODE_CHAIN;
+			else if (strcmp(item, "chainScale") == 0)
+				data->rotateMode = SP_ROTATE_MODE_CHAIN_SCALE;
+
+			data->offsetRotation = Json42_getFloat(constraintMap, "rotation", 0);
+			data->position = Json42_getFloat(constraintMap, "position", 0);
+			if (data->positionMode == SP_POSITION_MODE_FIXED) data->position *= self->scale;
+			data->spacing = Json42_getFloat(constraintMap, "spacing", 0);
+			if (data->spacingMode == SP_SPACING_MODE_LENGTH || data->spacingMode == SP_SPACING_MODE_FIXED)
+				data->spacing *= self->scale;
+			data->mixRotate = Json42_getFloat(constraintMap, "mixRotate", 1);
+			data->mixX = Json42_getFloat(constraintMap, "mixX", 1);
+			data->mixY = Json42_getFloat(constraintMap, "mixY", data->mixX);
+
+			skeletonData->pathConstraints[i] = data;
+			skeletonData->pathConstraintsCount++;
+		}
+	}
+
+	/* Physics constraints */
+	physics = Json42_getItem(root, "physics");
+	if (physics) {
+		Json42 *constraintMap;
+		skeletonData->physicsConstraintsCount = physics->size;
+		skeletonData->physicsConstraints = MALLOC(sp42PhysicsConstraintData *, physics->size);
+		for (constraintMap = physics->child, i = 0; constraintMap; constraintMap = constraintMap->next, ++i) {
+			const char *name;
+
+			sp42PhysicsConstraintData *data = sp42PhysicsConstraintData_create(
+					Json42_getString(constraintMap, "name", 0));
+			data->order = Json42_getInt(constraintMap, "order", 0);
+			data->skinRequired = Json42_getInt(constraintMap, "skin", 0);
+
+			name = Json42_getString(constraintMap, "bone", 0);
+			data->bone = sp42SkeletonData_findBone(skeletonData, name);
+			if (!data->bone) {
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Physics bone not found: ", name);
+				return NULL;
+			}
+
+			data->x = Json42_getFloat(constraintMap, "x", 0);
+			data->y = Json42_getFloat(constraintMap, "y", 0);
+			data->rotate = Json42_getFloat(constraintMap, "rotate", 0);
+			data->scaleX = Json42_getFloat(constraintMap, "scaleX", 0);
+			data->shearX = Json42_getFloat(constraintMap, "shearX", 0);
+			data->limit = Json42_getFloat(constraintMap, "limit", 5000) * self->scale;
+			data->step = 1.0f / Json42_getInt(constraintMap, "fps", 60);
+			data->inertia = Json42_getFloat(constraintMap, "inertia", 1);
+			data->strength = Json42_getFloat(constraintMap, "strength", 100);
+			data->damping = Json42_getFloat(constraintMap, "damping", 1);
+			data->massInverse = 1.0f / Json42_getFloat(constraintMap, "mass", 1);
+			data->wind = Json42_getFloat(constraintMap, "wind", 0);
+			data->gravity = Json42_getFloat(constraintMap, "gravity", 0);
+			data->mix = Json42_getFloat(constraintMap, "mix", 1);
+			data->inertiaGlobal = Json42_getInt(constraintMap, "inertiaGlobal", 0);
+			data->strengthGlobal = Json42_getInt(constraintMap, "strengthGlobal", 0);
+			data->dampingGlobal = Json42_getInt(constraintMap, "dampingGlobal", 0);
+			data->massGlobal = Json42_getInt(constraintMap, "massGlobal", 0);
+			data->windGlobal = Json42_getInt(constraintMap, "windGlobal", 0);
+			data->gravityGlobal = Json42_getInt(constraintMap, "gravityGlobal", 0);
+			data->mixGlobal = Json42_getInt(constraintMap, "mixGlobal", 0);
+
+			skeletonData->physicsConstraints[i] = data;
+		}
+	}
+
+	/* Skins. */
+	skins = Json42_getItem(root, "skins");
+	if (skins) {
+		Json42 *skinMap;
+		skeletonData->skins = MALLOC(sp42Skin *, skins->size);
+		for (skinMap = skins->child, i = 0; skinMap; skinMap = skinMap->next, ++i) {
+			Json42 *attachmentsMap;
+			Json42 *curves;
+			Json42 *skinPart;
+			sp42Skin *skin = sp42Skin_create(Json42_getString(skinMap, "name", ""));
+
+			skinPart = Json42_getItem(skinMap, "bones");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					sp42BoneData *bone = sp42SkeletonData_findBone(skeletonData, skinPart->valueString);
+					if (!bone) {
+						sp42Skin_dispose(skin);
+						sp42SkeletonData_dispose(skeletonData);
+						_sp42SkeletonJson_setError(self, root, "Skin bone constraint not found: ", skinPart->valueString);
+						return NULL;
+					}
+					sp42BoneDataArray_add(skin->bones, bone);
+				}
+			}
+
+			skinPart = Json42_getItem(skinMap, "ik");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					sp42IkConstraintData *constraint = sp42SkeletonData_findIkConstraint(skeletonData,
+																					 skinPart->valueString);
+					if (!constraint) {
+						sp42Skin_dispose(skin);
+						sp42SkeletonData_dispose(skeletonData);
+						_sp42SkeletonJson_setError(self, root, "Skin IK constraint not found: ", skinPart->valueString);
+						return NULL;
+					}
+					sp42IkConstraintDataArray_add(skin->ikConstraints, constraint);
+				}
+			}
+
+			skinPart = Json42_getItem(skinMap, "path");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					sp42PathConstraintData *constraint = sp42SkeletonData_findPathConstraint(skeletonData,
+																						 skinPart->valueString);
+					if (!constraint) {
+						sp42Skin_dispose(skin);
+						sp42SkeletonData_dispose(skeletonData);
+						_sp42SkeletonJson_setError(self, root, "Skin path constraint not found: ", skinPart->valueString);
+						return NULL;
+					}
+					sp42PathConstraintDataArray_add(skin->pathConstraints, constraint);
+				}
+			}
+
+			skinPart = Json42_getItem(skinMap, "transform");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					sp42TransformConstraintData *constraint = sp42SkeletonData_findTransformConstraint(skeletonData,
+																								   skinPart->valueString);
+					if (!constraint) {
+						sp42Skin_dispose(skin);
+						sp42SkeletonData_dispose(skeletonData);
+						_sp42SkeletonJson_setError(self, root, "Skin transform constraint not found: ",
+												 skinPart->valueString);
+						return NULL;
+					}
+					sp42TransformConstraintDataArray_add(skin->transformConstraints, constraint);
+				}
+			}
+
+			skinPart = Json42_getItem(skinMap, "physics");
+			if (skinPart) {
+				for (skinPart = skinPart->child; skinPart; skinPart = skinPart->next) {
+					sp42PhysicsConstraintData *constraint = sp42SkeletonData_findPhysicsConstraint(skeletonData,
+																							   skinPart->valueString);
+					if (!constraint) {
+						sp42SkeletonData_dispose(skeletonData);
+						_sp42SkeletonJson_setError(self, root, "Skin physics constraint not found: ", skinPart->valueString);
+						return NULL;
+					}
+					sp42PhysicsConstraintDataArray_add(skin->physicsConstraints, constraint);
+				}
+			}
+
+			skeletonData->skins[skeletonData->skinsCount++] = skin;
+			if (strcmp(skin->name, "default") == 0) skeletonData->defaultSkin = skin;
+
+			skinPart = Json42_getItem(skinMap, "attachments");
+			if (skinPart) {
+				for (attachmentsMap = skinPart->child; attachmentsMap; attachmentsMap = attachmentsMap->next) {
+					sp42SlotData *slot = sp42SkeletonData_findSlot(skeletonData, attachmentsMap->name);
+					Json42 *attachmentMap;
+
+					for (attachmentMap = attachmentsMap->child; attachmentMap; attachmentMap = attachmentMap->next) {
+						sp42Attachment *attachment;
+						const char *skinAttachmentName = attachmentMap->name;
+						const char *attachmentName = Json42_getString(attachmentMap, "name", skinAttachmentName);
+						const char *path = Json42_getString(attachmentMap, "path", attachmentName);
+						const char *color;
+						Json42 *entry;
+						sp42Sequence *sequence;
+
+						const char *typeString = Json42_getString(attachmentMap, "type", "region");
+						sp42AttachmentType type;
+						if (strcmp(typeString, "region") == 0) type = SP_ATTACHMENT_REGION;
+						else if (strcmp(typeString, "mesh") == 0)
+							type = SP_ATTACHMENT_MESH;
+						else if (strcmp(typeString, "linkedmesh") == 0)
+							type = SP_ATTACHMENT_LINKED_MESH;
+						else if (strcmp(typeString, "boundingbox") == 0)
+							type = SP_ATTACHMENT_BOUNDING_BOX;
+						else if (strcmp(typeString, "path") == 0)
+							type = SP_ATTACHMENT_PATH;
+						else if (strcmp(typeString, "clipping") == 0)
+							type = SP_ATTACHMENT_CLIPPING;
+						else if (strcmp(typeString, "point") == 0)
+							type = SP_ATTACHMENT_POINT;
+						else {
+							sp42SkeletonData_dispose(skeletonData);
+							_sp42SkeletonJson_setError(self, root, "Unknown attachment type: ", typeString);
+							return NULL;
+						}
+
+						sequence = readSequence(Json42_getItem(attachmentMap, "sequence"));
+						attachment = sp42AttachmentLoader_createAttachment(self->attachmentLoader, skin, type,
+																		 attachmentName,
+																		 path, sequence);
+						if (!attachment) {
+							if (self->attachmentLoader->error1) {
+								sp42SkeletonData_dispose(skeletonData);
+								_sp42SkeletonJson_setError(self, root, self->attachmentLoader->error1,
+														 self->attachmentLoader->error2);
+								return NULL;
+							}
+							continue;
+						}
+
+						switch (attachment->type) {
+							case SP_ATTACHMENT_REGION: {
+								sp42RegionAttachment *region = SUB_CAST(sp42RegionAttachment, attachment);
+								if (path) MALLOC_STR(region->path, path);
+								region->x = Json42_getFloat(attachmentMap, "x", 0) * self->scale;
+								region->y = Json42_getFloat(attachmentMap, "y", 0) * self->scale;
+								region->scaleX = Json42_getFloat(attachmentMap, "scaleX", 1);
+								region->scaleY = Json42_getFloat(attachmentMap, "scaleY", 1);
+								region->rotation = Json42_getFloat(attachmentMap, "rotation", 0);
+								region->width = Json42_getFloat(attachmentMap, "width", 32) * self->scale;
+								region->height = Json42_getFloat(attachmentMap, "height", 32) * self->scale;
+								region->sequence = sequence;
+
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&region->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+
+								if (region->region != NULL) sp42RegionAttachment_updateRegion(region);
+
+								sp42AttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
+								break;
+							}
+							case SP_ATTACHMENT_MESH:
+							case SP_ATTACHMENT_LINKED_MESH: {
+								sp42MeshAttachment *mesh = SUB_CAST(sp42MeshAttachment, attachment);
+
+								MALLOC_STR(mesh->path, path);
+
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&mesh->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+
+								mesh->width = Json42_getFloat(attachmentMap, "width", 32) * self->scale;
+								mesh->height = Json42_getFloat(attachmentMap, "height", 32) * self->scale;
+								mesh->sequence = sequence;
+
+								entry = Json42_getItem(attachmentMap, "parent");
+								if (!entry) {
+									int verticesLength;
+									entry = Json42_getItem(attachmentMap, "triangles");
+									mesh->trianglesCount = entry->size;
+									mesh->triangles = MALLOC(unsigned short, entry->size);
+									for (entry = entry->child, ii = 0; entry; entry = entry->next, ++ii)
+										mesh->triangles[ii] = (unsigned short) entry->valueInt;
+
+									entry = Json42_getItem(attachmentMap, "uvs");
+									verticesLength = entry->size;
+									mesh->regionUVs = MALLOC(float, verticesLength);
+									for (entry = entry->child, ii = 0; entry; entry = entry->next, ++ii)
+										mesh->regionUVs[ii] = entry->valueFloat;
+
+									_readVertices(self, attachmentMap, SUPER(mesh), verticesLength);
+
+									if (mesh->region != NULL) sp42MeshAttachment_updateRegion(mesh);
+
+									mesh->hullLength = Json42_getInt(attachmentMap, "hull", 0);
+
+									entry = Json42_getItem(attachmentMap, "edges");
+									if (entry) {
+										mesh->edgesCount = entry->size;
+										mesh->edges = MALLOC(unsigned short, entry->size);
+										for (entry = entry->child, ii = 0; entry; entry = entry->next, ++ii)
+											mesh->edges[ii] = (unsigned short) entry->valueInt;
+									}
+
+									sp42AttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
+								} else {
+									int inheritTimelines = Json42_getInt(attachmentMap, "timelines", 1);
+									_sp42SkeletonJson_addLinkedMesh(self, SUB_CAST(sp42MeshAttachment, attachment),
+																  Json42_getString(attachmentMap, "skin", 0), slot->index,
+																  entry->valueString, inheritTimelines);
+								}
+								break;
+							}
+							case SP_ATTACHMENT_BOUNDING_BOX: {
+								sp42BoundingBoxAttachment *box = SUB_CAST(sp42BoundingBoxAttachment, attachment);
+								int vertexCount = Json42_getInt(attachmentMap, "vertexCount", 0) << 1;
+								_readVertices(self, attachmentMap, SUPER(box), vertexCount);
+								box->super.verticesCount = vertexCount;
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&box->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+								sp42AttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
+								break;
+							}
+							case SP_ATTACHMENT_PATH: {
+								sp42PathAttachment *pathAttachment = SUB_CAST(sp42PathAttachment, attachment);
+								int vertexCount = 0;
+								pathAttachment->closed = Json42_getInt(attachmentMap, "closed", 0);
+								pathAttachment->constantSpeed = Json42_getInt(attachmentMap, "constantSpeed", 1);
+								vertexCount = Json42_getInt(attachmentMap, "vertexCount", 0);
+								_readVertices(self, attachmentMap, SUPER(pathAttachment), vertexCount << 1);
+
+								pathAttachment->lengthsLength = vertexCount / 3;
+								pathAttachment->lengths = MALLOC(float, pathAttachment->lengthsLength);
+
+								curves = Json42_getItem(attachmentMap, "lengths");
+								for (curves = curves->child, ii = 0; curves; curves = curves->next, ++ii)
+									pathAttachment->lengths[ii] = curves->valueFloat * self->scale;
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&pathAttachment->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+								break;
+							}
+							case SP_ATTACHMENT_POINT: {
+								sp42PointAttachment *point = SUB_CAST(sp42PointAttachment, attachment);
+								point->x = Json42_getFloat(attachmentMap, "x", 0) * self->scale;
+								point->y = Json42_getFloat(attachmentMap, "y", 0) * self->scale;
+								point->rotation = Json42_getFloat(attachmentMap, "rotation", 0);
+
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&point->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+								break;
+							}
+							case SP_ATTACHMENT_CLIPPING: {
+								sp42ClippingAttachment *clip = SUB_CAST(sp42ClippingAttachment, attachment);
+								int vertexCount = 0;
+								const char *end = Json42_getString(attachmentMap, "end", 0);
+								if (end) {
+									sp42SlotData *endSlot = sp42SkeletonData_findSlot(skeletonData, end);
+									clip->endSlot = endSlot;
+								}
+								vertexCount = Json42_getInt(attachmentMap, "vertexCount", 0) << 1;
+								_readVertices(self, attachmentMap, SUPER(clip), vertexCount);
+								color = Json42_getString(attachmentMap, "color", 0);
+								if (color) {
+									sp42Color_setFromFloats(&clip->color,
+														  toColor(color, 0),
+														  toColor(color, 1),
+														  toColor(color, 2),
+														  toColor(color, 3));
+								}
+								sp42AttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
+								break;
+							}
+						}
+
+						sp42Skin_setAttachment(skin, slot->index, skinAttachmentName, attachment);
+					}
+				}
+			}
+		}
+	}
+
+	/* Linked meshes. */
+	for (i = 0; i < internal->linkedMeshCount; ++i) {
+		sp42Attachment *parent;
+		_sp42LinkedMesh *linkedMesh = internal->linkedMeshes + i;
+		sp42Skin *skin = !linkedMesh->skin ? skeletonData->defaultSkin : sp42SkeletonData_findSkin(skeletonData, linkedMesh->skin);
+		if (!skin) {
+			sp42SkeletonData_dispose(skeletonData);
+			_sp42SkeletonJson_setError(self, root, "Skin not found: ", linkedMesh->skin);
+			return NULL;
+		}
+		parent = sp42Skin_getAttachment(skin, linkedMesh->slotIndex, linkedMesh->parent);
+		if (!parent) {
+			sp42SkeletonData_dispose(skeletonData);
+			_sp42SkeletonJson_setError(self, root, "Parent mesh not found: ", linkedMesh->parent);
+			return NULL;
+		}
+		linkedMesh->mesh->super.timelineAttachment = linkedMesh->inheritTimeline ? parent
+																				 : SUPER(SUPER(linkedMesh->mesh));
+		sp42MeshAttachment_setParentMesh(linkedMesh->mesh, SUB_CAST(sp42MeshAttachment, parent));
+		if (linkedMesh->mesh->region != NULL) sp42MeshAttachment_updateRegion(linkedMesh->mesh);
+		sp42AttachmentLoader_configureAttachment(self->attachmentLoader, SUPER(SUPER(linkedMesh->mesh)));
+	}
+
+	/* Events. */
+	events = Json42_getItem(root, "events");
+	if (events) {
+		Json42 *eventMap;
+		const char *stringValue;
+		const char *audioPath;
+		skeletonData->eventsCount = events->size;
+		skeletonData->events = MALLOC(sp42EventData *, events->size);
+		for (eventMap = events->child, i = 0; eventMap; eventMap = eventMap->next, ++i) {
+			sp42EventData *eventData = sp42EventData_create(eventMap->name);
+			eventData->intValue = Json42_getInt(eventMap, "int", 0);
+			eventData->floatValue = Json42_getFloat(eventMap, "float", 0);
+			stringValue = Json42_getString(eventMap, "string", 0);
+			if (stringValue) MALLOC_STR(eventData->stringValue, stringValue);
+			audioPath = Json42_getString(eventMap, "audio", 0);
+			if (audioPath) {
+				MALLOC_STR(eventData->audioPath, audioPath);
+				eventData->volume = Json42_getFloat(eventMap, "volume", 1);
+				eventData->balance = Json42_getFloat(eventMap, "balance", 0);
+			}
+			skeletonData->events[i] = eventData;
+		}
+	}
+
+	/* Animations. */
+	animations = Json42_getItem(root, "animations");
+	if (animations) {
+		Json42 *animationMap;
+		skeletonData->animations = MALLOC(sp42Animation *, animations->size);
+		for (animationMap = animations->child; animationMap; animationMap = animationMap->next) {
+			sp42Animation *animation = _sp42SkeletonJson_readAnimation(self, animationMap, skeletonData);
+			if (!animation) {
+				sp42SkeletonData_dispose(skeletonData);
+				_sp42SkeletonJson_setError(self, root, "Animation broken: ", animationMap->name);
+				return NULL;
+			}
+			skeletonData->animations[skeletonData->animationsCount++] = animation;
+		}
+	}
+
+	Json42_dispose(root);
+	return skeletonData;
+}

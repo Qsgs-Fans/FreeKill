@@ -1,0 +1,259 @@
+/******************************************************************************
+ * Spine Runtimes License Agreement
+ * Last updated September 24, 2021. Replaces all prior versions.
+ *
+ * Copyright (c) 2013-2021, Esoteric Software LLC
+ *
+ * Integration of the Spine Runtimes into software or otherwise creating
+ * derivative works of the Spine Runtimes is permitted under the terms and
+ * conditions of Section 2 of the Spine Editor License Agreement:
+ * http://esotericsoftware.com/spine-editor-license
+ *
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * "Products"), provided that each user of the Products must obtain their own
+ * Spine Editor license and redistribution of the Products in any form must
+ * include this license and copyright notice.
+ *
+ * THE SPINE RUNTIMES ARE PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES,
+ * BUSINESS INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THE SPINE RUNTIMES, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *****************************************************************************/
+
+#include <spine/Skeleton.h>
+#include <spine/TransformConstraint.h>
+#include <spine/extension.h>
+
+sp41TransformConstraint *sp41TransformConstraint_create(sp41TransformConstraintData *data, const sp41Skeleton *skeleton) {
+	int i;
+	sp41TransformConstraint *self = NEW(sp41TransformConstraint);
+	CONST_CAST(sp41TransformConstraintData *, self->data) = data;
+	self->mixRotate = data->mixRotate;
+	self->mixX = data->mixX;
+	self->mixY = data->mixY;
+	self->mixScaleX = data->mixScaleX;
+	self->mixScaleY = data->mixScaleY;
+	self->mixShearY = data->mixShearY;
+	self->bonesCount = data->bonesCount;
+	CONST_CAST(sp41Bone **, self->bones) = MALLOC(sp41Bone *, self->bonesCount);
+	for (i = 0; i < self->bonesCount; ++i)
+		self->bones[i] = sp41Skeleton_findBone(skeleton, self->data->bones[i]->name);
+	self->target = sp41Skeleton_findBone(skeleton, self->data->target->name);
+	return self;
+}
+
+void sp41TransformConstraint_dispose(sp41TransformConstraint *self) {
+	FREE(self->bones);
+	FREE(self);
+}
+
+void _sp41TransformConstraint_applyAbsoluteWorld(sp41TransformConstraint *self) {
+	float mixRotate = self->mixRotate, mixX = self->mixX, mixY = self->mixY, mixScaleX = self->mixScaleX,
+		  mixScaleY = self->mixScaleY, mixShearY = self->mixShearY;
+	int /*bool*/ translate = mixX != 0 || mixY != 0;
+	sp41Bone *target = self->target;
+	float ta = target->a, tb = target->b, tc = target->c, td = target->d;
+	float degRadReflect = ta * td - tb * tc > 0 ? DEG_RAD : -DEG_RAD;
+	float offsetRotation = self->data->offsetRotation * degRadReflect, offsetShearY =
+																			   self->data->offsetShearY * degRadReflect;
+	int i;
+	float a, b, c, d, r, cosine, sine, x, y, s, by;
+	for (i = 0; i < self->bonesCount; ++i) {
+		sp41Bone *bone = self->bones[i];
+
+		if (mixRotate != 0) {
+			a = bone->a, b = bone->b, c = bone->c, d = bone->d;
+			r = ATAN2(tc, ta) - ATAN2(c, a) + offsetRotation;
+			if (r > PI) r -= PI2;
+			else if (r < -PI)
+				r += PI2;
+			r *= mixRotate;
+			cosine = COS(r);
+			sine = SIN(r);
+			CONST_CAST(float, bone->a) = cosine * a - sine * c;
+			CONST_CAST(float, bone->b) = cosine * b - sine * d;
+			CONST_CAST(float, bone->c) = sine * a + cosine * c;
+			CONST_CAST(float, bone->d) = sine * b + cosine * d;
+		}
+
+		if (translate) {
+			sp41Bone_localToWorld(target, self->data->offsetX, self->data->offsetY, &x, &y);
+			CONST_CAST(float, bone->worldX) += (x - bone->worldX) * mixX;
+			CONST_CAST(float, bone->worldY) += (y - bone->worldY) * mixY;
+		}
+
+		if (mixScaleX > 0) {
+			s = SQRT(bone->a * bone->a + bone->c * bone->c);
+			if (s != 0) s = (s + (SQRT(ta * ta + tc * tc) - s + self->data->offsetScaleX) * mixScaleX) / s;
+			CONST_CAST(float, bone->a) *= s;
+			CONST_CAST(float, bone->c) *= s;
+		}
+		if (mixScaleY != 0) {
+			s = SQRT(bone->b * bone->b + bone->d * bone->d);
+			if (s != 0) s = (s + (SQRT(tb * tb + td * td) - s + self->data->offsetScaleY) * mixScaleY) / s;
+			CONST_CAST(float, bone->b) *= s;
+			CONST_CAST(float, bone->d) *= s;
+		}
+
+		if (mixShearY > 0) {
+			b = bone->b, d = bone->d;
+			by = ATAN2(d, b);
+			r = ATAN2(td, tb) - ATAN2(tc, ta) - (by - ATAN2(bone->c, bone->a));
+			s = SQRT(b * b + d * d);
+			if (r > PI) r -= PI2;
+			else if (r < -PI)
+				r += PI2;
+			r = by + (r + offsetShearY) * mixShearY;
+			CONST_CAST(float, bone->b) = COS(r) * s;
+			CONST_CAST(float, bone->d) = SIN(r) * s;
+		}
+		sp41Bone_updateAppliedTransform(bone);
+	}
+}
+
+void _sp41TransformConstraint_applyRelativeWorld(sp41TransformConstraint *self) {
+	float mixRotate = self->mixRotate, mixX = self->mixX, mixY = self->mixY, mixScaleX = self->mixScaleX,
+		  mixScaleY = self->mixScaleY, mixShearY = self->mixShearY;
+	int /*bool*/ translate = mixX != 0 || mixY != 0;
+	sp41Bone *target = self->target;
+	float ta = target->a, tb = target->b, tc = target->c, td = target->d;
+	float degRadReflect = ta * td - tb * tc > 0 ? DEG_RAD : -DEG_RAD;
+	float offsetRotation = self->data->offsetRotation * degRadReflect, offsetShearY =
+																			   self->data->offsetShearY * degRadReflect;
+	int i;
+	float a, b, c, d, r, cosine, sine, x, y, s;
+	for (i = 0; i < self->bonesCount; ++i) {
+		sp41Bone *bone = self->bones[i];
+
+		if (mixRotate != 0) {
+			a = bone->a, b = bone->b, c = bone->c, d = bone->d;
+			r = ATAN2(tc, ta) + offsetRotation;
+			if (r > PI) r -= PI2;
+			else if (r < -PI)
+				r += PI2;
+			r *= mixRotate;
+			cosine = COS(r);
+			sine = SIN(r);
+			CONST_CAST(float, bone->a) = cosine * a - sine * c;
+			CONST_CAST(float, bone->b) = cosine * b - sine * d;
+			CONST_CAST(float, bone->c) = sine * a + cosine * c;
+			CONST_CAST(float, bone->d) = sine * b + cosine * d;
+		}
+
+		if (translate != 0) {
+			sp41Bone_localToWorld(target, self->data->offsetX, self->data->offsetY, &x, &y);
+			CONST_CAST(float, bone->worldX) += (x * mixX);
+			CONST_CAST(float, bone->worldY) += (y * mixY);
+		}
+
+		if (mixScaleX != 0) {
+			s = (SQRT(ta * ta + tc * tc) - 1 + self->data->offsetScaleX) * mixScaleX + 1;
+			CONST_CAST(float, bone->a) *= s;
+			CONST_CAST(float, bone->c) *= s;
+		}
+		if (mixScaleY > 0) {
+			s = (SQRT(tb * tb + td * td) - 1 + self->data->offsetScaleY) * mixScaleY + 1;
+			CONST_CAST(float, bone->b) *= s;
+			CONST_CAST(float, bone->d) *= s;
+		}
+
+		if (mixShearY > 0) {
+			r = ATAN2(td, tb) - ATAN2(tc, ta);
+			if (r > PI) r -= PI2;
+			else if (r < -PI)
+				r += PI2;
+			b = bone->b, d = bone->d;
+			r = ATAN2(d, b) + (r - PI / 2 + offsetShearY) * mixShearY;
+			s = SQRT(b * b + d * d);
+			CONST_CAST(float, bone->b) = COS(r) * s;
+			CONST_CAST(float, bone->d) = SIN(r) * s;
+		}
+
+		sp41Bone_updateAppliedTransform(bone);
+	}
+}
+
+void _sp41TransformConstraint_applyAbsoluteLocal(sp41TransformConstraint *self) {
+	float mixRotate = self->mixRotate, mixX = self->mixX, mixY = self->mixY, mixScaleX = self->mixScaleX,
+		  mixScaleY = self->mixScaleY, mixShearY = self->mixShearY;
+	sp41Bone *target = self->target;
+	int i;
+	float rotation, r, x, y, scaleX, scaleY, shearY;
+
+	for (i = 0; i < self->bonesCount; ++i) {
+		sp41Bone *bone = self->bones[i];
+
+		rotation = bone->arotation;
+		if (mixRotate != 0) {
+			r = target->arotation - rotation + self->data->offsetRotation;
+			r -= (16384 - (int) (16384.499999999996 - r / 360)) * 360;
+			rotation += r * mixRotate;
+		}
+
+		x = bone->ax, y = bone->ay;
+		x += (target->ax - x + self->data->offsetX) * mixX;
+		y += (target->ay - y + self->data->offsetY) * mixY;
+
+		scaleX = bone->ascaleX, scaleY = bone->ascaleY;
+		if (mixScaleX != 0 && scaleX != 0)
+			scaleX = (scaleX + (target->ascaleX - scaleX + self->data->offsetScaleX) * mixScaleX) / scaleX;
+		if (mixScaleY != 0 && scaleY != 0)
+			scaleY = (scaleY + (target->ascaleY - scaleY + self->data->offsetScaleY) * mixScaleY) / scaleY;
+
+		shearY = bone->ashearY;
+		if (mixShearY != 0) {
+			r = target->ashearY - shearY + self->data->offsetShearY;
+			r -= (16384 - (int) (16384.499999999996 - r / 360)) * 360;
+			shearY += r * mixShearY;
+		}
+
+		sp41Bone_updateWorldTransformWith(bone, x, y, rotation, scaleX, scaleY, bone->ashearX, shearY);
+	}
+}
+
+void _sp41TransformConstraint_applyRelativeLocal(sp41TransformConstraint *self) {
+	float mixRotate = self->mixRotate, mixX = self->mixX, mixY = self->mixY, mixScaleX = self->mixScaleX,
+		  mixScaleY = self->mixScaleY, mixShearY = self->mixShearY;
+	sp41Bone *target = self->target;
+	int i;
+	float rotation, x, y, scaleX, scaleY, shearY;
+
+	for (i = 0; i < self->bonesCount; ++i) {
+		sp41Bone *bone = self->bones[i];
+
+		rotation = bone->arotation + (target->arotation + self->data->offsetRotation) * mixRotate;
+		x = bone->ax + (target->ax + self->data->offsetX) * mixX;
+		y = bone->ay + (target->ay + self->data->offsetY) * mixY;
+		scaleX = bone->ascaleX * (((target->ascaleX - 1 + self->data->offsetScaleX) * mixScaleX) + 1);
+		scaleY = bone->ascaleY * (((target->ascaleY - 1 + self->data->offsetScaleY) * mixScaleY) + 1);
+		shearY = bone->ashearY + (target->ashearY + self->data->offsetShearY) * mixShearY;
+
+		sp41Bone_updateWorldTransformWith(bone, x, y, rotation, scaleX, scaleY, bone->ashearX, shearY);
+	}
+}
+
+void sp41TransformConstraint_update(sp41TransformConstraint *self) {
+	if (self->mixRotate == 0 && self->mixX == 0 && self->mixY == 0 && self->mixScaleX == 0 && self->mixScaleX == 0 &&
+		self->mixShearY == 0)
+		return;
+
+	if (self->data->local) {
+		if (self->data->relative)
+			_sp41TransformConstraint_applyRelativeLocal(self);
+		else
+			_sp41TransformConstraint_applyAbsoluteLocal(self);
+
+	} else {
+		if (self->data->relative)
+			_sp41TransformConstraint_applyRelativeWorld(self);
+		else
+			_sp41TransformConstraint_applyAbsoluteWorld(self);
+	}
+}

@@ -1,0 +1,128 @@
+import QtQuick.tooling 1.2
+
+// This file describes the C++ types registered by registerSpineQmlTypes().
+// It is used for QML tooling (qmllint/qmlls) purposes only.
+
+Module {
+    Component {
+        name: "SpineVersion"
+        accessSemantics: "reference"
+        exports: ["Spine/SpineVersion 1.0"]
+        isCreatable: false
+        Enum {
+            name: "Type"
+            values: {
+                "Auto": 0,
+                "V21": 1,
+                "V34": 2,
+                "V35": 3,
+                "V36": 4,
+                "V37": 5,
+                "V38": 6,
+                "V40": 7,
+                "V41": 8,
+                "V42": 9,
+                "Unknown": 10
+            }
+        }
+    }
+    Component {
+        name: "SpineEventData"
+        accessSemantics: "reference"
+        prototype: "QObject"
+        exports: ["Spine/SpineEventData 1.0"]
+        Property { name: "name"; type: "string"; isReadonly: true }
+        Property { name: "intValue"; type: "int"; isReadonly: true }
+        Property { name: "floatValue"; type: "float"; isReadonly: true }
+        Property { name: "stringValue"; type: "string"; isReadonly: true }
+    }
+    Component {
+        name: "SpineEvent"
+        accessSemantics: "reference"
+        prototype: "QObject"
+        exports: ["Spine/SpineEvent 1.0"]
+        Property { name: "data"; type: "SpineEventData"; isReadonly: true }
+        Property { name: "intValue"; type: "int"; isReadonly: true }
+        Property { name: "floatValue"; type: "float"; isReadonly: true }
+        Property { name: "stringValue"; type: "string"; isReadonly: true }
+    }
+    Component {
+        name: "SkeletonAnimationFbo"
+        accessSemantics: "value"
+        prototype: "QQuickItem"
+        exports: ["Spine/SkeletonAnimationFbo 1.0"]
+        Property { name: "skeletonDataFile"; type: "QUrl"; read: "skeletonDataFile"; write: "setSkeletonDataFile"; notify: "skeletonDataFileChanged" }
+        Property { name: "atlasFile"; type: "QUrl"; read: "atlasFile"; write: "setAtlasFile"; notify: "atlasFileChanged" }
+        Property { name: "scale"; type: "float"; read: "scale"; write: "setScale"; notify: "scaleChanged" }
+        Property { name: "skin"; type: "string"; read: "skin"; write: "setSkin"; notify: "skinChanged" }
+        Property { name: "timeScale"; type: "float"; read: "timeScale"; write: "setTimeScale"; notify: "timeScaleChanged" }
+        Property { name: "premultipliedAlapha"; type: "bool"; read: "premultipliedAlapha"; write: "setPremultipliedAlapha"; notify: "premultipliedAlaphaChanged" }
+        Property { name: "debugSlots"; type: "bool"; read: "debugSlots"; write: "setDebugSlots"; notify: "debugSlotsChanged" }
+        Property { name: "debugBones"; type: "bool"; read: "debugBones"; write: "setDebugBones"; notify: "debugBonesChanged" }
+        Property { name: "sourceSize"; type: "QSize"; read: "sourceSize"; notify: "sourceSizeChanged"; isReadonly: true }
+        Property { name: "spineVersion"; type: "int"; read: "spineVersion"; write: "setSpineVersion"; notify: "spineVersionChanged" }
+        Property { name: "detectedVersion"; type: "int"; read: "detectedVersion"; notify: "detectedVersionChanged"; isReadonly: true }
+        Signal {
+            name: "skeletonStart"
+            Parameter { name: "trackIndex"; type: "int" }
+        }
+        Signal {
+            name: "skeletonEnd"
+            Parameter { name: "trackIndex"; type: "int" }
+        }
+        Signal {
+            name: "skeletonComplete"
+            Parameter { name: "trackIndex"; type: "int" }
+            Parameter { name: "loopCount"; type: "int" }
+        }
+        Signal {
+            name: "skeletonEvent"
+            Parameter { name: "trackIndex"; type: "int" }
+            Parameter { name: "event"; type: "SpineEvent" }
+        }
+        Signal { name: "skeletonDataFileChanged"; Parameter { name: "arg"; type: "QUrl" } }
+        Signal { name: "atlasFileChanged"; Parameter { name: "arg"; type: "QUrl" } }
+        Signal { name: "scaleChanged" }
+        Signal { name: "skinChanged" }
+        Signal { name: "timeScaleChanged" }
+        Signal { name: "premultipliedAlaphaChanged" }
+        Signal { name: "debugSlotsChanged" }
+        Signal { name: "debugBonesChanged" }
+        Signal { name: "sourceSizeChanged" }
+        Signal { name: "spineVersionChanged" }
+        Signal { name: "detectedVersionChanged" }
+        Method { name: "setToSetupPose" }
+        Method { name: "setBonesToSetupPose" }
+        Method { name: "setSlotsToSetupPose" }
+        Method {
+            name: "setAttachment"
+            Parameter { name: "slotName"; type: "string" }
+            Parameter { name: "attachmentName"; type: "string" }
+        }
+        Method {
+            name: "setMix"
+            Parameter { name: "fromAnimation"; type: "string" }
+            Parameter { name: "toAnimation"; type: "string" }
+            Parameter { name: "duration"; type: "float" }
+        }
+        Method {
+            name: "setAnimation"
+            Parameter { name: "trackIndex"; type: "int" }
+            Parameter { name: "name"; type: "string" }
+            Parameter { name: "loop"; type: "bool" }
+        }
+        Method {
+            name: "addAnimation"
+            Parameter { name: "trackIndex"; type: "int" }
+            Parameter { name: "name"; type: "string" }
+            Parameter { name: "loop"; type: "bool" }
+            Parameter { name: "delay"; type: "float" }
+        }
+        Method { name: "clearTracks" }
+        Method {
+            name: "clearTrack"
+            Parameter { name: "trackIndex"; type: "int" }
+        }
+        Method { name: "updateSkeletonAnimation" }
+    }
+}

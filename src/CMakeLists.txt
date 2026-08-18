@@ -60,6 +60,68 @@ if (NOT DEFINED FK_SERVER_ONLY)
     "client/replayer.cpp"
     # "ui/mod.cpp"
   )
+
+  # Spine 渲染器（版本无关接口 + 各版本后端；纯 C 运行时在下方按版本编译为静态库）
+  set(SPINE_PLUGIN_SRCS
+    "ui/spine/texture.cpp"
+    "ui/spine/skeletonrenderer.cpp"
+    "ui/spine/rendercmdscache.cpp"
+    "ui/spine/skeletonanimationfbo.cpp"
+    "ui/spine/spineevent.cpp"
+    "ui/spine/spineregister.cpp"
+    "ui/spine/spineversion.cpp"
+    "ui/spine/spinebackend_factory.cpp"
+    "ui/spine/spinebackend_21.cpp"
+    "ui/spine/spinebackend_34.cpp"
+    "ui/spine/spinebackend_35.cpp"
+    "ui/spine/spinebackend_36.cpp"
+    "ui/spine/spinebackend_37.cpp"
+    "ui/spine/spinebackend_38.cpp"
+    "ui/spine/spinebackend_40.cpp"
+    "ui/spine/spinebackend_41.cpp"
+    "ui/spine/spinebackend_42.cpp"
+  )
+  list(APPEND freekill_SRCS ${SPINE_PLUGIN_SRCS})
+
+  # spine-c 头文件中使用了 `slots` 作为字段名，与 Qt 关键字宏冲突，
+  # 必须对这些文件关闭 Qt 关键字（代码已用 Q_SIGNALS/Q_EMIT 编写）。
+  set_source_files_properties(${SPINE_PLUGIN_SRCS} PROPERTIES
+    COMPILE_DEFINITIONS QT_NO_KEYWORDS
+    SKIP_PRECOMPILE_HEADERS ON
+  )
+
+  include_directories("${PROJECT_SOURCE_DIR}/src/ui/spine")
+
+  # SkeletonAnimation.qml 资源打进主程序（避免静态库资源需 Q_INIT_RESOURCE 的问题）
+  set_property(TARGET FreeKill PROPERTY AUTORCC ON)
+  list(APPEND freekill_EXESRCS "${PROJECT_SOURCE_DIR}/src/ui/spine/resource.qrc")
+
+  # 多版本 spine-c 运行时（源码已按版本重命名符号，互不冲突）
+  # 支持 2.1 / 3.4~3.8 / 4.0~4.2，供版本自动/显式分发使用
+  set(SPINE_RUNTIME_VERSIONS 21 34 35 36 37 38 40 41 42)
+  foreach(SPINE_VER IN LISTS SPINE_RUNTIME_VERSIONS)
+    file(GLOB SPINE_VER_SRCS
+      "${PROJECT_SOURCE_DIR}/src/spine-versions/spine-c-${SPINE_VER}/src/spine/*.c")
+    add_library(spine${SPINE_VER} STATIC ${SPINE_VER_SRCS})
+    # BEFORE：确保优先搜索本版本头文件，而不是旧的 src/spine-c/include
+    target_include_directories(spine${SPINE_VER} BEFORE PRIVATE
+      "${PROJECT_SOURCE_DIR}/src/spine-versions/spine-c-${SPINE_VER}/include")
+    set_target_properties(spine${SPINE_VER} PROPERTIES
+      C_STANDARD 11
+      C_EXTENSIONS ON)
+    # 旧版 C 代码告警较多，降级为不报错
+    if(MSVC)
+      target_compile_options(spine${SPINE_VER} PRIVATE /W0)
+    else()
+      target_compile_options(spine${SPINE_VER} PRIVATE -w)
+    endif()
+    # 后端 .cpp 只包含对应版本的 <spine/spine.h>，按文件指定 include 路径
+    set_source_files_properties(
+      "${PROJECT_SOURCE_DIR}/src/ui/spine/spinebackend_${SPINE_VER}.cpp"
+      PROPERTIES INCLUDE_DIRECTORIES
+      "${PROJECT_SOURCE_DIR}/src/spine-versions/spine-c-${SPINE_VER}/include")
+    list(APPEND SPINE_LIBS spine${SPINE_VER})
+  endforeach()
 endif ()
 
 set(QT_LIB Qt6::Network)
@@ -73,6 +135,7 @@ if (NOT DEFINED FK_SERVER_ONLY)
     Qt6::Multimedia
     Qt6::QuickControls2
     Qt6::Concurrent
+    Qt6::OpenGL
   )
 endif()
 
@@ -149,6 +212,7 @@ target_link_libraries(libFreeKill PRIVATE
   ${GIT_LIB}
   ${IDBFS_LIB}
   ${JEMALLOC_LIBRARIES}
+  ${SPINE_LIBS}
 )
 
 if (${CMAKE_BUILD_TYPE}0 STREQUAL "Debug0")

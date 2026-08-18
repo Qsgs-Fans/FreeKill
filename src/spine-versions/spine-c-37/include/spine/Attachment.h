@@ -1,0 +1,82 @@
+/******************************************************************************
+ * Spine Runtimes License Agreement
+ * Last updated May 1, 2019. Replaces all prior versions.
+ *
+ * Copyright (c) 2013-2019, Esoteric Software LLC
+ *
+ * Integration of the Spine Runtimes into software or otherwise creating
+ * derivative works of the Spine Runtimes is permitted under the terms and
+ * conditions of Section 2 of the Spine Editor License Agreement:
+ * http://esotericsoftware.com/spine-editor-license
+ *
+ * Otherwise, it is permitted to integrate the Spine Runtimes into software
+ * or otherwise create derivative works of the Spine Runtimes (collectively,
+ * "Products"), provided that each user of the Products must obtain their own
+ * Spine Editor license and redistribution of the Products in any form must
+ * include this license and copyright notice.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ESOTERIC SOFTWARE LLC "AS IS" AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+ * NO EVENT SHALL ESOTERIC SOFTWARE LLC BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, BUSINESS
+ * INTERRUPTION, OR LOSS OF USE, DATA, OR PROFITS) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *****************************************************************************/
+
+#ifndef SPINE_ATTACHMENT_H_
+#define SPINE_ATTACHMENT_H_
+
+#include <spine/dll.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct sp37AttachmentLoader;
+
+typedef enum {
+	SP_ATTACHMENT_REGION,
+	SP_ATTACHMENT_BOUNDING_BOX,
+	SP_ATTACHMENT_MESH,
+	SP_ATTACHMENT_LINKED_MESH,
+	SP_ATTACHMENT_PATH,
+	SP_ATTACHMENT_POINT,
+	SP_ATTACHMENT_CLIPPING
+} sp37AttachmentType;
+
+typedef struct sp37Attachment {
+	const char* const name;
+	const sp37AttachmentType type;
+	const void* const vtable;
+	struct sp37AttachmentLoader* attachmentLoader;
+
+#ifdef __cplusplus
+	sp37Attachment() :
+		name(0),
+		type(SP_ATTACHMENT_REGION),
+		vtable(0) {
+	}
+#endif
+} sp37Attachment;
+
+void sp37Attachment_dispose (sp37Attachment* self);
+
+#ifdef SPINE_SHORT_NAMES
+typedef sp37AttachmentType AttachmentType;
+#define ATTACHMENT_REGION SP_ATTACHMENT_REGION
+#define ATTACHMENT_BOUNDING_BOX SP_ATTACHMENT_BOUNDING_BOX
+#define ATTACHMENT_MESH SP_ATTACHMENT_MESH
+#define ATTACHMENT_LINKED_MESH SP_ATTACHMENT_LINKED_MESH
+typedef sp37Attachment Attachment;
+#define Attachment_dispose(...) sp37Attachment_dispose(__VA_ARGS__)
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* SPINE_ATTACHMENT_H_ */
