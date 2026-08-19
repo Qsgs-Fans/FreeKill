@@ -1,0 +1,149 @@
+name: Build For Apple Platforms
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    name: Build macOS DMG
+    runs-on: macos-15
+
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install build tools
+      run: brew install cmake ninja swig
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.10.0'
+        host: 'mac'
+        target: 'desktop'
+        arch: 'clang_64'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Install native dependencies
+      run: |
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
+        "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+        "$RUNNER_TEMP/vcpkg/vcpkg" install \
+          lua:x64-osx sqlite3:x64-osx openssl:x64-osx libgit2:x64-osx
+
+    - name: Configure CMake Project
+      run: |
+        cmake -S . -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=MinSizeRel \
+          -DCMAKE_TOOLCHAIN_FILE="$RUNNER_TEMP/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+          -DCMAKE_PREFIX_PATH="$Qt6_DIR"
+
+    - name: Build project
+      run: cmake --build build --parallel 4
+
+    - name: Deploy and package DMG
+      run: |
+        "$Qt6_DIR/bin/macdeployqt" build/FreeKill.app -qmldir=Fk -dmg
+        mv build/FreeKill.dmg "FreeKill-${GITHUB_REF_NAME}-macOS.dmg"
+
+    - name: Upload DMG
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-dmg
+        path: FreeKill-${{ github.ref_name }}-macOS.dmg
+
+    - name: Upload DMG to release
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: FreeKill-${{ github.ref_name }}-macOS.dmg
+
+  ios:
+    name: Build iOS IPA
+    runs-on: macos-15
+
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install build tools
+      run: brew install cmake ninja swig
+
+    - name: Install Qt for host
+      uses: jurplel/install-qt-action@v4
+      with:
+        dir: ${{ runner.temp }}/qt-host
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.10.0'
+        host: 'mac'
+        target: 'desktop'
+        arch: 'clang_64'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Save Qt host path
+      run: echo "QT_HOST_PATH=$Qt6_DIR" >> "$GITHUB_ENV"
+
+    - name: Install Qt for iOS
+      uses: jurplel/install-qt-action@v4
+      with:
+        dir: ${{ runner.temp }}/qt-ios
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.10.0'
+        host: 'mac'
+        target: 'ios'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Install iOS dependencies
+      run: |
+        git clone --depth 1 https://github.com/microsoft/vcpkg.git "$RUNNER_TEMP/vcpkg"
+        "$RUNNER_TEMP/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+        "$RUNNER_TEMP/vcpkg/vcpkg" install \
+          lua:arm64-ios sqlite3:arm64-ios openssl:arm64-ios libgit2:arm64-ios
+
+    - name: Configure CMake Project
+      run: |
+        "$Qt6_DIR/bin/qt-cmake" -S . -B build-ios -G Xcode \
+          -DCMAKE_BUILD_TYPE=MinSizeRel \
+          -DCMAKE_TOOLCHAIN_FILE="$RUNNER_TEMP/vcpkg/scripts/buildsystems/vcpkg.cmake" \
+          -DVCPKG_TARGET_TRIPLET=arm64-ios \
+          -DQT_HOST_PATH="$QT_HOST_PATH"
+
+    - name: Build unsigned archive
+      run: |
+        cmake --build build-ios --config MinSizeRel -- \
+          -sdk iphoneos CODE_SIGNING_ALLOWED=NO
+
+    - name: Package unsigned IPA
+      run: |
+        APP_PATH=$(find build-ios -type d -name FreeKill.app -path '*iphoneos*' -print -quit)
+        test -n "$APP_PATH"
+        mkdir Payload
+        cp -R "$APP_PATH" Payload/
+        ditto -c -k --sequesterRsrc --keepParent Payload \
+          "FreeKill-${GITHUB_REF_NAME}-iOS-unsigned.ipa"
+
+    - name: Upload IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-ipa-unsigned
+        path: FreeKill-${{ github.ref_name }}-iOS-unsigned.ipa
+
+    - name: Upload IPA to release
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: FreeKill-${{ github.ref_name }}-iOS-unsigned.ipa

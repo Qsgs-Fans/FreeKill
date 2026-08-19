@@ -31,7 +31,7 @@ using namespace fkShell;
 
 #include <QTextStream>
 
-#if defined(Q_OS_ANDROID)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_MACOS)
 static bool copyPath(const QString &srcFilePath, const QString &tgtFilePath) {
   QFileInfo srcFileInfo(srcFilePath);
   if (srcFileInfo.isDir()) {
@@ -69,6 +69,8 @@ static void installFkAssets(const QString &src, const QString &dest) {
     }
   }
 #ifdef Q_OS_ANDROID
+  copyPath(src, dest);
+#elif defined(Q_OS_IOS) || defined(Q_OS_MACOS)
   copyPath(src, dest);
 #elif defined(Q_OS_LINUX)
   system(QString("cp -r %1 %2/..").arg(src).arg(dest).toUtf8());
@@ -248,6 +250,11 @@ int freekill_main(int argc, char *argv[]) {
 
 #if defined(Q_OS_LINUX) && !defined(Q_OS_ANDROID)
   prepareForLinux();
+#elif defined(Q_OS_IOS) || defined(Q_OS_MACOS)
+  const auto dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+  QDir().mkpath(dataPath);
+  QDir::setCurrent(dataPath);
+  installFkAssets(":/res", dataPath);
 #endif
 
   if (!log_file) {
@@ -342,7 +349,6 @@ int freekill_main(int argc, char *argv[]) {
   splash.showMessage(msg, Qt::AlignHCenter | Qt::AlignBottom);
 
 #ifdef Q_OS_ANDROID
-  // 投降喵，设为android根本无效
   // 直接改用Android原生Mediaplayer了，不用你Qt家的
   // qputenv("QT_MEDIA_BACKEND", "android");
 
@@ -381,8 +387,18 @@ int freekill_main(int argc, char *argv[]) {
   splash.showFullScreen();
   SHOW_SPLASH_MSG("Copying resources...");
   installFkAssets("assets:/res", QDir::currentPath());
+#elif defined(Q_OS_IOS)
+  auto localeName = QLocale::system().name();
+
+  QScreen *screen = qobject_cast<QApplication *>(app)->primaryScreen();
+  QRect screenGeometry = screen->geometry();
+  QSplashScreen splash(QPixmap(":/res/image/splash.jpg")
+                           .scaled(screenGeometry.size()));
+  splash.showFullScreen();
+  SHOW_SPLASH_MSG("Copying resources...");
+  installFkAssets(":/res", QDir::currentPath());
 #else
-  // 不是安卓，使用QLocale获得系统语言
+  // 不是移动端，使用QLocale获得系统语言
   QLocale l = QLocale::system();
   auto localeName = l.name();
 
@@ -470,6 +486,10 @@ int freekill_main(int argc, char *argv[]) {
   SetConsoleOutputCP(CP_UTF8);
 #elif defined(Q_OS_LINUX)
   system = QStringLiteral("Linux");
+#elif defined(Q_OS_IOS)
+  system = QStringLiteral("iOS");
+#elif defined(Q_OS_MACOS)
+  system = QStringLiteral("macOS");
 #else
   system = QStringLiteral("Other");
 #endif

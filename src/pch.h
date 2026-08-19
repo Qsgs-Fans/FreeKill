@@ -16,7 +16,7 @@
 
 #define QT_ENABLE_STRICT_MODE_UP_TO 0x060200
 
-#if !defined (Q_OS_ANDROID)
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_IOS)
 #define DESKTOP_BUILD
 #endif
 
