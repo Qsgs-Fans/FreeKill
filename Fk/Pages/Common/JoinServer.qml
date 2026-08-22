@@ -12,6 +12,9 @@ Item {
   anchors.fill: parent
   property var selectedServer: serverModel.get(serverList.currentIndex)
 
+  readonly property string serverListUrl:
+    "https://cdn.jsdelivr.net/gh/Qsgs-Fans/freekill-server-list@master/server-list.json"
+
   Timer {
     id: opTimer
     interval: 5000
@@ -163,6 +166,7 @@ Item {
       enabled: !opTimer.running
       onClicked: {
         opTimer.start();
+        fetchPublicServerList();
         for (let i = 0; i < serverModel.count; i++) {
           const item = serverModel.get(i);
           if (!item.favorite && !item.lan) break;
@@ -401,20 +405,26 @@ Item {
     }
   }
 
-  function loadConfig() {
-    if (serverModel.count > 0) { return; }
-    let serverList = JSON.parse(Backend.getPublicServerList());
-    if (!(serverList instanceof Array)) serverList = [];
-    serverList.unshift(...Config.favoriteServers);
-    for (const server of serverList) {
-      let { addr, port, name, username, password } = server;
-      name = name ?? "";
-      username = username ?? "";
-      password = password ?? "";
-      if (port === -1) break;
-      if (!password && Config.findFavorite(addr, port)) continue;
+  function appendServers(list) {
+    if (!(list instanceof Array)) return;
+    for (const server of list) {
+      const addr = server.addr ?? "";
+      const port = server.port ?? 0;
+      if (!addr || port <= 0) continue; 
+      let exists = false;
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === addr && s.port === port) {
+          exists = true;
+          break;
+        }
+      }
+      if (exists) continue;
       serverModel.append({
-        addr, port, name, username, password,
+        addr, port,
+        name: server.name ?? "",
+        username: server.username ?? "",
+        password: server.password ?? "",
         misMatchMsg: "",
         description: qsTr("Server not up"),
         online: "?",
@@ -422,10 +432,62 @@ Item {
         favicon: "",
         delayBegin: (new Date).getTime(),
         delay: -1,
-        favorite: !!password,
+        favorite: !!server.password,
         lan: false,
       });
       Backend.getServerInfo(addr, port);
     }
+  }
+
+  function applyPublicServerList(list) {
+    let selAddr, selPort;
+    if (serverList.currentIndex >= 0) {
+      const sel = serverModel.get(serverList.currentIndex);
+      if (sel) { selAddr = sel.addr; selPort = sel.port; }
+    }
+    for (let i = serverModel.count - 1; i >= 0; i--) {
+      const s = serverModel.get(i);
+      if (!s.favorite && !s.lan) serverModel.remove(i);
+    }
+    appendServers(list);
+    if (selAddr !== undefined) {
+      serverList.currentIndex = -1;
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === selAddr && s.port === selPort) {
+          serverList.currentIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  function fetchPublicServerList() {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", serverListUrl + "?t=" + Date.now());
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== XMLHttpRequest.DONE) return;
+      if (xhr.status !== 200) return;
+      let list;
+      try {
+        list = JSON.parse(xhr.responseText);
+      } catch (e) {
+        return;
+      }
+      if (list instanceof Array) {
+        applyPublicServerList(list);
+      }
+    };
+    xhr.send();
+  }
+
+  function loadConfig() {
+    if (serverModel.count === 0) {
+      appendServers(Config.favoriteServers);
+      let staticList = JSON.parse(Backend.getPublicServerList());
+      if (!(staticList instanceof Array)) staticList = [];
+      appendServers(staticList);
+    }
+    fetchPublicServerList();
   }
 }
