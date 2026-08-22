@@ -915,7 +915,13 @@ function Card:setVSPattern(skillName, player, pattern)
     self.skillName = skillName
   end
   if pattern then
-    self:setMark("Global_VS_Pattern", pattern)
+    local exp = Exppattern:Parse(pattern)
+    for _, m in ipairs(exp.matchers) do
+      --牌名信息已确认，直接指定（前面大概率是不会写的）
+      --m.name = { self.name }
+      m.trueName = { self.trueName }
+    end
+    self:setMark("Global_VS_Pattern", tostring(exp))
   else
     local skill = Fk.skills[skillName] ---@type ViewAsSkill
     if skill:isInstanceOf(ViewAsSkill) then

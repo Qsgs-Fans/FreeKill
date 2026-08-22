@@ -21,7 +21,8 @@ GameEvent.Damage = tmp[2]
 GameEvent.LoseHp = tmp[3]
 GameEvent.Recover = tmp[4]
 GameEvent.ChangeMaxHp = tmp[5]
-table.assign(GameEventWrappers, tmp[6])
+GameEvent.ChangeShield = tmp[6]
+table.assign(GameEventWrappers, tmp[7])
 
 tmp = require "ltk.server.events.death"
 GameEvent.Dying = tmp[1]

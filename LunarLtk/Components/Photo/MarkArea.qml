@@ -38,8 +38,9 @@ Item {
       id: markItem
       required property var modelData
       width: childrenRect.width
-      height: 16
+      height: textItem.implicitHeight
       Text {
+        id: textItem
         text: {
           const data = markItem.modelData;
           if (!data) return "";
@@ -95,25 +96,26 @@ Item {
 
     marks.concat(long_marks).forEach(item => {
       const w = item.width;
+      const h = item.height;
       if (x === 0) {
         item.x = x; item.y = y;
 
         if (w < width / 2) {
           x += width / 2;
         } else {
-          x = 0; y += rowHeight;
+          x = 0; y += h;
         }
       } else {
         if (w < width / 2) {
           item.x = x; item.y = y;
-          x = 0; y += rowHeight;
+          x = 0; y += h;
         } else {
-          item.x = 0; item.y = y + rowHeight;
-          x = 0; y += rowHeight * 2;
+          item.x = 0; item.y = y + h;
+          x = 0; y += h * 2;
         }
       }
 
-      height = x ? y + rowHeight : y;
+      height = x ? y + h : y;
     });
 
     if (i === 0) height = 0;

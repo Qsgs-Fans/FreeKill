@@ -420,6 +420,7 @@ Item {
       source: Config.roomBg
       anchors.fill: parent
       fillMode: Image.PreserveAspectCrop
+      pause: false
     }
   }
 

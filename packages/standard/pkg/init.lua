@@ -112,6 +112,7 @@ local role_getlogic = function()
           targets = lord,
           generals = generals,
           needDeputy = room:getSettings("enableDeputy"),
+          returnPile = true,
         })
       end
 
@@ -270,52 +271,37 @@ local role_mode = fk.CreateGameMode{
     return ""
   end,
   surrender_func = function(self, playedTime, player)
-    local roleCheck = false
-    local roleText = ""
+    if player.role == "loyalist" or player.role == "civilian" then
+      return { { text = player.role.." never surrender", passed = false } }
+    end
 
     local alive_players = table.filter(Fk:currentRoom().players, function(p)
       return not p.dead or p.rest > 0
     end)
-
-    if player.role == "renegade" then
-      roleCheck = not table.find(alive_players, function(p)
-        return p ~= player and table.contains({"rebel", "rebel_chief", "renegade"}, p.role)
-      end)
-      roleText = "left lord and loyalist alive"
-    elseif player.role == "rebel" or player.role == "rebel_chief" then
-      roleCheck = #table.filter(alive_players, function(p)
-        return table.contains({"rebel", "rebel_chief", "renegade"}, p.role)
-      end) == 1
-      roleText = "left one rebel alive"
+    local roleText = "left you alive"
+    local roleCheck = false
+    if #alive_players <= 2 then
+      roleCheck = true
     else
-      if player.role == "loyalist" or player.role == "civilian" then
-        return { { text = player.role.." never surrender", passed = false } }
-      else
-        if #alive_players < 3 then
-          roleCheck = true
-        else
-          roleText = "left you alive"
-          local left_loyalist, left_rebel, left_renegade = false, false, false
-          for _, p in ipairs(alive_players) do
-            if p ~= player then
-              if table.contains({"lord", "loyalist"}, p.role) then
-                left_loyalist = true
-                break
-              else
-                if table.contains({"rebel", "rebel_chief"}, p.role) then
-                  left_rebel = true
-                elseif p.role == "renegade" then
-                  left_renegade = true
-                end
-              end
+      local other = nil ---@type Player
+      for _, p in ipairs(alive_players) do
+        if p ~= player then
+          other = p
+          break
+        end
+      end
+      if other and not other:isFriend(player) then
+        local non_friend_count = 0
+        for _, t in ipairs(alive_players) do
+          if not other:isFriend(t) then
+            non_friend_count = non_friend_count + 1
+
+            if non_friend_count > 1 then
+              break
             end
           end
-          if left_loyalist then
-            roleCheck = false
-          else
-            roleCheck = not (left_rebel and left_renegade)
-          end
         end
+        roleCheck = (non_friend_count == 1) -- onlyYou
       end
     end
 
@@ -412,9 +398,7 @@ role_mode.ui_settings = {
 extension:addGameMode(role_mode)
 Fk:loadTranslationTable{
   ["time limitation: 5 min"] = "游戏时长达到5分钟",
-  ["left lord and loyalist alive"] = "仅剩你和主忠方存活",
-  ["left one rebel alive"] = "反贼仅剩你存活且不存在存活内奸",
-  ["left you alive"] = "主忠方仅剩你存活且其他阵营仅剩一方",
+  ["left you alive"] = "你的阵营仅剩你存活且其他阵营仅剩一方",
   ["loyalist never surrender"] = "忠臣永不投降！",
   ["civilian never surrender"] = "平民坚持就是成功！",
 
@@ -437,7 +421,7 @@ Fk:loadTranslationTable{
       "主公死亡时，若储君为忠臣，获得主公区域内至多两张牌，增加1点体力上限，回复1点体力，变为主公；" ..
       "忠臣储君死亡时，主公失去1点体力；储君杀死主公弃置所有牌。",
   ["RenegadeLoyalty"] = "内奸侍奉明主",
-  ["help: RenegadeLoyalty"] = "场上人数＞4且有主忠死亡时，内奸可以变为忠臣。",
+  ["help: RenegadeLoyalty"] = "场上人数＞4且有主忠死亡时，内奸可以变为忠臣（不暴露身份）。",
   ["RenegadeWild"] = "内奸自立",
   ["help: RenegadeWild"] = "内奸可以成为野心家：获得野心家标记（出牌阶段，弃置以摸两张牌或回复1点体力）" ..
       "和〖飞扬〗〖跋扈〗，杀死角色摸三张牌。",

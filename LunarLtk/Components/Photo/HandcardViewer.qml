@@ -73,6 +73,7 @@ Rectangle {
        data = data.filter((e) => Lua.selfPlayer.cardVisible(e));
 
        params.ids = data;
+       params.additional_prop = { selectable: true, markVisible: true };
 
        // Just for using room's right drawer
        roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "ViewPile"), params);

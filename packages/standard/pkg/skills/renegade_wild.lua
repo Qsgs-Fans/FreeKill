@@ -26,7 +26,6 @@ local spec = {
   on_use = function (self, event, target, player, data)
     local room = player.room
     room:addPlayerMark(player, "@!!m_role_wild", 1)
-    player:loseFakeSkill("renegade_loyalty&")
     room:changeRole(player, "wild", true)
     room:setPlayerProperty(player, "role_shown", true)
     room:handleAddLoseSkills(player, "m_feiyang|m_bahu|m_role_wild_draw&", nil, false, true)

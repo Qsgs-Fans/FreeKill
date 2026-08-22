@@ -32,6 +32,7 @@ Game.BasicCard {
   cardFrontSource: dataModel.frontSkin
   cardBackSource: dataModel.backSkin
   glow.color: "white" //Engine.kingdomColor[kingdom]
+  cardBg.pause: dataModel.pause
 
   known: dataModel.known
 

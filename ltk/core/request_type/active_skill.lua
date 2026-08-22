@@ -597,7 +597,15 @@ function ReqActiveSkill:updateInteraction(data, ignoreSetup)
   local skill = Fk.skills[self.skill_name] --[[@as ButtonSkill]]
   if skill and skill.interaction then
     skill.interaction.data = data
-    self.scene:update("Interaction", "1", { data = data })
+    --self.scene:update("Interaction", "1", { data = data })
+    if skill.update_interaction then
+      skill:update_interaction(
+        self.player, self.pendings or {},
+        table.map(self.selected_targets,
+        Util.Id2PlayerMapper),
+        self.extra_data or {}
+      )
+    end
     if not ignoreSetup then
       ReqActiveSkill.setup(self, true) -- interaction变动后需复原
     end

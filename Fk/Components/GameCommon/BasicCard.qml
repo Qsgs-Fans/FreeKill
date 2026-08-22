@@ -21,6 +21,8 @@ BasicItem {
 
   property alias glow: glowItem
 
+  property alias cardBg: cardBg
+
   onHoverChanged: (hover) => {
     if (hover) {
       glowItem.opacity = 1;
@@ -30,6 +32,7 @@ BasicItem {
   }
 
   MediaArea {
+    id: cardBg
     anchors.fill: parent
     fillMode: Image.PreserveAspectCrop
     source: root.known ? root.cardFrontSource : root.cardBackSource

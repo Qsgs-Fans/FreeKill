@@ -307,6 +307,9 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Enabled Status"] = "启用状态",
   ["Enable"] = "启用",
   ["Disabled"] = "禁用",
+  ["Skin Status"] = "皮肤状态",
+  ["Available"] = "可用",
+  ["Unavailable"] = "不可用",
   ["Prohibit"] = "禁",
   ["BanPackage"] = "禁拓展包",
   ["$BanPkgHelp"] = "正在禁用拓展包",
@@ -544,11 +547,13 @@ FreeKill使用的是libgit2的C API，与此同时使用Git完成拓展包的下
   ["Resume"] = "继续",
 
   ["Bulletin Info"] = [==[
-  ## v0.5.9
+  ## v0.5.21
 
-  新增了更新拓展包时的ui
+  增强旁观
 
-  并且更新freekill-core后提示客户端必须重启
+  允许客户端下载远程资源
+
+  优化了无色的显示效果
 
   ]==],
 }

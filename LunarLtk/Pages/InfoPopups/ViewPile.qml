@@ -13,6 +13,7 @@ ColumnLayout {
   property string name
   property list<int> ids
   property list<string> cardNames
+  property var additional_prop
 
   signal finish()
 
@@ -39,9 +40,9 @@ ColumnLayout {
       autoBack: false
       dataModel: {
         if (typeof modelData === "string") {
-          return Ltk.createCardModelFromName(modelData, { selectable: true });
+          return Ltk.createCardModelFromName(modelData, root.additional_prop ?? { selectable: true });
         } else {
-          return Ltk.createCardModel(modelData, { selectable: true });
+          return Ltk.createCardModel(modelData, root.additional_prop ?? { selectable: true });
         }
       }
     }

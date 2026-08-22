@@ -17,6 +17,7 @@ PixmapAnimation 1.0 PixmapAnimation.qml
 SkillArea 1.0 SkillArea.qml
 SkillButton 1.0 SkillButton.qml
 SkillInvokeAnimation 1.0 SkillInvokeAnimation.qml
+SuperLightBox 1.0 SuperLightBox.qml
 UltSkillAnimation 1.0 UltSkillAnimation.qml
 TablePile 1.0 TablePile.qml
 SkinItem 1.0 SkinItem.qml

@@ -152,7 +152,7 @@ function CheckSurrenderAvailable()
   local curMode = ClientInstance:getSettings('gameMode')
   local mode = Fk.game_modes[curMode] or Fk.game_modes["aaa_role_mode"]
   local playedTime = os.time() - ClientInstance.gameStartTime
-  return mode:surrenderFunc(playedTime, Self)
+  return mode:surrenderFunc(playedTime, Self:getMark("@ControledBy") ~= 0 and Self:getMark("@ControledBy") or Self)
 end
 
 function SaveRecord()

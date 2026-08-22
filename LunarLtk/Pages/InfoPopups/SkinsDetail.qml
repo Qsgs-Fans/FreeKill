@@ -132,7 +132,9 @@ Item {
 
           W.TapHandler {
             onTapped: {
-              if (parent.index === 0) {
+              if (parent.selected) {
+                root.selected_skin = "";
+              } else if (parent.index === 0) {
                 root.selected_skin = "-";
               } else {
                 root.selected_skin = parent.modelData;
@@ -143,7 +145,7 @@ Item {
                   skinsRepeater.itemAt(i).selected = false;
                 }
               };
-              parent.selected = true;
+              parent.selected = !parent.selected;
             }
           }
         }
@@ -214,7 +216,9 @@ Item {
 
           W.TapHandler {
             onTapped: {
-              if (parent.index === 0) {
+              if (parent.selected) {
+                root.selected_deputy_skin = "";
+              } else if (parent.index === 0) {
                 root.selected_deputy_skin = "-";
               } else {
                 root.selected_deputy_skin = parent.modelData;
@@ -224,7 +228,7 @@ Item {
                   deputySkinsRepeater.itemAt(i).selected = false;
                 }
               };
-              parent.selected = true;
+              parent.selected = !parent.selected;
             }
           }
         }
@@ -252,7 +256,4 @@ Item {
       }
     }
   }
-
-  
-  
 }

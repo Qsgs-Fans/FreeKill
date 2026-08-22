@@ -7,6 +7,8 @@ import QtQuick.Controls
 import Fk
 import Fk.Widgets as W
 
+import LunarLtk
+
 W.PageBase {
   id: root
   property alias serverDialog: serverDialogLoader

@@ -6,6 +6,7 @@ Item {
   property string source: ""
   property bool hasDeputy: false //是否使用dual这个功能还是相信后人智慧吧
   property int fillMode: Image.PreserveAspectCrop
+  property bool pause: true
 
   Loader {
     id: imgLoader
@@ -49,7 +50,15 @@ Item {
       fillMode: root.fillMode
       muted: true
 
-      Component.onCompleted: play()
+      // 媒体时长就绪后跳到第一帧并暂停，只显示封面帧
+      onDurationChanged: {
+        if (duration > 0 && root.pause) {
+          seek(0);
+          pause();
+        } else {
+          play();
+        }
+      }
     }
   }
 }

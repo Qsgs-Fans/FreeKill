@@ -29,17 +29,7 @@ Item {
       model: 40
       Text {
         text: {
-          let o = "$" + skillName + "_" + generalName + (index % 2 + 1);
-          let p = Lua.tr(o);
-          if (o !== p) {
-            return p;
-          }
-          o = "$" + skillName + (index % 2 + 1);
-          p = Lua.tr(o);
-          if (o === p) {
-            return "Ultimate Skill Invoked!";
-          }
-          return p;
+          return findAudioTranslation(index % 2 + 1) || findAudioTranslation((index + 1) % 2 + 1) ||"Ultimate Skill Invoked!"
         }
         color: "white"
         font.pixelSize: 30
@@ -60,17 +50,7 @@ Item {
       model: 40
       Text {
         text: {
-          let o = "$" + skillName + "_" + generalName + ((index + 1) % 2 + 1);
-          let p = Lua.tr(o);
-          if (o !== p) {
-            return p;
-          }
-          o = "$" + skillName + ((index + 1) % 2 + 1);
-          p = Lua.tr(o);
-          if (o === p) {
-            return "Ultimate Skill Invoked!";
-          }
-          return p;
+          return findAudioTranslation((index + 1) % 2 + 1) || findAudioTranslation(index % 2 + 1) || "Ultimate Skill Invoked!"
         }
         color: "white"
         font.pixelSize: 30
@@ -205,6 +185,20 @@ Item {
     onFinished: {
       roomScene.bigAnim.source = "";
     }
+  }
+
+  function findAudioTranslation(index) {
+    let o = "$" + skillName + "_" + generalName + index;
+    let p = Lua.tr(o);
+    if (o !== p) {
+      return p;
+    }
+    o = "$" + skillName + index;
+    p = Lua.tr(o);
+    if (o === p) {
+      return null;
+    }
+    return p;
   }
 
   function loadData(data) {

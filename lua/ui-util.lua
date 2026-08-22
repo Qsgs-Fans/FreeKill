@@ -104,4 +104,11 @@ UI.ExpandItems = function(spec)
   return spec
 end
 
+-- 一个空spec
+-- 不必赋值，配合update_interaction及refresh_interaction使用
+UI.ToBeDecided = function(spec)
+  spec.type = "ToBeDecided"
+  return spec
+end
+
 return UI

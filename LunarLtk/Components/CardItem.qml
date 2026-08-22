@@ -47,7 +47,7 @@ Game.PokerCard {
     }
   }
 
-  property bool markVisible: false
+  property bool markVisible: dataModel.markVisible
   property string areaText: "" // 手牌中用来显示“装备区”、“木牛”等
 
   hoverHandler.cursorShape: selectable ? Qt.PointingHandCursor : Qt.ArrowCursor

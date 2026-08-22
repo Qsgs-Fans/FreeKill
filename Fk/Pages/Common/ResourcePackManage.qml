@@ -131,19 +131,19 @@ W.PageBase {
         }
       }
       Label {
-        text: qs.Tr("Resource Package Manager")
+        text: qsTr("Resource Package Manager")
         horizontalAlignment: Qt.AlignHCenter
         Layout.fillWidth: true
       }
       TextField {
         id: searchField
-        placeholderText: qs.Tr("Search Resource Packs")
+        placeholderText: qsTr("Search Resource Packs")
         Layout.preferredWidth: 220
         clip: true
         onTextChanged: applyFilter()
       }
       ToolButton {
-        text:  qs.Tr("Undo Changes");
+        text:  qsTr("Undo Changes");
         onClicked: root.Component.onCompleted()
       }
     }
@@ -152,7 +152,7 @@ W.PageBase {
   MessageDialog {
     id: quitDialog
     title: qsTr("Quit")
-    informativeText: qs.Tr("Unsaved settings. Are you sure to exit?")
+    informativeText: qsTr("Unsaved settings. Are you sure to exit?")
     buttons: MessageDialog.Ok | MessageDialog.Cancel
     onButtonClicked: function (button) {
       switch (button) {

@@ -208,6 +208,7 @@ W.PageBase {
       dataModel.options = null;
     }
     dataModel.optionVisible = false;
+    Ltk.roomScene.dashboard.handcardArea.clearMiscExpand();
 
     Lua.finishRequestUI();
     applyChange({});
@@ -358,8 +359,12 @@ W.PageBase {
   }
 
   function doSuperLightBox(path, data) {
-    bigAnim.source = Cpp.path + "/" + path;
-    if (data) {
+    if (path) {
+      bigAnim.source = Cpp.path + "/" + path;
+    } else {
+      bigAnim.sourceComponent = Qt.createComponent("LunarLtk.Components", "SuperLightBox");
+    }
+    if (data && bigAnim.item && typeof bigAnim.item.loadData === "function") {
       bigAnim.item.loadData(data);
     }
   }
@@ -617,6 +622,7 @@ W.PageBase {
         dataModel.options = null;
       }
       dataModel.optionVisible = false;
+      Ltk.roomScene.dashboard.handcardArea.clearMiscExpand();
     }
     for (const dat of (uiUpdate["_new"] || [])) {
       if (dat.type !== "Interaction") continue;
@@ -727,17 +733,119 @@ W.PageBase {
 
   // interaction真神了，这么多函数伺候它一个
   function handleInteractionRefresh(uiUpdate) {
-    const dat = uiUpdate["Interaction"][0]
+    // console.log("handleInteractionRefresh", JSON.stringify(uiUpdate["Interaction"]));
+    for (const dat of (uiUpdate["Interaction"] || [])) {
     const [type, refresh_data] = [dat.spec?.type, dat.refresh_data]
-    if (!type || !refresh_data) return; 
+      if (!type || !refresh_data) continue; 
     // 所有允许refresh_interaction的skillInteraction都要在这里把数据传到interaction里
 
     switch (type) {
       case "optionbox":
-      const optionModel = roomScene.dataModel.options
+          const optionModel = roomScene.dataModel.options;
       if (optionModel) {
-        const orig_options = optionModel.options
-        optionModel.enabledOptions = refresh_data.filter(str => orig_options.indexOf(str) !== -1)
+            const orig_options = optionModel.options;
+            optionModel.enabledOptions = refresh_data.filter(str => orig_options.indexOf(str) !== -1);
+          }
+          break;
+        case "ToBeDecided": {
+          const handArea = Ltk.roomScene.dashboard.handcardArea;
+          if (refresh_data.expandItems) {
+            const expandItems = [];
+            const cardComponent = Qt.createComponent("LunarLtk.Components", "CardItem");
+            for (const spec of refresh_data.expandItems) {
+              if (spec.prop.type === "card") {
+                let dataModel;
+                if (spec.prop.card) {
+                  dataModel = Ltk.createCardModelFromLuaValue(spec.prop.card, spec.prop.additional_prop);
+                } else if (spec.prop.cid) {
+                  dataModel = Ltk.createCardModel(spec.prop.cid, spec.prop.additional_prop);
+                }
+                const item = cardComponent.createObject(Ltk.roomScene, { dataModel }) as CardItem;
+                item.dataModel.miscExpandId = spec.cid;
+                item.clicked.connect(cardSelf => {
+                  if (cardSelf.selectable) {
+                    Lua.updateRequestUI("Interaction", "1", "update", {
+                      elemType: "ExpandItem",
+                      cid: spec.cid,
+                      name: spec.name
+                    } );
+                  }
+                });
+                expandItems.push(item);
+              } else if (spec.prop.type === "general") {
+                let dataModel = Ltk.createGeneralCardModel(spec.prop.name, spec.prop.additional_prop);
+                const component = Qt.createComponent("LunarLtk.Components", "GeneralCardItem");
+                const item = component.createObject(Ltk.roomScene, { dataModel }) as GeneralCardItem;
+                item.dataModel.miscExpandId = spec.cid;
+                item.clicked.connect(cardSelf => {
+                  if (cardSelf.selectable) {
+                    Lua.updateRequestUI("Interaction", "1", "update", {
+                      elemType: "ExpandItem",
+                      cid: spec.cid,
+                      name: spec.name,
+                    } );
+                  }
+                });
+                expandItems.push(item);
+              } else if (spec.qml) {
+                // TODO
+              }
+            }
+            handArea.addMiscExpand(expandItems);
+          }
+          if (refresh_data.enabled_ids || refresh_data.pendings) {
+            handArea.updateMiscExpand(refresh_data.enabled_ids, refresh_data.pendings);
+          }
+          if (refresh_data.optionBox) {
+            const [options, all_options, single, min_num, max_num, direct, cancelable] = [refresh_data.optionBox.options, refresh_data.optionBox.all_options, refresh_data.optionBox.single, refresh_data.optionBox.min_num, refresh_data.optionBox.max_num, refresh_data.optionBox.direct_send, refresh_data.optionBox.cancelable];
+            const optionComponent = Qt.createComponent("LunarLtk.Models", "OptionsModel");
+            const optionModel = optionComponent.createObject(null, {
+              options,
+              allOptions: all_options,
+              minNum: 1,
+              maxNum: 1,
+              cancelable: cancelable || roomScene.dataModel.cancelEnabled,
+              skillName: dat.skill_name,
+              prompt: "",
+              single: true,
+              enableOK: false,
+              acceptable: true,
+            });
+            optionModel.accepted.connect(() => {
+              const option_answer = optionModel.result[0] ?? "";
+              if (direct) {
+                Lua.updateRequestUI("Interaction", "1", "finish", {
+                  option: option_answer,
+                });
+                Lua.updateRequestUI("Button", "OK");
+              } else {
+                Lua.updateRequestUI("Interaction", "1", "update", {
+                  elemType: "OptionBox",
+                  option: option_answer,
+                } );
+              }
+            });
+            optionModel.rejected.connect(() => {
+              if (cancelable) {
+                Lua.updateRequestUI("Interaction", "1", "update", {
+                  elemType: "OptionBox",
+                  option: "Cancel"
+                } );
+              } else {
+                Lua.updateRequestUI("Button", "Cancel")
+              }
+            });
+            dataModel.options = optionModel;
+            dataModel.optionVisible = true;
+          } else {
+            if (dataModel.options) {
+              dataModel.options.destroy();
+              dataModel.options = null;
+            }
+            dataModel.optionVisible = false;
+          }
+          break;
+        }
       }
     }
   }

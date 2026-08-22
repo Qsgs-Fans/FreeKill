@@ -377,6 +377,58 @@ Flickable {
       }
     }
 
+    // skinStatus
+    Column {
+      id: skinColumn
+      property bool skinShown: false
+      ButtonGroup {
+        id: childSkin
+        exclusive: false
+        checkState: parentSkinBox.checkState
+      }
+
+      RowLayout {
+        spacing: 8
+        height: skinColumn.skinShown ? 32 : 36
+        CheckBox {
+          id: parentSkinBox
+          text: Lua.tr("Skin Status")
+          font.bold: true
+          checkState: childSkin.checkState
+          Layout.minimumWidth: 100
+        }
+        ToolButton {
+          text: (skinColumn.skinShown ? "➖" : "➕")
+          onClicked: {
+            skinColumn.skinShown = !skinColumn.skinShown
+          }
+          background: Rectangle {
+            implicitWidth: 20
+            implicitHeight: 20
+
+            visible: parent.down || parent.checked || parent.highlighted || parent.visualFocus
+              || (parent.enabled && parent.hovered)
+          }
+        }
+      }
+
+      GridLayout {
+        columns: 6
+        height: parent.skinShown ? skinStates.contentHeigh : 0
+        visible: parent.skinShown
+
+        Repeater {
+          id: skinStates
+
+          CheckBox {
+            text: modelData
+            leftPadding: indicator.width
+            ButtonGroup.group: childSkin
+          }
+        }
+      }
+    }
+
     GridLayout {
       anchors.topMargin: 8
       columns: 2
@@ -528,6 +580,7 @@ Flickable {
       hpStates.model = properties.hps;
       //shieldStates.model = properties.shields;
       enabledStates.model = properties.enabledStates;
+      skinStates.model = [Lua.tr("Available"), Lua.tr("Unavailable")];
     }
   }
 
@@ -564,6 +617,8 @@ Flickable {
     f.genders = getCheck(parentGenderBox, gendersStates);
     // enabledStatus
     f.enabledStates = getCheck(parentEnabledBox, enabledStates);
+    // skinStatus
+    f.skinStates = getCheck(parentSkinBox, skinStates);
     // skillName
     f.skillName = skillName.text;
     // skillDesc

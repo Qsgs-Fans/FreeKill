@@ -11,6 +11,7 @@ QtObject {
 
   property int cardId   // 游戏牌的id
   property int virtId   // 若cardId为0（虚拟卡），则另设id以便与ui卡一一对应
+  property int miscExpandId   // miscExpand专用
 
   // 获得牌的*唯一ID*，如果是虚拟牌则返回virtId，否则返回cardId
   readonly property int uniqueId: cardId === 0 ? virtId : cardId
@@ -35,6 +36,7 @@ QtObject {
   property bool known: true // 是否已知
 
   property list<var> marks: [] // 标记，详见PhotoModel
+  property bool markVisible: false
 
   property string footnote: ""  // footnote, e.g. "A use card to B"
   property bool footnoteVisible: false

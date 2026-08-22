@@ -120,6 +120,7 @@ end
 ---@field public include_equip? boolean @ 选牌时是否展开装备区
 ---@field public visible_pile? integer[] | string | fun(self: ActiveSkill, player: Player): integer[] | string @ 可见的手牌id，同时筛选手牌和expand_pile。如果返回值为字符串，当返回"_expand_pile"时会转为expand_pile，为其他字符串时则转为对应name的私人牌堆。注意：这是纯ui方案，不要用这种方式来做合法牌的筛选
 ---@field public interaction? fun(self: ButtonSkill, player: Player): table? @ 选项框
+---@field public update_interaction? fun(self: ButtonSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): any @ interaction更新时立刻预设信息（在选牌及目标刷新之前）
 ---@field public refresh_interaction? fun(self: ButtonSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): table? @ 用于给interaction传递额外信息，例如按钮亮暗
 ---@field public card_filter? fun(self: ButtonSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[]): any @ 判断卡牌能否选择
 ---@field public target_filter? fun(self: ButtonSkill, player: Player?, to_select: Player, selected: Player[], selected_cards: integer[], card: Card?, extra_data: UseExtraData|table?): any @ 判定目标能否选择
@@ -153,6 +154,7 @@ end
 ---@field public offset_func? fun(self: CardSkill, room: Room, effect: CardEffectData): any @ 重新定义抵消方式
 ---@field public prompt? string|fun(self: CardSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): string @ 提示信息
 ---@field public interaction? fun(self: CardSkill, player: Player, card: Card, extra_data: any): table? @ 选项框
+---@field public update_interaction? fun(self: CardSkill, player: Player, selected_cards: integer[], selected_targets: Player[], card: Card, extra_data: any): any @ interaction更新时立刻预设信息（在选牌及目标刷新之前）
 ---@field public refresh_interaction? fun(self: CardSkill, player: Player, selected_cards: integer[], selected_targets: Player[], card: Card, extra_data: any): table? @ （暂时没用）用于给interaction传递额外信息，例如按钮亮暗
 ---@field public card_tip? fun(self: ActiveSkill, player: Player, to_select: integer, selected: integer[], selected_targets: Player[], card?: Card, selectable: boolean, extra_data: any): string|CardTipDataSpec? @ 显示在牌上的提示
 ---@field public target_tip? fun(self: CardSkill, player: Player, to_select: Player, selected: Player[], selected_cards: integer[], card?: Card, selectable: boolean, extra_data: any): string|TargetTipDataSpec? @ 显示在目标武将牌脸上的提示
@@ -176,6 +178,7 @@ end
 ---@field public after_use? fun(self: ViewAsSkill, player: ServerPlayer, use: UseCardData | RespondCardData): string? @ 使用/打出此牌后执行的内容
 ---@field public prompt? string|fun(self: ViewAsSkill, player: Player, selected_cards: integer[], selected: Player[]): string
 ---@field public interaction? fun(self: ViewAsSkill, player: Player): table? @ 选项框
+---@field public update_interaction? fun(self: ViewAsSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): any @ interaction更新时立刻预设信息（在选牌及目标刷新之前）
 ---@field public refresh_interaction? fun(self: ViewAsSkill, player: Player, selected_cards: integer[], selected_targets: Player[], extra_data: any): table? @ 用于给interaction传递额外信息，例如按钮亮暗
 ---@field public handly_pile? boolean @ 是否能够选择“如手牌使用或打出”的牌
 ---@field public mute_card? boolean @ 是否不播放卡牌特效和语音。一个牌名的默认不播放，其他默认播放

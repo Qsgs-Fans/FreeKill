@@ -22,6 +22,8 @@ Item {
     const fav = Config.favoriteGenerals;
     return fav.includes(g);
   }
+  readonly property int audioTextMarginH: 12  // 音频按钮文本水平间距
+  readonly property int audioTextMarginV: 5   // 音频按钮文本垂直间距
 
   signal changeGeneralDetailInside(string to_general)
 
@@ -50,15 +52,23 @@ Item {
 
   Component {
     id: skillAudioBtn
-    Win.Button {
+    W.ButtonContent {
       id: skillAudioItem
+      Layout.preferredHeight: skillAudioName.height + skillAudio.height + 2 * audioTextMarginV
+      plainButton: false
       required property string name
       required property int idx
       required property bool specific
 
       Layout.fillWidth: true
       contentItem: Column {
+        anchors.fill: parent
+        anchors.leftMargin: audioTextMarginH
+        anchors.rightMargin: audioTextMarginH
+        anchors.topMargin: audioTextMarginV
+        anchors.bottomMargin: audioTextMarginV
         Text {
+          id: skillAudioName
           width: parent.width
           text: {
             return Lua.tr(skillAudioItem.name) + (skillAudioItem.idx ? " (" + skillAudioItem.idx.toString() + ")"
@@ -68,6 +78,7 @@ Item {
           font.pixelSize: 14
         }
         Text {
+          id: skillAudio
           width: parent.width
           text: {
             const orig = '$' + skillAudioItem.name + (skillAudioItem.specific ? '_' + detailGeneralCard.dataModel.name : "")
@@ -202,8 +213,10 @@ Item {
       interval: 4000
     }
 
-    Win.Button {
+    W.ButtonContent {
       Layout.preferredWidth: 130
+      Layout.preferredHeight: 25
+      plainButton: false
       text: Lua.tr("Set as Avatar")
       visible: root.canSetAvatar
       enabled: detailGeneralCard.dataModel.name !== "" && !opTimer.running
@@ -218,8 +231,10 @@ Item {
       }
     }
 
-    Win.Button {
+    W.ButtonContent {
       Layout.preferredWidth: 130
+      Layout.preferredHeight: 25
+      plainButton: false
       text: root.isFavor ? Lua.tr("Remove from Favorite") : Lua.tr("Set as Favorite")
       onClicked: {
         const g = root.general;
@@ -234,8 +249,10 @@ Item {
       }
     }
 
-    Win.Button {
+    W.ButtonContent {
       Layout.preferredWidth: 130
+      Layout.preferredHeight: 25
+      plainButton: false
       text: Lua.tr("Check Skins")
       visible: Ltk.getSkinNamesByGeneral(root.general).length > 0
 
@@ -327,6 +344,7 @@ Item {
       ColumnLayout {
         id: audioLayout
         width: parent.width - 4
+        y: 3
         x: 2
 
         GridLayout {
@@ -340,17 +358,26 @@ Item {
           }
         }
 
-        Win.Button {
+        W.ButtonContent {
           id: audioWin
           Layout.fillWidth: true
+          Layout.preferredHeight: winName.height + winAudio.height + 2 * audioTextMarginV
+          plainButton: false
           contentItem: Column {
+            anchors.fill: parent
+            anchors.leftMargin: audioTextMarginH
+            anchors.rightMargin: audioTextMarginH
+            anchors.topMargin: audioTextMarginV
+            anchors.bottomMargin: audioTextMarginV
             Text {
+              id: winName
               // Layout.fillWidth: true
               text: Lua.tr("Win audio")
               font.bold: true
               font.pixelSize: 14
             }
             Text {
+              id: winAudio
               // Layout.fillWidth: true
               text: {
                 const orig = "!" + root.general;
@@ -412,17 +439,26 @@ Item {
           }
         }
 
-        Win.Button {
+        W.ButtonContent {
           id: audioDeath
+          Layout.preferredHeight: deathName.height + deathAudio.height + 2 * audioTextMarginV
           Layout.fillWidth: true
+          plainButton: false
           contentItem: Column {
+            anchors.fill: parent
+            anchors.leftMargin: audioTextMarginH
+            anchors.rightMargin: audioTextMarginH
+            anchors.topMargin: audioTextMarginV
+            anchors.bottomMargin: audioTextMarginV
             Text {
+              id: deathName
               Layout.fillWidth: true
               text: Lua.tr("Death audio")
               font.bold: true
               font.pixelSize: 14
             }
             Text {
+              id: deathAudio
               Layout.fillWidth: true
               text: {
                 const orig = "~" + root.general;
@@ -688,11 +724,14 @@ Item {
         id: srcList
         width: parent.width - 4
         x: 2
+        y: 3
         spacing: 0
         property string generalSourceCode
 
-        Win.Button {
+        W.ButtonContent {
           Layout.fillWidth: true
+          Layout.preferredHeight: 27
+          plainButton: false
           text: {
             const skill = root.general;
             const skillTr = "武将定义";
@@ -844,8 +883,10 @@ Item {
             required property string modelData
             property string sourceCode
 
-            Win.Button {
+            W.ButtonContent {
               Layout.fillWidth: true
+              Layout.preferredHeight: 27
+              plainButton: false
               text: {
                 const skill = parent.modelData;
                 const skillTr = Lua.tr(skill);

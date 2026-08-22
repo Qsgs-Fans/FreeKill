@@ -33,6 +33,22 @@ function HpLostData:preventHpLost()
   self.prevented = true
 end
 
+--- ShieldChangedData 描述和一次护甲变化有关的数据
+---@class ShieldChangedDataSpec
+---@field public who ServerPlayer @ 护甲变化的角色
+---@field public num integer @ 护甲变化量，可能是正数或者负数
+---@field public prevented boolean? @ 护甲变化是否被防止
+
+--- 描述和一次护甲变化有关的数据
+---@class ShieldChangedData: ShieldChangedDataSpec, TriggerData
+ShieldChangedData = TriggerData:subclass("ShieldChangedData")
+
+--- 防止护甲变化
+function ShieldChangedData:preventShieldChange()
+  self.num = 0
+  self.prevented = true
+end
+
 --- MaxHpChangedData 描述跟体力上限变化有关的数据
 ---@class MaxHpChangedDataSpec
 ---@field public who ServerPlayer @ 改变体力上限的角色
@@ -215,6 +231,17 @@ fk.BeforeMaxHpChanged = MaxHpChangedEvent:subclass("fk.BeforeMaxHpChanged")
 ---@class fk.MaxHpChanged: MaxHpChangedEvent
 fk.MaxHpChanged = MaxHpChangedEvent:subclass("fk.MaxHpChanged")
 
+---@class ShieldChangedEvent: TriggerEvent
+---@field data ShieldChangedData
+local ShieldChangedEvent = TriggerEvent:subclass("ShieldChangedEvent")
+
+--- 改变护甲值前，受到伤害减少护甲不要用此时机
+---@class fk.BeforeShieldChanged: ShieldChangedEvent
+fk.BeforeShieldChanged = ShieldChangedEvent:subclass("fk.BeforeShieldChanged")
+--- 改变护甲值后，受到伤害减少护甲不要用此时机
+---@class fk.ShieldChanged: ShieldChangedEvent
+fk.ShieldChanged = ShieldChangedEvent:subclass("fk.ShieldChanged")
+
 -- 注释环节
 
 ---@alias HpChangedTrigFunc fun(self: TriggerSkill, event: HpChangedEvent,
@@ -227,6 +254,8 @@ fk.MaxHpChanged = MaxHpChangedEvent:subclass("fk.MaxHpChanged")
 ---  target: ServerPlayer, player: ServerPlayer, data: RecoverData): any
 ---@alias MaxHpChangedTrigFunc fun(self: TriggerSkill, event: MaxHpChangedEvent,
 ---  target: ServerPlayer, player: ServerPlayer, data: MaxHpChangedData): any
+---@alias ShieldChangedTrigFunc fun(self: TriggerSkill, event: ShieldChangedEvent,
+---  target: ServerPlayer, player: ServerPlayer, data: ShieldChangedData): any
 
 ---@class DamageSkelAttr: TrigSkelAttribute
 
@@ -241,6 +270,8 @@ fk.MaxHpChanged = MaxHpChangedEvent:subclass("fk.MaxHpChanged")
 ---  data: TrigSkelSpec<RecoverTrigFunc>, attr: DamageSkelAttr?): SkillSkeleton
 ---@field public addEffect fun(self: SkillSkeleton, key: MaxHpChangedEvent,
 ---  data: TrigSkelSpec<MaxHpChangedTrigFunc>, attr: TrigSkelAttribute?): SkillSkeleton
+---@field public addEffect fun(self: SkillSkeleton, key: ShieldChangedEvent,
+---  data: TrigSkelSpec<ShieldChangedTrigFunc>, attr: TrigSkelAttribute?): SkillSkeleton
 
 function DamageEvent:breakCheck()
   return not self:isInstanceOf(fk.DamageFinished) and (self.data.damage < 1 or self.data.prevented)

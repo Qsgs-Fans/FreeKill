@@ -14,10 +14,13 @@ function ViewAsSkill:initialize(name, frequency)
 end
 
 ---@class ViewAsPattern
----@field public max_num number @ 推测转化底牌的最大数
----@field public min_num number @ 推测转化底牌的最小数
+---@field public max_num number @ 推测转化底牌的最大数（subcards存在时将变成选fakesubcards）
+---@field public min_num number @ 推测转化底牌的最小数（subcards存在时将变成选fakesubcards）
 ---@field public pattern string @ 推测参与转化的实体牌所满足的匹配器
 ---@field public subcards number[]? @ 转化底牌（用于实体牌已完全确定的情况）
+---@field public skill_name string? @ 技能名称*泛转化技用
+---@field public names string[]? @ 所有可转化的卡牌名*泛转化技用
+---@field public ban_names string[]? @ 所有可转化的卡牌名中不可用的卡牌名*泛转化技用
 
 --- 判断一个视为技会印什么样的牌
 ---@param player Player @ 使用者
@@ -37,10 +40,17 @@ end
 function ViewAsSkill:cardFilter(player, to_select, selected, selected_targets)
   local card = self:viewAs(player, table.connect(selected, {to_select}))
   local filter_pattern = self:filterPattern(player, card and card.name, selected)
+
   if filter_pattern then
     if filter_pattern.subcards then return false end
     if #selected >= filter_pattern.max_num then return false end
     if not Fk:getCardById(to_select):matchPattern(filter_pattern.pattern) then return false end
+
+    if self.interaction ~= nil and (self.interaction.spec or {}).type == "ToBeDecided" and
+      filter_pattern.names then
+      --预制模板的泛转化技，无法预先确定即将转化的牌名
+      return true
+    end
 
     if #selected == filter_pattern.max_num - 1 then
       return card ~= nil and player:canUseOrResponseInCurrent(card)
@@ -85,6 +95,155 @@ function ViewAsSkill:cardFilter(player, to_select, selected, selected_targets)
     return true
   end
   return false
+end
+
+--[[
+function ViewAsSkill:visible_pile(player)
+  if self.interaction == nil then return end
+  local spec = self.interaction.spec or {}
+  if spec.type ~= "ToBeDecided" then return end
+
+  -- FIXME(邪道实现): 通过设置visible_pile，使得点取消键触发的setup重置手牌！
+  local req = spec.UIrequest
+  if req then
+    if req.elemType == "OptionBox" and req.option == "Cancel" then
+      --注：这东西在req会处理两次，一次在update_interaction后，一次在refresh_interaction，因此不需要考虑恢复
+      return { 0 }
+    end
+  elseif spec.result then
+    --这里result已取值，代表已经进入expandItems阶段了，使UI手牌区的expandpile卡牌均不可见
+    local handcards = player:getCardIds("h")
+    if #handcards == 0 then
+      --为空的话visible_cards会失效，这里随便传个不可能取到的逆天值即可
+      return { 0 }
+    end
+    return handcards
+  end
+  return {}
+end
+]]
+
+-- 技能的交互选项（如选项框、选项卡等）返回值self.interaction.data确定后，可使用这个预先进行一次修改
+---@param player Player @ 使用者
+---@param selected_targets Player[] @ 已选目标
+---@param selected_cards integer[] @ 已选牌
+function ViewAsSkill:update_interaction(player, selected_cards, selected_targets)
+  if self.interaction == nil then return end
+  local spec = self.interaction.spec or {}
+  if spec.type ~= "ToBeDecided" then return end
+
+  local dat = self.interaction.data
+  spec.UIrequest = table.simpleClone(dat)
+  if dat.elemType == "OptionBox" then
+    if dat.option == "Cancel" then
+      --FIXME(邪道实现): 直接修改req来取消self.pendings选牌
+      local handler = ClientInstance.current_request_handler
+      if handler then
+        handler.pendings = {}
+      end
+      spec.result = nil
+    else
+      spec.result = { cards = table.simpleClone(selected_cards) }
+    end
+  elseif dat.elemType == "ExpandItem" then
+    spec.result = spec.result or {}
+    if spec.result.name == dat.name then
+      spec.result.name = nil
+      spec.pendings = {}
+    else
+      spec.result.name = dat.name
+      spec.pendings = { dat.cid }
+    end
+  end
+  self.interaction.data = (spec.result or {}).name
+end
+
+-- 刷新技能的交互选项（如选项框、选项卡等），返回一个表，表中每个元素为一个选项
+---@param player Player @ 使用者
+---@param selected_targets Player[] @ 已选目标
+---@param selected_cards integer[] @ 已选牌
+---@return table?
+function ViewAsSkill:refresh_interaction(player, selected_cards, selected_targets)
+  if self.interaction == nil then return end
+  local spec = self.interaction.spec or {}
+  if spec.type ~= "ToBeDecided" then return end
+
+  --待定：需不需要输入card_name？
+  local VSPattern = self:filterPattern(player, nil, selected_cards)
+  if VSPattern == nil then return end
+
+  local refresh_data = {}
+  local req = spec.UIrequest or {}
+
+  if spec.UIrequest == nil then
+    if #selected_cards == VSPattern.max_num and spec.result == nil then
+      spec.result = { cards = table.simpleClone(selected_cards) }
+      req = {
+        elemType = "OptionBox",
+        option = "OK"
+      }
+    end
+  end
+
+  if req.elemType == "OptionBox" then
+    if req.option == "Cancel" then
+      --回归选牌步骤
+      refresh_data.expandItems = {}
+    else
+      local items = {}
+      local i = 1
+      local subcards = VSPattern.subcards or spec.result.cards
+      local ban_names = VSPattern.ban_names or {}
+      for _, name in ipairs(VSPattern.names) do
+        local card = Fk:cloneCard(name, nil, nil, VSPattern.skill_name, subcards)
+        table.insert(items, {
+          prop = {
+            type = "card",
+            card = card,
+            additional_prop = { selectable = (not table.contains(ban_names, card.trueName) and player:canUseOrResponseInCurrent(card)) }
+          },
+          name = name,
+          cid = i,
+        })
+        i = i + 1
+      end
+      refresh_data.expandItems = items
+    end
+  elseif req.elemType == "ExpandItem" then
+    refresh_data.pendings = spec.pendings
+  end
+
+  if VSPattern.max_num > 0 then
+    --可选牌时，需要重设手牌区按钮
+    if spec.result == nil then
+      local op_spec = {   ---@class OptionBoxParams
+        options = {},
+        all_options = { "OK" }
+      }
+      if #selected_cards >= VSPattern.min_num then
+        op_spec.options = { "OK" }
+      end
+      refresh_data.optionBox = UI.OptionBox(op_spec)
+    else
+      local handler = ClientInstance.current_request_handler
+      if handler and handler.class.name == "ReqActiveSkill" then
+        --在读条中使用的情况直接使用自带的确定取消即可（因为可以反复操作）
+        local op_spec = {   ---@class OptionBoxParams
+          options = {},
+          all_options = { "OK" },
+          direct_send = true,
+          cancelable = true
+        }
+        local card = self:viewAs(player, selected_cards)
+        if card and card:getSkill(player):feasible(player, selected_targets, { }, card) then
+          op_spec.options = { "OK" }
+        end
+        refresh_data.optionBox = UI.OptionBox(op_spec)
+      end
+    end
+  end
+  spec.UIrequest = nil
+  return refresh_data
 end
 
 -- 该技能所实际使用/打出的虚拟牌

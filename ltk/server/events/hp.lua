@@ -524,4 +524,69 @@ function HpEventWrappers:changeMaxHp(player, num)
   return exec(ChangeMaxHp, data)
 end
 
-return { ChangeHp, Damage, LoseHp, Recover, ChangeMaxHp, HpEventWrappers }
+---@class GameEvent.ChangeShield : GameEvent
+---@field public data ShieldChangedData
+local ChangeShield = GameEvent:subclass("GameEvent.ChangeShield")
+
+function ChangeShield:__tostring()
+  local data = self.data
+  return string.format("<ChangeShield %d : %s #%d>",
+    data.num, data.who, self.id)
+end
+
+function ChangeShield:main()
+  local data = self.data
+  local room = self.room
+
+  if data.num == 0 then
+    return false
+  end
+
+  room.logic:trigger(fk.BeforeShieldChanged, data.who, data)
+
+  data.num = math.min(data.num, data.who:getMaxShield() - data.who.shield)
+  data.num = math.max(data.num, -data.who.shield)
+  if data.num == 0 then
+    data.prevented = true
+  end
+  if data.prevented then
+    room.logic:breakEvent(false)
+  end
+
+  local player = data.who
+  local num = data.num
+
+  if num > 0 then
+    room:sendLog {
+      type = "#AddShield",
+      from = player.id,
+      arg = num,
+    }
+  else
+    room:sendLog {
+      type = "#LoseShield",
+      from = player.id,
+      arg = -num,
+    }
+  end
+  room:setPlayerProperty(player, "shield", player.shield + num)
+
+  room.logic:trigger(fk.ShieldChanged, player, data)
+  return true
+end
+
+--- 改变一名玩家的护甲数。
+---@param player ServerPlayer @ 玩家
+---@param num integer @ 变化量
+---@return boolean
+function HpEventWrappers:changeShield(player, num)
+  num = math.min(num, player:getMaxShield() - player.shield)
+  num = math.max(num, -player.shield)
+  local data = ShieldChangedData:new{
+    who = player,
+    num = num,
+  }
+  return exec(ChangeShield, data)
+end
+
+return { ChangeHp, Damage, LoseHp, Recover, ChangeMaxHp, ChangeShield, HpEventWrappers }

@@ -54,10 +54,10 @@ designating:addEffect(fk.BeforePlayCard, spec)
 
 designating:addEffect(fk.RoundStart, {
   can_refresh = function (self, event, target, player, data)
-    return player.room:getBanner("RoundCount") > 1 and player:hasSkill("-lord_designating_heir&", true)
+    return player.room:getBanner("RoundCount") > 1
   end,
   on_refresh = function (self, event, target, player, data)
-    player.room:handleAddLoseSkills(player, "-lord_designating_heir&", nil, false, true)
+    player:loseFakeSkill(designating.name)
   end,
 })
 

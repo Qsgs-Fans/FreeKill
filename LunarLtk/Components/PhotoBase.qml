@@ -32,6 +32,7 @@ Game.BasicItem {
   property bool surrendered: false
 
   property alias photoMask: photoMask
+  property alias skinIcon: skinIcon
 
   state: "normal"
 
@@ -59,8 +60,9 @@ Game.BasicItem {
   }
 
   Item {
-    width: photoMask.width
-    height: photoMask.height
+    // 由于直接使用photoMask宽高会导致内容物真的以该分辨率进行重渲染导致糊图，所以这里要额外增加渲染分辨率，直接翻倍
+    width: photoMask.width * 2
+    height: photoMask.height * 2
     visible: false
     id: generalImgItem
 
@@ -127,32 +129,6 @@ Game.BasicItem {
       height: parent.height
       hasDeputy: !!deputyGeneral
     }
-
-    Image {
-      id: deputySplit
-      source: SkinBank.photoDir + "deputy-split"
-      opacity: deputyGeneral ? 1 : 0
-      scale: 0.75
-      anchors.centerIn: parent
-    }
-
-    Text {
-      id: deputyGeneralName
-      anchors.left: generalImage.right
-      anchors.leftMargin: -10
-      y: 21
-      font.family: Config.libianName
-      font.pixelSize: 16
-      opacity: 0.9
-      horizontalAlignment: Text.AlignHCenter
-      lineHeight: 14
-      lineHeightMode: Text.FixedHeight
-      color: "white"
-      width: 18
-      wrapMode: Text.WrapAnywhere
-      text: Lua.tr(root.deputyGeneral)
-      style: Text.Outline
-    }
   }
 
   Rectangle {
@@ -170,6 +146,32 @@ Game.BasicItem {
     anchors.fill: photoMask
     source: generalImgItem
     maskSource: photoMask
+  }
+
+  Image {
+    id: deputySplit
+    source: SkinBank.photoDir + "deputy-split"
+    opacity: root.deputyGeneral ? 1 : 0
+    height: photoMask.height
+    width: photoMask.width
+    anchors.centerIn: photoMask
+  }
+
+  Text {
+    id: deputyGeneralName
+    anchors.horizontalCenter: deputySplit.horizontalCenter
+    y: 21
+    font.family: Config.libianName
+    font.pixelSize: 16
+    opacity: 0.9
+    horizontalAlignment: Text.AlignHCenter
+    lineHeight: 14
+    lineHeightMode: Text.FixedHeight
+    color: "white"
+    width: 18
+    wrapMode: Text.WrapAnywhere
+    text: Lua.tr(root.deputyGeneral)
+    style: Text.Outline
   }
 
   Colorize {
@@ -246,16 +248,16 @@ Game.BasicItem {
     }
   }
 
-  HoverHandler {
-    id: hover
-    onHoveredChanged: {
-      if (hovered && root.enableChangeSkin && (roomScene.dataModel?.dashboardId === root.playerid) && !Config.observing && !cooldownTimer.running && (Ltk.getSkinNamesByGeneral(root.general).length > 0 || Ltk.getSkinNamesByGeneral(root.deputyGeneral).length > 0)) {
-        skinIcon.visible = true;
-      } else {
-        skinIcon.visible = false;
-      }
-    }
-  }
+  // HoverHandler {
+  //   id: hover
+  //   onHoveredChanged: {
+  //     if (hovered && root.enableChangeSkin && (roomScene.dataModel?.dashboardId === root.playerid) && !Config.observing && !cooldownTimer.running && (Ltk.getSkinNamesByGeneral(root.general).length > 0 || Ltk.getSkinNamesByGeneral(root.deputyGeneral).length > 0) || Cpp.quickStartMode) {
+  //       skinIcon.visible = true;
+  //     } else {
+  //       skinIcon.visible = false;
+  //     }
+  //   }
+  // }
 
   function refreshSkins() {
     if (root.playerid === roomScene.dataModel?.dashboardId && !Config.observing) {

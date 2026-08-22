@@ -289,6 +289,7 @@ local function filterGeneral(general, filter)
   local illustrator = filter.illustrator ---@type string
   local audioText = filter.audioText ---@type string
   local enabledStates = filter.enabledStates ---@type string[]
+  local skinStates = filter.skinStates ---@type string[]
   return not (
     (name ~= "" and not find_with_escape(Fk:translate(general.name), name)) or
     (title ~= "" and not find_with_escape(translateInfo("#" .. general.name), title)) or
@@ -299,21 +300,18 @@ local function filterGeneral(general, filter)
     (#maxHps > 0 and not table.contains(maxHps, tostring(general.maxHp))) or
     (#hps > 0 and not table.contains(hps, tostring(general.hp))) or
     (#genders > 0 and not table.contains(genders, genderMapper[general.gender])) or
-    (skillName ~= "" and not (table.find(general:getSkillNameList(true), function(s)
-      return not not find_with_escape(Fk:translate(s), skillName)
-    end) or table.find(general.related_other_skills, function(s)
-      return not not find_with_escape(Fk:translate(s), skillName)
-    end))) or
-    (skillDesc ~= "" and not (table.find(general:getSkillNameList(true), function(s)
+    (skillName ~= "" and not table.find(general:getSkillNameList(true, true), function(s)
+      return not not (find_with_escape(s, skillName) or find_with_escape(Fk:translate(s), skillName))
+    end)) or
+    (skillDesc ~= "" and not table.find(general:getSkillNameList(true, true), function(s)
       return not not find_with_escape(Fk:getDescription(s), skillDesc)
-    end) or table.find(general.related_other_skills, function(s)
-      return not not find_with_escape(Fk:getDescription(s), skillDesc)
-    end))) or
+    end)) or
     (designer ~= "" and not find_with_escape(translateInfo("designer:" .. general.name), designer)) or
     (voiceActor ~= "" and not find_with_escape(translateInfo("cv:" .. general.name), voiceActor)) or
     (illustrator ~= "" and not find_with_escape(translateInfo("illustrator:" .. general.name), illustrator)) or
-    (audioText ~= "" and not findAudioText(general, audioText))
-    or (#enabledStates > 0 and not table.contains(enabledStates, Fk:canUseGeneral(general.name) and Fk:translate("Enable") or Fk:translate("Disabled")))
+    (audioText ~= "" and not findAudioText(general, audioText)) or
+    (#enabledStates > 0 and not table.contains(enabledStates, Fk:canUseGeneral(general.name) and Fk:translate("Enable") or Fk:translate("Disabled"))) or
+    (#skinStates > 0 and not table.contains(skinStates, #Fk:getSkinNamesByGeneral(general.name) > 0 and Fk:translate("Available") or Fk:translate("Unavailable")))
   )
 end
 

@@ -52,22 +52,77 @@ Item {
   }
 
   function addMiscExpand(inputs) {
-    miscExpandArea.add(inputs);
-    const myPos = roomScene.mapFromItem(miscExpandArea, 0, 0);
-    for (const item of inputs) {
-      item.x = myPos.x;
-      item.y = myPos.y;
-    }
-    miscExpandArea.updatePosition(true);
-  }
-
-  function clearMiscExpand() {
-    const myPos = roomScene.mapFromItem(miscExpandArea, 0, 0);
+    const myPos = Ltk.roomScene.mapFromItem(miscExpandArea, 0, 0);
     for (const item of miscExpandArea.remove([...miscExpandArea.items])) {
       item.origY = myPos.y + 200;
       item.destroyOnStop();
       item.goBack(true);
     }
+    miscExpandArea.add(inputs);
+    for (const item of inputs) {
+      item.draggable = true;
+      item.x = myPos.x;
+      item.y = myPos.y;
+    }
+    updateMiscExpandPosition(true);
+  }
+
+  function clearMiscExpand() {
+    const myPos = Ltk.roomScene.mapFromItem(miscExpandArea, 0, 0);
+    for (const item of miscExpandArea.remove([...miscExpandArea.items])) {
+      item.origY = myPos.y + 200;
+      item.destroyOnStop();
+      item.goBack(true);
+    }
+    syncCards();
+  }
+
+  function updateMiscExpandPosition(animated) {
+    miscExpandArea.updatePosition(false);
+
+    miscExpandArea.items.forEach(card => {
+      // 新增关键一行：如果卡牌正在返回动画，立刻停止动画，才能生效新origX
+      if(card.goBackAnim.running){
+        card.goBackAnim.stop();
+      }
+      if (card.selected) {
+        card.origY -= 20;
+      }
+      if (!card.selectable && Config.hideUseless) {
+        card.origY += 60;
+      }
+    });
+
+    if (animated) {
+      miscExpandArea.items.forEach(card => {
+        if (!card.dragging) card.goBack(true);
+      });
+    }
+
+    if (folded) {
+      cards.forEach(card => {
+        card.selected = false;
+      });
+    }
+    syncCards();
+  }
+
+  function updateMiscExpand(enabled_ids, pendings) {
+    let card, i;
+    if (pendings) {
+      miscExpandArea.items.forEach(card => {
+        card.selected = pendings.includes(card.dataModel.miscExpandId);
+      });
+    }
+    if (enabled_ids) {
+      miscExpandArea.items.forEach(card => {
+        card.selectable = enabled_ids.includes(card.dataModel.miscExpandId);
+        if (!card.selectable) {
+          card.selected = false;
+        }
+      });
+    }
+    updateMiscExpandPosition(true);
   }
 
   function add(inputs) {
@@ -86,6 +141,7 @@ Item {
     card.autoBack = true;
     // 只有会被频繁刷新的手牌才能拖动
     card.draggable = Ltk.canSortHandcards(Cpp.self.id);
+    card.selectable = Qt.binding(function() { return !folded && this.dataModel.selectable });
     card.dataModel.selectable = false;
     card.clicked.connect(selectCard);
     card.clicked.connect(adjustCards);
@@ -98,6 +154,7 @@ Item {
     const result = cardArea.remove(outputs);
     for (const card of result) {
       card.draggable = false;
+      card.selectable = Qt.binding(function() { return this.dataModel.selectable });
       card.dataModel.selectable = false;
       card.clicked.disconnect(selectCard);
       card.selectedChanged.disconnect(adjustCards);
@@ -112,9 +169,15 @@ Item {
   }
 
   function updateCardPosition(animated) {
+    let card, i;
     cardArea.updateCardPosition(false);
 
     cards.forEach(card => {
+      // 新增关键一行：如果卡牌正在返回动画，立刻停止动画，才能生效新origX
+      if(card.goBackAnim.running){
+        card.goBackAnim.stop();
+      }
+
       if (card.selected) {
         card.origY -= 20;
       }
@@ -272,7 +335,7 @@ Item {
   function syncCards() {
     // sync expandedCards
     const visibleIds = dataModel.visible_ids ?? [];
-    let allCards = [...dataModel.handcards, ...dataModel.expandedCards]
+    let allCards = folded ? dataModel.handcards : [...dataModel.handcards, ...dataModel.expandedCards];
     if (visibleIds.length > 0) {
       allCards = allCards.filter(model => visibleIds.includes(model.uniqueId));
     }

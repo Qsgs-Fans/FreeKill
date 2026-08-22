@@ -35,9 +35,8 @@ BasicCard {
 
   Image { // 没点数的时候的suit位置
     id: colorItem
-    visible: parent.known && (parent.suit === "" || parent.suit === "nosuit")
-      && parent.number <= 0
-    source: (visible && parent.color !== "") ? SkinBank.cardSuitDir + "/" + parent.color
+    visible: parent.known && parent.number <= 0
+    source: (visible && parent.color !== "") ? SkinBank.cardSuitDir + "/" + ((parent.suit === "" || parent.suit === "nosuit") ? parent.color : parent.suit)
                                       : ""
     x: 3 * root.cardScale
     y: 9.5 * root.cardScale

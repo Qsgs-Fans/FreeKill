@@ -106,6 +106,7 @@ RoomBase {
         textFont.pixelSize: 28
         visible: {
           if (!progressAnim.running) return false;
+          if (dashboard.handcardArea.folded) return true;
           if (dashboard.handcardArea.length <= 15) {
             return false;
           }
@@ -115,7 +116,21 @@ RoomBase {
           }
           return false;
         }
-        onClicked: roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "ChooseHandcard"));
+        onClicked: {
+          if (dashboard.handcardArea.folded) {
+            const params = { name: "hand_card" };
+            let data = dashboard.dataModel.handcards.map(e => { return e.uniqueId } );
+            data = data.filter((e) => Lua.selfPlayer.cardVisible(e));
+
+            params.ids = data;
+            params.additional_prop = { selectable: true, markVisible: true };
+
+            // Just for using room's right drawer
+            roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "ViewPile"), params);
+
+          } else
+            roomScene.showInfoPopup(Qt.createComponent("LunarLtk.Pages.InfoPopups", "ChooseHandcard"));
+        }
       }
       MetroButton {
         id: trustBtn
@@ -131,6 +146,7 @@ RoomBase {
       }
       MetroButton {
         id: revertSelectionBtn
+        enabled: !dashboard.handcardArea.folded
         text: Lua.tr("Revert Selection")
         textFont.pixelSize: 28
         onClicked: Ltk.revertSelection();

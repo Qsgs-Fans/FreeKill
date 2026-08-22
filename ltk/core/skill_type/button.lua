@@ -14,6 +14,7 @@
 ---@field public max_card_num integer
 ---@field public card_num integer
 ---@field public interaction any
+---@field public update_interaction function
 ---@field public refresh_interaction function
 ---@field public prompt string | function? @ 技能提示
 ---@field public expand_pile? string | integer[] | fun(self: ButtonSkill, player: Player): integer[]|string? @ 额外牌堆，牌堆名称或卡牌id表

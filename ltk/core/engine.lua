@@ -36,6 +36,7 @@ local baseEngine = require "core.engine"
 ---@field public skin_packages table<string, SkinContent[]> @ Skins
 ---@field public personal_marks table<string, PersonalMarkSpec> @ PersonalMark
 ---@field public gamemode_whitelist_map table<string, table>
+---@field public post_load_func function[] @ 加载后执行的函数
 local Engine = baseEngine:subclass("Engine")
 Engine:include(modManager)
 
@@ -91,6 +92,7 @@ function Engine:initialize()
   self.skin_packages = {}
   self.personal_marks = {}
   self.gamemode_whitelist_map = {}
+  self.post_load_func = {}
 
   self.Ltk = {
     AIStrategy = require 'ltk.server.ai.strategy',
@@ -149,6 +151,16 @@ function Engine:postLoad()
   end
   fk.qInfo(string.format("[LunarLtk] Loaded %d skills.", skillCount))
   fk.qInfo(string.format("[LunarLtk] Loaded %d card types.", #self.all_card_names))
+
+  for _, fn in ipairs(self.post_load_func) do
+    fn()
+  end
+end
+
+---添加加载后要执行的函数
+---@param func function
+function Engine:addPostLoadFunc(func)
+  table.insert(self.post_load_func, func)
 end
 
 local _foreign_keys = {
