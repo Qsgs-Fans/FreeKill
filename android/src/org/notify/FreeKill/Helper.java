@@ -80,22 +80,44 @@ public class Helper {
   static MediaPlayer mp;
 
   public static void PlaySound(String path, float vol) {
-    // FIXME: 此法中途会被GC
-    mp = new MediaPlayer();
-    mp.setOnCompletionListener(new OnCompletionListener() {
-      @Override
-      public void onCompletion(MediaPlayer mp) {
-        mp.reset();
+    // 释放上一个未结束的 MediaPlayer，避免文件句柄泄漏
+    if (mp != null) {
+      try {
         mp.release();
+      } catch (Exception ignored) {
+      }
+      mp = null;
+    }
+
+    final MediaPlayer player = new MediaPlayer();
+    mp = player;
+    player.setOnCompletionListener(new OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer p) {
+        try {
+          p.reset();
+          p.release();
+        } catch (Exception ignored) {
+        }
+        if (mp == p) {
+          mp = null;
+        }
       }
     });
     try {
-      mp.setDataSource(path);
-      mp.setVolume(vol, vol);
-      mp.prepare();
-      mp.start();
+      player.setDataSource(path);
+      player.setVolume(vol, vol);
+      player.prepare();
+      player.start();
     } catch (Exception e) {
       e.printStackTrace();
+      try {
+        player.release();
+      } catch (Exception ignored) {
+      }
+      if (mp == player) {
+        mp = null;
+      }
     }
   }
 }

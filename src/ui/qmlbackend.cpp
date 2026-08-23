@@ -467,9 +467,14 @@ void QmlBackend::playSound(const QString &name, int index) {
         thread->quit();
       }
     });
+  // finished 信号在 worker 线程发出，用 DirectConnection 保证在 worker 线程内
+  // 直接删除 player/output（它们的线程归属就是 worker 线程），
+  // 否则 deleteLater 会投递到已退出的事件循环，永远不执行，导致文件句柄泄漏
   connect(thread, &QThread::finished, this, [=] {
-    player->deleteLater();
-    output->deleteLater();
+    delete player;
+    delete output;
+  }, Qt::DirectConnection);
+  connect(thread, &QThread::finished, this, [=] {
     thread->deleteLater();
     maxConcurrentPlayback++;
   });
