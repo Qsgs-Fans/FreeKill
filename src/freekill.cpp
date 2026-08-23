@@ -351,6 +351,10 @@ int freekill_main(int argc, char *argv[]) {
 
   qputenv("ANDROID_OPENSSL_SUFFIX", "_3");
 
+  // 安卓：指定 FFmpeg 后端使用 MediaCodec 硬件解码
+  // （私有点环境变量，Qt 6.8+，必须在 QMediaPlayer 创建前设置）
+  qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "mediacodec");
+
   // 安卓：从Qt 6.8起需要别的办法拿activity
   // 参考文献 https://forum.qt.io/topic/159350/qt-6-8-0-replacement-for-qtnative-activity
   QJniObject::callStaticMethod<void>(
