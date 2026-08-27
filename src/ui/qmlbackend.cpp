@@ -446,34 +446,42 @@ void QmlBackend::playSound(const QString &name, int index) {
       (float)(m_volume / 100));
 #else
   if (maxConcurrentPlayback < 0) return;
-  auto player = new QMediaPlayer;
-  auto output = new QAudioOutput;
   silenceFfmpegLogs(); // 后端已加载，静默 FFmpeg 的 warning/info 日志
   maxConcurrentPlayback--;
 
-  player->setAudioOutput(output);
-  player->setSource(QUrl::fromLocalFile(fname));
-  output->setVolume(m_volume / 100);
-
-  // 使用独立线程驱动事件循环，避免主线程卡顿且保证QMediaPlayer正常解码
+  // 整个生命周期（创建/初始化/播放/清理）都在 worker 线程内完成，
+  // 避免 QMediaPlayer/QAudioOutput 的内部定时器跨线程启动：
+  // "QObject::startTimer: Timers cannot be started from another thread"
   auto thread = new QThread;
-  player->moveToThread(thread);
-  output->moveToThread(thread);
+  const QString path = fname;
+  const float vol = m_volume / 100;
 
-  connect(thread, &QThread::started, player, &QMediaPlayer::play);
-  connect(player, &QMediaPlayer::playbackStateChanged, thread,
-    [=](QMediaPlayer::PlaybackState state) {
-      if (state != QMediaPlayer::PlayingState) {
+  // QThread::started 总是从新线程发出，DirectConnection 让回调直接在新线程执行
+  connect(thread, &QThread::started, thread, [=] {
+    auto player = new QMediaPlayer;
+    auto output = new QAudioOutput;
+    player->setAudioOutput(output);
+    player->setSource(QUrl::fromLocalFile(path));
+    output->setVolume(vol);
+    player->play();
+
+    QObject::connect(player, &QMediaPlayer::playbackStateChanged, thread,
+      [=](QMediaPlayer::PlaybackState state) {
+        if (state != QMediaPlayer::PlayingState)
+          thread->quit();
+      });
+    QObject::connect(player, &QMediaPlayer::errorOccurred, thread,
+      [=](QMediaPlayer::Error, const QString &) {
         thread->quit();
-      }
-    });
-  // finished 信号在 worker 线程发出，用 DirectConnection 保证在 worker 线程内
-  // 直接删除 player/output（它们的线程归属就是 worker 线程），
-  // 否则 deleteLater 会投递到已退出的事件循环，永远不执行，导致文件句柄泄漏
-  connect(thread, &QThread::finished, this, [=] {
-    delete player;
-    delete output;
+      });
+    // finished 同样从新线程发出，DirectConnection 保证在新线程内 delete，
+    // 避免 deleteLater 投递到已退出的事件循环导致句柄泄漏
+    QObject::connect(thread, &QThread::finished, thread, [=] {
+      delete player;
+      delete output;
+    }, Qt::DirectConnection);
   }, Qt::DirectConnection);
+
   connect(thread, &QThread::finished, this, [=] {
     thread->deleteLater();
     maxConcurrentPlayback++;
