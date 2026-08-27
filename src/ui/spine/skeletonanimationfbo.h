@@ -161,6 +161,7 @@ private:
 
     SpineBackend *mBackend;
     QVector<SpineDrawCommand> mDrawCommands;
+    QRectF mBounds;
 
     QList<SpineEvent*> mEventCache;
 };

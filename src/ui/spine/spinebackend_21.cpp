@@ -18,6 +18,9 @@
 
 namespace {
 
+// 矩形附件的固定三角形索引，跨帧复用。
+static const unsigned short kQuadIndices[6] = {0, 1, 2, 2, 3, 0};
+
 class SpineBackend21 : public SpineBackend {
     typedef sp21Skeleton Skeleton;
     typedef sp21SkeletonData SkeletonData;
@@ -37,6 +40,8 @@ class SpineBackend21 : public SpineBackend {
     Atlas *mAtlas = nullptr;
     AnimationState *mAnimationState = nullptr;
     SpineEventCallback mEventCallback;
+    std::vector<float> mVertexBuffer; // 复用顶点缓冲，避免每帧堆分配
+    std::vector<unsigned short> mIndexBuffer; // 复用索引缓冲（2.1 的 triangles 为 int，需转换）
 
     static void animationCallback(AnimationState *state, int trackIndex, sp21EventType type,
                                   Event *event, int loopCount) {
@@ -136,6 +141,34 @@ public:
         out.clear();
         if (!mSkeleton)
             return;
+        // 第一遍：统计顶点/索引总数，一次性 resize 复用缓冲，避免逐条分配
+        size_t totalFloats = 0;
+        size_t totalIndices = 0;
+        for (int i = 0, n = mSkeleton->slotsCount; i < n; ++i) {
+            Slot *slot = mSkeleton->drawOrder[i];
+            if (!slot || !slot->attachment)
+                continue;
+            switch (slot->attachment->type) {
+            case SP_ATTACHMENT_REGION:
+                totalFloats += 8;
+                break;
+            case SP_ATTACHMENT_MESH:
+                totalFloats += (size_t)((MeshAttachment *)slot->attachment)->verticesCount * 2;
+                totalIndices += (size_t)((MeshAttachment *)slot->attachment)->trianglesCount;
+                break;
+            case SP_ATTACHMENT_SKINNED_MESH:
+                totalFloats += (size_t)((SkinnedMeshAttachment *)slot->attachment)->uvsCount * 2;
+                totalIndices += (size_t)((SkinnedMeshAttachment *)slot->attachment)->trianglesCount;
+                break;
+            default:
+                break;
+            }
+        }
+        mVertexBuffer.resize(totalFloats); // capacity 足够时不会重新分配
+        mIndexBuffer.resize(totalIndices);
+        size_t vOffset = 0;
+        size_t iOffset = 0;
+
         for (int i = 0, n = mSkeleton->slotsCount; i < n; ++i) {
             Slot *slot = mSkeleton->drawOrder[i];
             if (!slot || !slot->attachment)
@@ -143,58 +176,74 @@ public:
             switch (slot->attachment->type) {
             case SP_ATTACHMENT_REGION: {
                 RegionAttachment *region = (RegionAttachment *)slot->attachment;
-                std::vector<float> verts(8);
-                sp21RegionAttachment_computeWorldVertices(region, slot->bone, verts.data());
+                float *verts = mVertexBuffer.data() + vOffset;
+                sp21RegionAttachment_computeWorldVertices(region, slot->bone, verts);
+                vOffset += 8;
                 SpineDrawCommand cmd;
                 cmd.texture = textureOf(region);
-                cmd.vertices = std::move(verts);
+                cmd.vertices = verts;
                 cmd.uvs = region->uvs;
                 cmd.vertexCount = 4;
-                cmd.indices = {0, 1, 2, 2, 3, 0};
+                cmd.indices = kQuadIndices;
+                cmd.indexCount = 6;
                 cmd.r = mSkeleton->r * slot->r * region->r;
                 cmd.g = mSkeleton->g * slot->g * region->g;
                 cmd.b = mSkeleton->b * slot->b * region->b;
                 cmd.a = mSkeleton->a * slot->a * region->a;
                 cmd.additiveBlending = slot->data->additiveBlending != 0;
-                out.push_back(std::move(cmd));
+                out.push_back(cmd);
                 break;
             }
             case SP_ATTACHMENT_MESH: {
                 MeshAttachment *mesh = (MeshAttachment *)slot->attachment;
                 const int vcount = mesh->verticesCount;
-                std::vector<float> verts((size_t)vcount * 2);
-                sp21MeshAttachment_computeWorldVertices(mesh, slot, verts.data());
+                const int floats = vcount * 2;
+                float *verts = mVertexBuffer.data() + vOffset;
+                sp21MeshAttachment_computeWorldVertices(mesh, slot, verts);
+                vOffset += (size_t)floats;
+                unsigned short *idx = mIndexBuffer.data() + iOffset;
+                for (int t = 0; t < mesh->trianglesCount; ++t)
+                    idx[t] = (unsigned short)mesh->triangles[t];
+                iOffset += (size_t)mesh->trianglesCount;
                 SpineDrawCommand cmd;
                 cmd.texture = textureOf(mesh);
-                cmd.vertices = std::move(verts);
+                cmd.vertices = verts;
                 cmd.uvs = mesh->uvs;
                 cmd.vertexCount = vcount;
-                cmd.indices.assign(mesh->triangles, mesh->triangles + mesh->trianglesCount);
+                cmd.indices = idx;
+                cmd.indexCount = mesh->trianglesCount;
                 cmd.r = mSkeleton->r * slot->r * mesh->r;
                 cmd.g = mSkeleton->g * slot->g * mesh->g;
                 cmd.b = mSkeleton->b * slot->b * mesh->b;
                 cmd.a = mSkeleton->a * slot->a * mesh->a;
                 cmd.additiveBlending = slot->data->additiveBlending != 0;
-                out.push_back(std::move(cmd));
+                out.push_back(cmd);
                 break;
             }
             case SP_ATTACHMENT_SKINNED_MESH: {
                 SkinnedMeshAttachment *mesh = (SkinnedMeshAttachment *)slot->attachment;
                 const int vcount = mesh->uvsCount;
-                std::vector<float> verts((size_t)vcount * 2);
-                sp21SkinnedMeshAttachment_computeWorldVertices(mesh, slot, verts.data());
+                const int floats = vcount * 2;
+                float *verts = mVertexBuffer.data() + vOffset;
+                sp21SkinnedMeshAttachment_computeWorldVertices(mesh, slot, verts);
+                vOffset += (size_t)floats;
+                unsigned short *idx = mIndexBuffer.data() + iOffset;
+                for (int t = 0; t < mesh->trianglesCount; ++t)
+                    idx[t] = (unsigned short)mesh->triangles[t];
+                iOffset += (size_t)mesh->trianglesCount;
                 SpineDrawCommand cmd;
                 cmd.texture = textureOf(mesh);
-                cmd.vertices = std::move(verts);
+                cmd.vertices = verts;
                 cmd.uvs = mesh->uvs;
                 cmd.vertexCount = vcount;
-                cmd.indices.assign(mesh->triangles, mesh->triangles + mesh->trianglesCount);
+                cmd.indices = idx;
+                cmd.indexCount = mesh->trianglesCount;
                 cmd.r = mSkeleton->r * slot->r * mesh->r;
                 cmd.g = mSkeleton->g * slot->g * mesh->g;
                 cmd.b = mSkeleton->b * slot->b * mesh->b;
                 cmd.a = mSkeleton->a * slot->a * mesh->a;
                 cmd.additiveBlending = slot->data->additiveBlending != 0;
-                out.push_back(std::move(cmd));
+                out.push_back(cmd);
                 break;
             }
             default:

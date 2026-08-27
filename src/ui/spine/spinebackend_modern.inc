@@ -41,6 +41,9 @@
 
 namespace {
 
+// 矩形附件的固定三角形索引，跨帧复用。
+static const unsigned short kQuadIndices[6] = {0, 1, 2, 2, 3, 0};
+
 class SpineBackendModern : public SpineBackend {
     typedef SP_TYPE(Skeleton) Skeleton;
     typedef SP_TYPE(SkeletonData) SkeletonData;
@@ -63,6 +66,7 @@ class SpineBackendModern : public SpineBackend {
     Atlas *mAtlas = nullptr;
     AnimationState *mAnimationState = nullptr;
     SpineEventCallback mEventCallback;
+    std::vector<float> mVertexBuffer; // 复用顶点缓冲，避免每帧堆分配
 
 #if SPINE_LISTENER_V4
     // 4.x：spXXAnimationStateListener(state, type, entry, event)
@@ -217,6 +221,23 @@ public:
         out.clear();
         if (!mSkeleton)
             return;
+        // 第一遍：统计顶点总数，一次性 resize 复用缓冲，避免逐条分配
+        size_t totalFloats = 0;
+        for (int i = 0, n = mSkeleton->slotsCount; i < n; ++i) {
+            Slot *slot = mSkeleton->drawOrder[i];
+            if (!slot || !slot->attachment)
+                continue;
+            if (slot->attachment->type == SP_ATTACHMENT_REGION) {
+                totalFloats += 8;
+            } else if (slot->attachment->type == SP_ATTACHMENT_MESH ||
+                       slot->attachment->type == SP_ATTACHMENT_LINKED_MESH) {
+                MeshAttachment *mesh = (MeshAttachment *)slot->attachment;
+                totalFloats += (size_t)mesh->super.worldVerticesLength;
+            }
+        }
+        mVertexBuffer.resize(totalFloats); // capacity 足够时不会重新分配
+        size_t vOffset = 0;
+
         for (int i = 0, n = mSkeleton->slotsCount; i < n; ++i) {
             Slot *slot = mSkeleton->drawOrder[i];
             if (!slot || !slot->attachment)
@@ -224,40 +245,44 @@ public:
             switch (slot->attachment->type) {
             case SP_ATTACHMENT_REGION: {
                 RegionAttachment *region = (RegionAttachment *)slot->attachment;
-                std::vector<float> verts(8);
-                SP_COMPUTE_REGION(region, slot, verts.data());
+                float *verts = mVertexBuffer.data() + vOffset;
+                SP_COMPUTE_REGION(region, slot, verts);
+                vOffset += 8;
                 SpineDrawCommand cmd;
                 cmd.texture = textureOf(region);
-                cmd.vertices = std::move(verts);
+                cmd.vertices = verts;
                 cmd.uvs = region->uvs;
                 cmd.vertexCount = 4;
-                cmd.indices = {0, 1, 2, 2, 3, 0};
+                cmd.indices = kQuadIndices;
+                cmd.indexCount = 6;
                 cmd.r = SP_C_R(mSkeleton) * SP_C_R(slot) * SP_C_R(region);
                 cmd.g = SP_C_G(mSkeleton) * SP_C_G(slot) * SP_C_G(region);
                 cmd.b = SP_C_B(mSkeleton) * SP_C_B(slot) * SP_C_B(region);
                 cmd.a = SP_C_A(mSkeleton) * SP_C_A(slot) * SP_C_A(region);
                 cmd.additiveBlending = SP_IS_ADDITIVE(slot);
-                out.push_back(std::move(cmd));
+                out.push_back(cmd);
                 break;
             }
             case SP_ATTACHMENT_MESH:
             case SP_ATTACHMENT_LINKED_MESH: {
                 MeshAttachment *mesh = (MeshAttachment *)slot->attachment;
                 const int floats = mesh->super.worldVerticesLength;
-                std::vector<float> verts((size_t)floats);
-                SP_COMPUTE_VERTEX((VertexAttachment *)mesh, slot, floats, verts.data());
+                float *verts = mVertexBuffer.data() + vOffset;
+                SP_COMPUTE_VERTEX((VertexAttachment *)mesh, slot, floats, verts);
+                vOffset += (size_t)floats;
                 SpineDrawCommand cmd;
                 cmd.texture = textureOf(mesh);
-                cmd.vertices = std::move(verts);
+                cmd.vertices = verts;
                 cmd.uvs = mesh->uvs;
                 cmd.vertexCount = floats / 2;
-                cmd.indices.assign(mesh->triangles, mesh->triangles + mesh->trianglesCount);
+                cmd.indices = mesh->triangles; // 指向持久数据
+                cmd.indexCount = mesh->trianglesCount;
                 cmd.r = SP_C_R(mSkeleton) * SP_C_R(slot) * SP_C_R(mesh);
                 cmd.g = SP_C_G(mSkeleton) * SP_C_G(slot) * SP_C_G(mesh);
                 cmd.b = SP_C_B(mSkeleton) * SP_C_B(slot) * SP_C_B(mesh);
                 cmd.a = SP_C_A(mSkeleton) * SP_C_A(slot) * SP_C_A(mesh);
                 cmd.additiveBlending = SP_IS_ADDITIVE(slot);
-                out.push_back(std::move(cmd));
+                out.push_back(cmd);
                 break;
             }
             default:

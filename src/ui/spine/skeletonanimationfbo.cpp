@@ -271,12 +271,10 @@ void SkeletonAnimationFbo::renderToCache(Renderer* renderer, RenderCmdsCache* ca
         skeletonRenderer->releaseTextures();
     }
 
-    const QRectF rect = calculateSkeletonRect();
-
     if (!isSkeletonValid())
         return;
 
-    cache->setSkeletonRect(rect);
+    cache->setSkeletonRect(mBounds);
     cache->setPremultipliedAlpha(mPremultipliedAlapha);
     cache->bindShader(RenderCmdsCache::ShaderTexture);
 
@@ -304,8 +302,8 @@ void SkeletonAnimationFbo::renderToCache(Renderer* renderer, RenderCmdsCache* ca
         color.a = static_cast<GLubyte>(cmd.a * 255);
 
         cache->drawTriangles(texture,
-                             cmd.vertices.data(), cmd.uvs, cmd.vertexCount * 2,
-                             cmd.indices.data(), static_cast<int>(cmd.indices.size()), color);
+                             cmd.vertices, cmd.uvs, cmd.vertexCount * 2,
+                             cmd.indices, cmd.indexCount, color);
     }
     cache->cacheTriangleDrawCall();
 
@@ -393,10 +391,10 @@ void SkeletonAnimationFbo::updateSkeletonAnimation()
     const float deltaTime = mSecs/1000.0 * mTimeScale;
     mBackend->update(deltaTime);
 
-    const QRectF rect = calculateSkeletonRect();
-    setSourceSize(QSize(rect.width(), rect.height()));
-    setImplicitSize(rect.width(), rect.height());
-    setPosition(QPointF(rect.left(), -1.0f*(rect.top() + rect.height())));
+    mBounds = calculateSkeletonRect();
+    setSourceSize(QSize(mBounds.width(), mBounds.height()));
+    setImplicitSize(mBounds.width(), mBounds.height());
+    setPosition(QPointF(mBounds.left(), -1.0f*(mBounds.top() + mBounds.height())));
     update();
 }
 
@@ -448,6 +446,7 @@ void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
 
     mSkeletonLoaded = true;
 
+    mBounds = mBackend->bounds();
     mTimer.invalidate();
 }
 

@@ -469,7 +469,6 @@ int freekill_main(int argc, char *argv[]) {
 #if defined(Q_OS_ANDROID)
   system = QStringLiteral("Android");
 #elif defined(Q_OS_WIN32)
-  qputenv("QT_MEDIA_BACKEND", "ffmpeg");
   system = QStringLiteral("Win");
   SetConsoleOutputCP(CP_UTF8);
 #elif defined(Q_OS_LINUX)

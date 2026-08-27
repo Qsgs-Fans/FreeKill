@@ -10,12 +10,15 @@
 #include "spineversion.h"
 
 // 一条可绘制命令（与版本无关）。
+// 顶点/索引均为不拥有内存的指针：vertices 指向后端复用缓冲（仅当帧有效），
+// indices 指向 attachment 持久数据或静态 quad 索引。避免每帧堆分配。
 struct SpineDrawCommand {
     void *texture = nullptr;        // Texture*（由渲染器映射为 GL 纹理）
     const float *uvs = nullptr;     // 纹理坐标，指向 attachment 的持久数据
-    std::vector<float> vertices;    // 世界坐标，2 * vertexCount 个 float
-    std::vector<unsigned short> indices; // 三角形索引
-    int vertexCount = 0;            // 顶点数（xy 对数）
+    const float *vertices = nullptr;      // 世界坐标，2 * vertexCount 个 float（复用缓冲）
+    int vertexCount = 0;                  // 顶点数（xy 对数）
+    const unsigned short *indices = nullptr; // 三角形索引（持久数据）
+    int indexCount = 0;
     float r = 1.0f, g = 1.0f, b = 1.0f, a = 1.0f; // 最终颜色（a 为整体透明度乘数）
     bool additiveBlending = false;
 };
