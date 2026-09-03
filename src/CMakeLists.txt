@@ -49,6 +49,7 @@ set(freekill_SRCS
   "server/cli/shell.cpp"
 
   "ui/qmlbackend.cpp"
+  "ui/soloudplayer.cpp"
 
   "swig/freekill-wrap.cxx"
 )
@@ -122,6 +123,61 @@ if (NOT DEFINED FK_SERVER_ONLY)
       "${PROJECT_SOURCE_DIR}/src/spine-versions/spine-c-${SPINE_VER}/include")
     list(APPEND SPINE_LIBS spine${SPINE_VER})
   endforeach()
+
+  # SoLoud 音频引擎（mp3/wav/flac 解码 + miniaudio 后端），用于播放短音效。
+  # Android 不参与（Android 走 Java MediaPlayer）；soloudplayer.cpp 在无 SoLoud
+  # 平台（FK_SERVER_ONLY / Android）编译为桩实现。
+  if (NOT ANDROID)
+    set(SOLOUD_ROOT "${PROJECT_SOURCE_DIR}/thirdparty/soloud")
+    # SoLoud 编为动态库（soloud.dll），避免把整个引擎塞进 FreeKill.exe 增大体积
+    add_library(soloud SHARED
+      "${SOLOUD_ROOT}/src/core/soloud.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_audiosource.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_bus.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_3d.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_basicops.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_faderops.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_filterops.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_getters.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_setters.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_voicegroup.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_core_voiceops.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_fader.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_fft.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_fft_lut.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_file.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_filter.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_misc.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_queue.cpp"
+      "${SOLOUD_ROOT}/src/core/soloud_thread.cpp"
+      "${SOLOUD_ROOT}/src/audiosource/wav/soloud_wav.cpp"
+      "${SOLOUD_ROOT}/src/audiosource/wav/dr_impl.cpp"
+      "${SOLOUD_ROOT}/src/audiosource/wav/stb_vorbis.c"
+      "${SOLOUD_ROOT}/src/backend/miniaudio/soloud_miniaudio.cpp"
+    )
+    target_include_directories(soloud PRIVATE
+      "${SOLOUD_ROOT}/include"
+      "${SOLOUD_ROOT}/src/audiosource/wav"
+      "${SOLOUD_ROOT}/src/backend/miniaudio"
+    )
+    target_compile_definitions(soloud PRIVATE WITH_MINIAUDIO)
+    # stb_vorbis 单头实现：编译 .c 时展开实现
+    set_source_files_properties(
+      "${SOLOUD_ROOT}/src/audiosource/wav/stb_vorbis.c" PROPERTIES
+      COMPILE_DEFINITIONS "STB_VORBIS_IMPLEMENTATION")
+    set_target_properties(soloud PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+    # 导出全部符号（SoLoud 头无 dllexport 标记）并把 DLL 输出到 exe 同目录
+    set_target_properties(soloud PROPERTIES
+      WINDOWS_EXPORT_ALL_SYMBOLS ON
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+    if(MSVC)
+      target_compile_options(soloud PRIVATE /W0)
+    else()
+      target_compile_options(soloud PRIVATE -w)
+    endif()
+    set(SOLOUD_INCLUDE "${SOLOUD_ROOT}/include")
+    set(SOLOUD_LIB soloud)
+  endif()
 endif ()
 
 set(QT_LIB Qt6::Network)
@@ -200,6 +256,10 @@ else ()
 endif ()
 
 add_library(libFreeKill STATIC ${freekill_SRCS})
+if (SOLOUD_LIB)
+  target_include_directories(libFreeKill PRIVATE ${SOLOUD_INCLUDE})
+  target_compile_definitions(libFreeKill PRIVATE FK_WITH_SOLOUD)
+endif()
 target_precompile_headers(libFreeKill PRIVATE "pch.h")
 target_link_libraries(libFreeKill PRIVATE
   ${LUA_LIB}
@@ -213,6 +273,7 @@ target_link_libraries(libFreeKill PRIVATE
   ${IDBFS_LIB}
   ${JEMALLOC_LIBRARIES}
   ${SPINE_LIBS}
+  ${SOLOUD_LIB}
 )
 
 if (${CMAKE_BUILD_TYPE}0 STREQUAL "Debug0")

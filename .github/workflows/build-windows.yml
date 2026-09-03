@@ -83,6 +83,7 @@ jobs:
         cp lib/win/* FreeKill-release
         cp build/zh_CN.qm FreeKill-release
         cp build/en_US.qm FreeKill-release
+        cp build/libsoloud.dll FreeKill-release
         cp fk_ver FreeKill-release
         cp ../Qt/6.10.0/mingw_64/bin/li*.dll FreeKill-release
         cp ../Qt/Tools/OpenSSLv3/Win_x64/bin/*.dll FreeKill-release

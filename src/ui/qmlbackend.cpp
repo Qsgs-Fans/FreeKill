@@ -6,6 +6,7 @@
 
 #ifndef FK_SERVER_ONLY
 #include <QAudioOutput>
+#include <QCoreApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDatagram>
 #include <QNetworkReply>
@@ -19,6 +20,8 @@
 #include <QLibrary>
 #include <QtConcurrent>
 #endif
+
+#include "ui/soloudplayer.h"
 
 #include <cstdlib>
 #include "server/server.h"
@@ -42,10 +45,15 @@ QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   connect(udpSocket, &QUdpSocket::readyRead,
           this, &QmlBackend::readPendingDatagrams);
   connect(this, &QmlBackend::dialog, this, &QmlBackend::showDialog);
+  // 事件循环退出前正确关闭 SoLoud 音频后端（停音/释放缓存/关设备）
+  connect(qApp, &QCoreApplication::aboutToQuit, [] {
+    SoloudPlayer::shutdown();
+  });
 #endif
 }
 
 QmlBackend::~QmlBackend() {
+  SoloudPlayer::shutdown();
   Backend = nullptr;
 }
 
@@ -418,6 +426,9 @@ static void silenceFfmpegLogs() {
   }
 }
 
+// 音频播放池大小
+static constexpr int kSoundPoolSize = 12;
+
 void QmlBackend::playSound(const QString &name, int index) {
   QString fname(name);
   if (index == -1) {
@@ -445,49 +456,9 @@ void QmlBackend::playSound(const QString &name, int index) {
       "(Ljava/lang/String;F)V", QJniObject::fromString(fname).object<jstring>(),
       (float)(m_volume / 100));
 #else
-  if (maxConcurrentPlayback < 0) return;
-  silenceFfmpegLogs(); // 后端已加载，静默 FFmpeg 的 warning/info 日志
-  maxConcurrentPlayback--;
-
-  // 整个生命周期（创建/初始化/播放/清理）都在 worker 线程内完成，
-  // 避免 QMediaPlayer/QAudioOutput 的内部定时器跨线程启动：
-  // "QObject::startTimer: Timers cannot be started from another thread"
-  auto thread = new QThread;
-  const QString path = fname;
-  const float vol = m_volume / 100;
-
-  // QThread::started 总是从新线程发出，DirectConnection 让回调直接在新线程执行
-  connect(thread, &QThread::started, thread, [=] {
-    auto player = new QMediaPlayer;
-    auto output = new QAudioOutput;
-    player->setAudioOutput(output);
-    player->setSource(QUrl::fromLocalFile(path));
-    output->setVolume(vol);
-    player->play();
-
-    QObject::connect(player, &QMediaPlayer::playbackStateChanged, thread,
-      [=](QMediaPlayer::PlaybackState state) {
-        if (state != QMediaPlayer::PlayingState)
-          thread->quit();
-      });
-    QObject::connect(player, &QMediaPlayer::errorOccurred, thread,
-      [=](QMediaPlayer::Error, const QString &) {
-        thread->quit();
-      });
-    // finished 同样从新线程发出，DirectConnection 保证在新线程内 delete，
-    // 避免 deleteLater 投递到已退出的事件循环导致句柄泄漏
-    QObject::connect(thread, &QThread::finished, thread, [=] {
-      delete player;
-      delete output;
-    }, Qt::DirectConnection);
-  }, Qt::DirectConnection);
-
-  connect(thread, &QThread::finished, this, [=] {
-    thread->deleteLater();
-    maxConcurrentPlayback++;
-  });
-
-  thread->start();
+  // 用 SoLoud 播放（dr_mp3 解 mp3 / wav），低延迟、支持并发、无 Qt ffmpeg 解码开销。
+  SoloudPlayer::init();
+  SoloudPlayer::playFile(fname, float(m_volume / 100.0));
 #endif
 }
 
