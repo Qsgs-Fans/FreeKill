@@ -35,15 +35,14 @@
 #include <QOpenGLShaderProgram>
 
 static const char *textureVertexShaderSource =
-        "#version 150\n"
-        "in vec2 a_position;\n"
-        "in vec4 a_color;\n"
-        "in vec2 a_texCoord;\n"
+        "attribute vec2 a_position;\n"
+        "attribute vec4 a_color;\n"
+        "attribute vec2 a_texCoord;\n"
 
         "uniform mat4 u_matrix;\n"
 
-        "out vec4 v_color;\n"
-        "out vec2 v_texCoord;\n"
+        "varying vec4 v_color;\n"
+        "varying vec2 v_texCoord;\n"
 
         "void main() {\n"
         "   gl_Position = u_matrix * vec4(a_position.xy, 0.0, 1.0);\n"
@@ -52,38 +51,33 @@ static const char *textureVertexShaderSource =
         "}\n";
 
 static const char *textureFragmentShaderSource =
-        "#version 150\n"
-        "in vec4 v_color;\n"
-        "in vec2 v_texCoord;\n"
+        "varying vec4 v_color;\n"
+        "varying vec2 v_texCoord;\n"
         "uniform sampler2D u_texture; \n"
-        "out vec4 fragColor;\n"
         "void main() {\n"
-        "   vec4 tex = texture(u_texture, v_texCoord);\n"
+        "   vec4 tex = texture2D(u_texture, v_texCoord);\n"
         "   tex.rgb *= v_color.a;\n"
-        "   fragColor = v_color * tex;\n"
+        "   gl_FragColor = v_color * tex;\n"
         "}\n";
 
 // 非预乘纹理：采样后先把 RGB 乘上纹理 alpha 转成预乘，再乘顶点 alpha（slot 透明度）
 static const char *textureFragmentShaderSourceStraight =
-        "#version 150\n"
-        "in vec4 v_color;\n"
-        "in vec2 v_texCoord;\n"
+        "varying vec4 v_color;\n"
+        "varying vec2 v_texCoord;\n"
         "uniform sampler2D u_texture; \n"
-        "out vec4 fragColor;\n"
         "void main() {\n"
-        "   vec4 tex = texture(u_texture, v_texCoord);\n"
+        "   vec4 tex = texture2D(u_texture, v_texCoord);\n"
         "   tex.rgb *= tex.a * v_color.a;\n"
-        "   fragColor = v_color * tex;\n"
+        "   gl_FragColor = v_color * tex;\n"
         "}\n";
 
 static const char *colorVertexShaderSource =
-        "#version 150\n"
-        "in vec2 a_position;\n"
+        "attribute vec2 a_position;\n"
 
         "uniform vec4 u_color;\n"
         "uniform mat4 u_matrix;\n"
 
-        "out vec4 v_color;\n"
+        "varying vec4 v_color;\n"
 
         "void main() {\n"
         "   gl_Position = u_matrix * vec4(a_position.xy, 0.0, 1.0);\n"
@@ -91,13 +85,10 @@ static const char *colorVertexShaderSource =
         "}\n";
 
 static const char *colorFragmentShaderSource =
-        "#version 150\n"
-        "in vec4 v_color;\n"
-
-        "out vec4 fragColor;\n"
+        "varying vec4 v_color;\n"
 
         "void main() {\n"
-        "   fragColor = v_color;\n"
+        "   gl_FragColor = v_color;\n"
         "}\n";
 
 void ICachedGLFunctionCall::release()
