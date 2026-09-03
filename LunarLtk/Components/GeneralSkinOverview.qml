@@ -25,7 +25,8 @@ Flickable {
       delegate: SkinItem {
         required property string modelData
         required property string index
-        source: Ltk.getFullSkinPath(root.general, modelData)
+        general: root.general
+        skinName: modelData
         text: Lua.tr(modelData)
 
         onClicked: {

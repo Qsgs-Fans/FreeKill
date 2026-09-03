@@ -31,12 +31,25 @@ function ResetClientLua()
   local cpp_client = self.client
 
   -- 最优先处理自己是旁观者时的返回房间
-  if self.observing and self.observer_setup_data then
+  if self.observing and (self.observer_player or self.observer_setup_data) then
     local t = self.observer_setup_data
-    local selfp = cpp_client:addPlayer(t[1], t[2], t[3])
-    selfp:addTotalGameTime(Self.player:getTotalGameTime())
-    cpp_client:changeSelf(t[1])
-    Self = self:createPlayer(selfp)
+    -- 对局旁观时本人已被注册为独立身份（observer_player，cpp player 以本人 id 常驻），
+    -- 直接把 cpp self 切回本人即可；这避免了 addPlayer 覆盖本人，也避免了之后收到
+    -- RemovePlayer(observee) 时 cpp removePlayer 对不存在玩家空指针崩溃。
+    local selfp = self.observer_player and self.observer_player.player
+    if not selfp and t then
+      selfp = cpp_client:addPlayer(t[1], t[2], t[3])
+      selfp:addTotalGameTime(t[4] or Self.player:getTotalGameTime())
+    end
+    if selfp then
+      -- 先更新 Lua Self 再切 cpp self：cpp Client::changeSelf 会同步 emit self_changed，
+      -- 触发 QML/Lua 刷新链；若此时 Lua Self 仍指向已退出的 observee，刷新逻辑可能
+      -- 访问到已被移除的玩家（player.lua 报 “attempt to index a nil value”）。
+      -- 先让 Lua Self 指向本人（对局旁观时已常驻 map 的稳定对象）即可避开该窗口。
+      Self = self:createPlayer(selfp)
+      cpp_client:changeSelf(selfp:getId())
+    end
+    self.observer_player = nil
     self.observer_setup_data = nil
   end
   local cpp_players = table.map(self.players, function(p)

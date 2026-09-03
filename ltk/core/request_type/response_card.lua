@@ -274,37 +274,13 @@ local function autoSelectOnlyFeasibleTarget(req, data)
       req.selected_targets = tars
       req.scene:update("Photo", tars[1], { selected = true })
       req:updateUnselectedTargets()
-      if req:feasible() then
-        req:updateButtons()
-      else
-        req.selected_targets = {}
-        req.scene:update("Photo", tars[1], { selected = false })
-        req:updateUnselectedTargets()
-      end
+      req:updateButtons()
     end
   end
 end
 
 function ReqResponseCard:update(elemType, id, action, data)
-  if elemType == "CardItem" then
-    self:selectCard(id, data)
-    self:updateButtons()
-    -- 双击打出
-    --[[
-    if action == "doubleClick" and data.doubleClickUse then
-      if not data.selected then -- 未选中的选中
-        data.selected = true
-        self:selectCard(id, data)
-      end
-      if self:feasible() then
-        self:doOKButton()
-      else
-        data.selected = false
-        self:selectCard(id, data)
-      end
-    end
-    ]]
-  elseif elemType == "SkillButton" then
+  if elemType == "SkillButton" then
     self:selectSkill(id, data)
     -- 自动选择唯一目标
     autoSelectOnlyFeasibleTarget(self, data)
@@ -325,7 +301,7 @@ function ReqResponseCard:update(elemType, id, action, data)
       end
     end
     ]]
-  else -- if elemType == "Button" or elemType == "Interaction" then
+  else -- if elemType == "Button" or elemType == "Interaction" or elemType == "CardItem" then
     return ReqActiveSkill.update(self, elemType, id, action, data)
   end
 end

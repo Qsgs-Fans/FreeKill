@@ -544,11 +544,9 @@ end
 function M:getSkinByName(general, name)
   local skin_data =  Fk:getSkinByName(general, name)
   if (skin_data or {}).name then
-    return {
-      name = skin_data.name,
-      path = skin_data.path,
-      url = skin_data.path .. skin_data.name
-    }
+    local _skin = table.simpleClone(skin_data)
+    _skin.url = skin_data.path .. skin_data.name
+    return _skin
   end
   return
 end
@@ -882,6 +880,7 @@ function M:getCardTip(cid)
   local skill = Fk.skills[handler.skill_name]
   local CardItem = handler.scene.items["CardItem"][cid] --[[@as CardItem]]
   if not CardItem then return {} end
+  local selectable = CardItem.enabled
   local extra_data = handler.extra_data
 
   local ret = {}
@@ -889,7 +888,7 @@ function M:getCardTip(cid)
   if skill then
     if skill:isInstanceOf(ActiveSkill) then
       ---@cast skill ActiveSkill
-      local tip = skill:cardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), nil, extra_data)
+      local tip = skill:cardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), nil, selectable, extra_data)
       if type(tip) == "string" then
         table.insert(ret, { content = tip, type = "normal" })
       elseif type(tip) == "table" then
@@ -897,19 +896,25 @@ function M:getCardTip(cid)
       end
     elseif skill:isInstanceOf(ViewAsSkill) then
       ---@cast skill ViewAsSkill
+      local tip = skill:cardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), nil, selectable, extra_data)
+      if type(tip) == "string" then
+        table.insert(ret, { content = tip, type = "normal" })
+      elseif type(tip) == "table" then
+        table.insertTable(ret, tip)
+      end
       card = skill:viewAs(Self, selected)
     end
   end
 
   if card then
-    local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable
+    local status_skills = Fk:currentRoom().status_skills[TargetModSkill] or Util.DummyTable ---@type TargetModSkill[]
     for _, sk in ipairs(status_skills) do
       ret = ret or {}
       if #ret > 4 then
         return ret
       end
 
-      local tip = sk:getCardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), card, extra_data)
+      local tip = sk:getCardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), card, selectable, extra_data)
       if type(tip) == "string" then
         table.insert(ret, { content = tip, type = "normal" })
       elseif type(tip) == "table" then
@@ -918,7 +923,7 @@ function M:getCardTip(cid)
     end
 
     ret = ret or {}
-    local tip = card:getSkill(Self):cardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), card, extra_data)
+    local tip = card:getSkill(Self):cardTip(Self, to_select, selected, table.map(selected_targets, Util.Id2PlayerMapper), card, selectable, extra_data)
     if type(tip) == "string" then
       table.insert(ret, { content = tip, type = "normal" })
     elseif type(tip) == "table" then
@@ -1020,7 +1025,7 @@ function M:chooseGeneralFeasible(rule_name, selected, data, extra_data)
   return rule.feasible(selected, data, extra_data)
 end
 
-function M:poxiPrompt(poxi_type, data, extra_data)
+function M:poxiPrompt(poxi_type, data, extra_data, selected)
   local poxi = Fk.poxi_methods[poxi_type]
   if not poxi then return end
   local prompt = poxi.prompt
@@ -1028,7 +1033,7 @@ function M:poxiPrompt(poxi_type, data, extra_data)
   if type(prompt) == "string" then
     return prompt
   else
-    return prompt(data, extra_data)
+    return prompt(data, extra_data, selected)
   end
 end
 

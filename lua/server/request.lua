@@ -242,14 +242,14 @@ function Request:ask()
         if self.timeout - elapsed <= 0 then
           table.insert(self.overtimes, player)
 
-          -- TODO: 烧完整管后若累计烧了60s则托管，但这个功能目前无法实现
-          -- player._timewaste_count = player._timewaste_count + elapsed
-          -- if player._timewaste_count >= 60 and
-          --   player.serverplayer:getState() == fk.Player_Online then
-          --   player._timewaste_count = 0
+          -- TODO: 烧完整管后若累计烧了70s则托管，但这个功能目前无法实现，目前只能直接把人给踢出去
+          player._timewaste_count = player._timewaste_count + elapsed
+          if player._timewaste_count >= 70 and
+            player.serverplayer:getState() == fk.Player_Online then
+            player._timewaste_count = 0
             -- freekill-asio中并没有setState。
-            -- player.serverplayer:setState(fk.Player_Trust)
-          -- end
+            player.serverplayer:emitKick()
+          end
         end
         if self.send_success[player.serverplayer] then
           table.remove(players, i)

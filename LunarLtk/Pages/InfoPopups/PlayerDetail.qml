@@ -152,7 +152,7 @@ ColumnLayout {
 
     MetroButton {
       text: Lua.tr("Change Skin")
-      visible: !Config.observing && root.dataModel.playerid === Ltk.roomScene.dataModel?.dashboardId
+      visible: !Config.observing && root.dataModel.playerid === Ltk.roomScene.dataModel?.dashboardId && !Config.banChangeSkin
       enabled: !Config.observing && root.dataModel.playerid === Ltk.roomScene.dataModel?.dashboardId && (Ltk.getSkinNamesByGeneral(root.dataModel.general).length > 0 || Ltk.getSkinNamesByGeneral(root.dataModel.deputyGeneral).length > 0 || Cpp.quickStartMode) && !root.dataModel.photoItem.changeSkinTimer.running
       onClicked: {
         // 草了这什么神秘bug，从这不能直接打开infoPopup

@@ -65,6 +65,13 @@ W.PreferencePage {
       checked: Config.hideScreenName
       onCheckedChanged: Config.hideScreenName = checked;
     }
+
+    W.SwitchRow {
+      title: Lua.tr("Ban Change Skins")
+      subTitle: Lua.tr("help: Ban Change Skins")
+      checked: Config.banChangeSkin
+      onCheckedChanged: Config.banChangeSkin = checked;
+    }
   }
 
 }

@@ -32,7 +32,7 @@ W.PreferencePage {
         title: Lua.tr(modelData)
         textRole: "translation"
         property list<string> uipaks: currentRepeater.getUIPackagesByBoardGame(modelData)
-        visible: uipaks.length > 1 
+        visible: uipaks.length > 1
         model: ListModel {
           id: boardgameListModel
           Component.onCompleted: {

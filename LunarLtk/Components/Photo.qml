@@ -471,7 +471,7 @@ PhotoBase {
   }
 
   function setEmotion(path, permanent) {
-    emotionItem.source = path;
+    emotionItem.source = Fs.convertPathToUrl(path);
     if (permanent) {
       permanentEmotionShowAnim.start();
     } else {

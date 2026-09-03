@@ -33,7 +33,7 @@ local baseEngine = require "core.engine"
 ---@field public card_tips table<string, CardTipSpec> @ 选择卡牌提示对应表
 ---@field public target_tips table<string, TargetTipSpec> @ 选择目标提示对应表
 ---@field public choose_general_rule table<string, ChooseGeneralSpec> @ 选将框操作方法表
----@field public skin_packages table<string, SkinContent[]> @ Skins
+---@field public skin_packages table<string, table<string, SkinContent[] | SkelSkinContent>> @ Skins
 ---@field public personal_marks table<string, PersonalMarkSpec> @ PersonalMark
 ---@field public gamemode_whitelist_map table<string, table>
 ---@field public post_load_func function[] @ 加载后执行的函数
@@ -769,14 +769,14 @@ function Engine:filterCard(id, player)
   end
 end
 
----@return table<string, SkinContent>
+---@return table<string, SkelSkinContent|SkinContent[]>
 function Engine:getSkinsByGeneral(general)
   return self.skin_packages[general] or {}
 end
 
----@return SkinContent
 ---@param general string
 ---@param name string
+---@return table<string, SkelSkinContent|SkinContent[]>
 function Engine:getSkinByName(general, name)
   return self:getSkinsByGeneral(general)[name]
 end

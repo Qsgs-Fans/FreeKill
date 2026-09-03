@@ -386,9 +386,10 @@ W.PageBase {
     icon.name: "application-exit"
     onClicked: {
       App.showToast("Goodbye.");
-      App.quitPage();
       Config.saveConf();
       Cpp.quitLobby();
+      // 清空页面栈回到主界面(Init)，防止栈内残留的旧 Lobby/房间页导致退回旧页面
+      App.backToStart();
     }
   }
 

@@ -189,17 +189,4 @@ function JudgeEventWrappers:changeJudge(params)
 
 end
 
-
-
---- 改判。
----@param card Card @ 改判的牌
----@param player ServerPlayer @ 改判者
----@param judge JudgeData @ 被改判的判定数据
----@param skillName? string @ 技能名
----@param exchange? boolean @ 是否替换原有判定牌（类似```鬼道```）
----@deprecated @ 用changeJudge代替
-function JudgeEventWrappers:retrial(card, player, judge, skillName, exchange)
-  self:changeJudge{card = card, player = player, data = judge, skillName = skillName, exchange = exchange}
-end
-
 return { Judge, JudgeEventWrappers }

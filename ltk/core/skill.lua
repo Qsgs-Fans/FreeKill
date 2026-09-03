@@ -6,7 +6,6 @@
 ---@field public name string @ 技能名
 ---@field public trueName string @ 技能真名
 ---@field public package Package @ 技能所属的包
----@field public frequency? SkillTag @ 技能标签，如compulsory（锁定技）、limited（限定技）。（deprecated，请改为向skeleton添加tag）
 ---@field public visible boolean @ 技能是否会显示在游戏中
 ---@field public mute boolean @ 决定是否关闭技能配音
 ---@field public no_indicate boolean @ 决定是否关闭技能指示线

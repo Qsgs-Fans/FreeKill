@@ -10,6 +10,7 @@
 ---@field public name string @ 游戏模式名
 ---@field public minPlayer integer @ 最小玩家数
 ---@field public maxPlayer integer @ 最大玩家数
+---@field public playerNums? integer[] @ 玩家数
 ---@field public minComp integer @ 最小电脑数
 ---@field public maxComp integer @ 最大电脑数
 ---@field public rule? string @ 规则（通过技能完成，通常用来为特定角色及特定时机提供触发事件）
@@ -69,8 +70,14 @@ function GameMode:countInFunc(room)
 end
 
 -- 判断是否允许点确定按钮创房间。
+---@param settings W.SettingsParam
+---@return boolean
 function GameMode:feasible(settings)
-  return true
+  -- 理论上组件内已经判断了，这里都是冗余
+  local playerNum = settings.playerNum
+  local playerNums = self.playerNums
+  if playerNums then return table.contains(playerNums, playerNum)
+  else return playerNum <= self.maxPlayer and playerNum >= self.minPlayer end
 end
 
 -- 以下大多是三国杀特有的

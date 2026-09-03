@@ -65,13 +65,7 @@ local function autoSelectOnlyFeasibleTarget(req, data)
       req.selected_targets = tars
       req.scene:update("Photo", tars[1], { selected = true })
       req:updateUnselectedTargets()
-      if req:feasible() then
-        req:updateButtons()
-      else
-        req.selected_targets = {}
-        req.scene:update("Photo", tars[1], { selected = false })
-        req:updateUnselectedTargets()
-      end
+      req:updateButtons()
     end
   end
 end
@@ -223,7 +217,7 @@ end
 
 --- 在手牌区展开一些牌，注可以和已有的牌重复
 ---@param pile string @ 牌堆名，用于标识
----@param extra_ids? integer|Card[] @ 额外的牌id数组
+---@param extra_ids? integer[]|Card[] @ 额外的牌id数组
 ---@param extra_footnote? string @ 卡牌底注
 ---@return integer[] @ 展开的牌id数组
 function ReqActiveSkill:expandPile(pile, extra_ids, extra_footnote)
@@ -240,7 +234,7 @@ function ReqActiveSkill:expandPile(pile, extra_ids, extra_footnote)
     footnote = extra_footnote
     -- self.extra_cards = exira_ids
     self.expanded_piles[pile] = self.expanded_piles[pile] or {}
-    table.insertTable(self.expanded_piles[pile],ids)
+    table.insertTable(self.expanded_piles[pile], ids)
   elseif pile == "_sub_selection" and extra_ids then
     -- 二级菜单的expand_pile必为实体卡牌表……
     self.expanded_piles["_sub_selection"] = table.map(extra_ids, function(c) return Fk:currentRoom():getVirtCardId(c) end)
@@ -607,7 +601,7 @@ function ReqActiveSkill:updateInteraction(data, ignoreSetup)
       )
     end
     if not ignoreSetup then
-      ReqActiveSkill.setup(self, true) -- interaction变动后需复原
+      ReqActiveSkill.setup(self, true, type(data) == "table" and data) -- interaction变动后需复原
     end
   end
 end

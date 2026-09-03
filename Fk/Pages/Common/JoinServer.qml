@@ -12,6 +12,14 @@ Item {
   anchors.fill: parent
   property var selectedServer: serverModel.get(serverList.currentIndex)
 
+  readonly property string serverListUrl:
+    "https://cdn.jsdelivr.net/gh/Qsgs-Fans/freekill-server-list@master/server-list.json"
+
+  readonly property string hashApiUrl:
+    "https://data.jsdelivr.com/v1/package/gh/Qsgs-Fans/freekill-server-list@master/flat"
+
+  property var lastHashCheck: 0
+
   Timer {
     id: opTimer
     interval: 5000
@@ -31,14 +39,21 @@ Item {
         Item {}
 
         Image {
+          id: serverIcon
           Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
           Layout.preferredHeight: 56
           Layout.preferredWidth: 56
           fillMode: Image.PreserveAspectFit
+          asynchronous: true
           source: {
             if (!favicon) return SkinBank.miscDir + "server_icon";
             if (favicon === "default") return AppPath + "/image/icon.png";
             return favicon;
+          }
+          onStatusChanged: {
+            if (status === Image.Error) {
+              source = SkinBank.miscDir + "server_icon";
+            }
           }
         }
 
@@ -163,6 +178,7 @@ Item {
       enabled: !opTimer.running
       onClicked: {
         opTimer.start();
+        fetchPublicServerList();
         for (let i = 0; i < serverModel.count; i++) {
           const item = serverModel.get(i);
           if (!item.favorite && !item.lan) break;
@@ -401,20 +417,26 @@ Item {
     }
   }
 
-  function loadConfig() {
-    if (serverModel.count > 0) { return; }
-    let serverList = JSON.parse(Backend.getPublicServerList());
-    if (!(serverList instanceof Array)) serverList = [];
-    serverList.unshift(...Config.favoriteServers);
-    for (const server of serverList) {
-      let { addr, port, name, username, password } = server;
-      name = name ?? "";
-      username = username ?? "";
-      password = password ?? "";
-      if (port === -1) break;
-      if (!password && Config.findFavorite(addr, port)) continue;
+  function appendServers(list) {
+    if (!(list instanceof Array)) return;
+    for (const server of list) {
+      const addr = server.addr ?? "";
+      const port = server.port ?? 0;
+      if (!addr || port <= 0) continue; 
+      let exists = false;
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === addr && s.port === port) {
+          exists = true;
+          break;
+        }
+      }
+      if (exists) continue;
       serverModel.append({
-        addr, port, name, username, password,
+        addr, port,
+        name: server.name ?? "",
+        username: server.username ?? "",
+        password: server.password ?? "",
         misMatchMsg: "",
         description: qsTr("Server not up"),
         online: "?",
@@ -422,10 +444,119 @@ Item {
         favicon: "",
         delayBegin: (new Date).getTime(),
         delay: -1,
-        favorite: !!password,
+        favorite: !!server.password,
         lan: false,
       });
       Backend.getServerInfo(addr, port);
     }
+  }
+
+  function applyPublicServerList(list) {
+    let selAddr, selPort;
+    if (serverList.currentIndex >= 0) {
+      const sel = serverModel.get(serverList.currentIndex);
+      if (sel) { selAddr = sel.addr; selPort = sel.port; }
+    }
+    for (let i = serverModel.count - 1; i >= 0; i--) {
+      const s = serverModel.get(i);
+      if (!s.favorite && !s.lan) serverModel.remove(i);
+    }
+    appendServers(list);
+    if (selAddr !== undefined) {
+      serverList.currentIndex = -1;
+      for (let i = 0; i < serverModel.count; i++) {
+        const s = serverModel.get(i);
+        if (s.addr === selAddr && s.port === selPort) {
+          serverList.currentIndex = i;
+          break;
+        }
+      }
+    }
+  }
+
+  function readCache(key) {
+    const c = Config.conf?.serverListCache;
+    return (c && c[key] !== undefined) ? c[key] : null;
+  }
+
+  function writeCache(key, value) {
+    if (!Config.conf) return;
+    if (!Config.conf.serverListCache) Config.conf.serverListCache = {};
+    Config.conf.serverListCache[key] = value;
+  }
+
+  function fetchRemoteHash(callback) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", hashApiUrl);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== XMLHttpRequest.DONE) return;
+      if (xhr.status !== 200) { callback(null); return; }
+      try {
+        const data = JSON.parse(xhr.responseText);
+        for (const f of (data.files ?? [])) {
+          if (f.name === "/server-list.json") { callback(f.hash ?? null); return; }
+        }
+      } catch (e) {}
+      callback(null);
+    };
+    xhr.send();
+  }
+
+  function checkServerListUpdate() {
+    const now = Date.now();
+    if (now - lastHashCheck < 1200000) return;
+    lastHashCheck = now;
+    fetchRemoteHash(function(remoteHash) {
+      if (!remoteHash) return;
+      if (remoteHash === readCache("hash")) return;
+      fetchPublicServerList(remoteHash);
+    });
+  }
+
+  function fetchPublicServerList(remoteHash) {
+    if (remoteHash === undefined) {
+      fetchRemoteHash(function(h) { fetchPublicServerList(h ?? ""); });
+      return;
+    }
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", serverListUrl + "?t=" + Date.now());
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState !== XMLHttpRequest.DONE) return;
+      if (xhr.status !== 200) return;
+      let list;
+      try {
+        list = JSON.parse(xhr.responseText);
+      } catch (e) {
+        return;
+      }
+      if (list instanceof Array) {
+        applyPublicServerList(list);
+        writeCache("json", xhr.responseText);
+        if (remoteHash) writeCache("hash", remoteHash);
+        Config.saveConf();
+      }
+    };
+    xhr.send();
+  }
+
+  function loadConfig() {
+    if (serverModel.count === 0) {
+      appendServers(Config.favoriteServers);
+      let list = null;
+      const cachedJson = readCache("json");
+      if (cachedJson) {
+        try { list = JSON.parse(cachedJson); } catch (e) {}
+      }
+      if (!(list instanceof Array)) {
+        try {
+          list = JSON.parse(Backend.getPublicServerList());
+        } catch (e) {
+          list = [];
+        }
+        if (!(list instanceof Array)) list = [];
+      }
+      appendServers(list);
+    }
+    checkServerListUpdate();
   }
 }

@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtMultimedia
 import Qt5Compat.GraphicalEffects
+import QtQuick.Dialogs
 
 import Fk
 import Fk.Components.Common
@@ -139,9 +140,31 @@ RoomBase {
         visible: !Config.observing && !Config.replaying
         textFont.pixelSize: 28
         onClicked: {
-          Cpp.notifyServer("Trust", "");
-          trustBtn.enabled = false;
-          roomScene.dataModel.deActivate();
+          if (getPhoto(Cpp.self.id).dataModel.netstate == "trust") {
+            dataModel.trust(); // 已托管点击直接取消托管
+          } else {
+            trustDialog.open(); // 托管询问
+          }
+        }
+        onRightClicked: dataModel.trust(); // 长按直接托管
+
+        MessageDialog {
+          id: trustDialog
+          title: Lua.tr("Trust")
+          text: Lua.tr("Are you sure to trust?")
+          informativeText: Lua.tr("help: Are you sure to trust?")
+          buttons: MessageDialog.Ok | MessageDialog.Cancel
+          onButtonClicked: function (button) {
+            switch (button) {
+              case MessageDialog.Ok: {
+                dataModel.trust();
+                break;
+              }
+              case MessageDialog.Cancel: {
+                trustDialog.close();
+              }
+            }
+          }
         }
       }
       MetroButton {
@@ -488,6 +511,29 @@ RoomBase {
       font.family: Config.li2Name
       font.pixelSize: 48
     }
+  }
+
+  Rectangle { // 托管变灰
+    anchors.fill: dashboard
+    visible: getPhoto(Cpp.self.id).dataModel.netstate == "trust"
+    color: "gray"
+    opacity: 0.35
+    z: 9
+  }
+  MetroButton {
+    width: 150
+    height: 65
+    padding: 8
+    z: 9
+    visible: getPhoto(Cpp.self.id).dataModel.netstate == "trust" && !Config.observing && !Config.replaying
+    anchors.horizontalCenter: dashboard.horizontalCenter
+    anchors.verticalCenter: dashboard.verticalCenter
+    text: Lua.tr("Cancel Trust")
+    textFont.bold: true
+    textFont.family: Config.libianName
+    textFont.pixelSize: 30
+    title.style: Text.Outline
+    onClicked: dataModel.trust();
   }
 
   MiscStatus {

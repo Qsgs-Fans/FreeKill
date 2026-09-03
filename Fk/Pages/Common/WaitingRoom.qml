@@ -85,8 +85,6 @@ W.PageBase {
     border.color: roomScene.borderColor
     border.width: 2
 
-    property bool viewFalse: false
-
     Text {
       id: roomSettingsTitle
       width: parent.width
@@ -106,158 +104,21 @@ W.PageBase {
       anchors.top: roomSettingsTitle.bottom
     }
 
-    Flickable {
+    RoomInfoContainer {
       id: infoContainer
-      ScrollBar.vertical: ScrollBar {
-        parent: roomSettings
-        anchors.top: infoContainer.top
-        anchors.right: infoContainer.right
-        anchors.rightMargin: -12
-        anchors.bottom: infoContainer.bottom
-        width: 8
-      }
       anchors.horizontalCenter: parent.horizontalCenter
       anchors.top: roomSettingsTitle.bottom
       anchors.topMargin: 10
-      anchors.bottom: viewFalseCheck.top
-      anchors.bottomMargin: 2
-      height: parent.height - 20 - roomSettingsTitle.height - viewFalseCheck.height - 20
-      flickableDirection: Flickable.VerticalFlick
-      width: parent.width - 30
-      contentHeight: roominfo.height
-      clip: true
-      property var settings: []
-
-      Component.onCompleted: setDataList();
-
-      function getSettingKey(prop, mainKey) {
-        const data = Lua.client.settings;
-        const value = data?.[mainKey]?.[prop['_settingsKey']];
-        const key = prop.title;
-        if (typeof value === "boolean") {
-          const tr = Lua.hasTranslate("#" + key);
-          const trNega = Lua.hasTranslate("#!" + key);
-          if (tr) {
-            return value ? [tr]: (trNega ? [trNega] : [Lua.tr(prop.title), Lua.tr(value)]);
-          }
-        }
-
-        return [Lua.tr(prop.title), Lua.tr(value)];
-      }
-
-      function setDataList() {
-        let _settings = [];
-        const data = Lua.client.settings;
-        let cardpack = Ltk.getAllCardPack();
-        cardpack = cardpack.filter(p => !data.disabledPack.includes(p));
-        const gameMode = data.gameMode;
-        const boardgameSettingsData = Lua.getUIDataOfSettings(gameMode, data, true);
-        const gameSettingsData = Lua.getUIDataOfSettings(gameMode, data, false);
-
-        _settings.push([Lua.tr("GameMode"), Lua.tr(gameMode)]);
-        _settings.push([Lua.tr("ResponseTime"), Config.roomTimeout]);
-        for (const group of boardgameSettingsData) {
-          for (const prop of group['_children']) {
-            _settings.push(getSettingKey(prop, "_game"))
-          }
-        }
-        for (const group of gameSettingsData) {
-          for (const prop of group['_children']) {
-            _settings.push(getSettingKey(prop, "_mode"))
-          }
-        }
-        _settings.push([Lua.tr("General Pool"), "1"]);
-        _settings.push([Lua.tr('CardPackages'), cardpack.map(e => {
-          let ret = Lua.tr(e);
-          // TODO: 这种东西最好还是变量名规范化= =
-          if (ret.search(/特殊牌|衍生牌/) === -1) {
-            ret = "<b>" + ret + "</b>";
-          }
-          return ret;
-        }).join('，')]);
-        settings = _settings
-      }
-
-      ColumnLayout {
-        id: roominfo
-        width: parent.width
-        Repeater {
-          model: infoContainer.settings
-
-          Item {
-            width: parent.width
-            height: Math.max(30, ketText.height)
-            required property var modelData
-            visible: {
-              if (roomSettings.viewFalse) return true;
-              const value = modelData[1];
-              return value !== "false" && value !== "" && value !== "否"; // 选项框出来直接是翻译过的
-            }
-
-            Text {
-              id: titleText
-              anchors.left: parent.left
-              text: parent.modelData[0]
-              color: '#5e5e5e'
-              font.pixelSize: 14
-            }
-
-            Text {
-              id: ketText
-              anchors.right: parent.right
-              anchors.left: titleText.right
-              anchors.leftMargin: 2
-              horizontalAlignment: Text.AlignRight
-              visible: parent.modelData[0] !== Lua.tr("General Pool")
-              text: {
-                const str = parent.modelData[1];
-                if (typeof str !== "string") return "";
-                if (str === "true") return Lua.tr("True");
-                if (str === "false") return Lua.tr("False");
-                return str
-              }
-              color: '#222222'
-              font.pixelSize: 14
-              wrapMode: Text.WordWrap
-            }
-
-            WButton {
-              id: generalButton
-              visible: parent.modelData[0] === Lua.tr("General Pool")
-              anchors.right: parent.right
-              height: 20
-              width: 40
-              text: Lua.tr("View General Pool")
-              textFont.pixelSize: 14
-              title.color: '#e1f5f3'
-              bg.radius: 10
-              bg.color: '#8eb1ab'
-              border.width: 0
-
-              onClicked: {
-                overviewLoader.overviewSource = "LunarLtk.Pages";
-                overviewLoader.overviewType = "GeneralPool";
-                overviewDialog.open();
-              }
-            }
-          }
-        }
-      }
-    }
-
-    W.SwitchRow {
-      id: viewFalseCheck
       anchors.bottom: parent.bottom
-      anchors.right: parent.right
-      anchors.left: parent.left
+      width: parent.width - 30
+      scrollBarParent: roomSettings
+      switchBackgroundColor: roomScene.bgColor
 
-      backgroundColor: roomScene.bgColor
-      borderColor: roomScene.bgColor
-
-      title: Lua.tr("View False Settings")
-
-      checked: parent.viewFalse
-      onCheckedChanged: parent.viewFalse = checked;
+      onGeneralPoolRequested: {
+        overviewLoader.overviewSource = "LunarLtk.Pages";
+        overviewLoader.overviewType = "GeneralPool";
+        overviewDialog.open();
+      }
     }
   }
 
@@ -540,7 +401,7 @@ W.PageBase {
         bg.radius: 10
         bg.color: '#8eb1ab'
         border.width: 0
-        visible: isOwner && isFull
+        visible: isOwner && isFull && !Config.observing
         enabled: isAllReady
         onClicked: if (enabled) {
           Cpp.notifyServer("StartGame", "");
@@ -802,7 +663,7 @@ W.PageBase {
     }
     for (let i = 0; i < observerModel.count; i++) {
       if (observerModel.get(i).id === id) {
-        return observerListView.contentItem.children[i];
+        return observerListView.itemAtIndex(i);
       }
     }
     return undefined;

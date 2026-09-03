@@ -7,7 +7,6 @@
 ---@field public anim_type? string|AnimationType @ 技能类型定义
 ---@field public global? boolean @ 决定是否是全局技能
 ---@field public dynamic_desc? fun(self: Skill, player: Player, lang: string): string? @ 动态描述函数
----@field public derived_piles? string|string[]  @deprecated @ 与某效果联系起来的私人牌堆名，失去该效果时将之置入弃牌堆
 ---@field public audio_index? table|integer @ 此技能效果播放的语音序号，可为int或int表，为0时不播放语音
 ---@field public extra? table @ 塞进技能里的各种数据
 ---@field public relate_to_place? string| "m" | "d" @ 主将技("m")/副将技("d")
@@ -545,6 +544,7 @@ function SkillSkeleton:createVisibilitySkill(_skill, idx, key, attr, spec)
 end
 
 -- 将技能的选项框设置元表，仅用于主动技、视为技
+---@param spec ButtonSkillSpec
 function fk.readInteractionToSkill(skill, spec)
   if spec.interaction then
     skill.interaction = setmetatable({}, {
@@ -553,6 +553,23 @@ function fk.readInteractionToSkill(skill, spec)
           return spec.interaction(...)
         else
           return spec.interaction
+        end
+      end,
+    })
+  elseif spec.interaction_helper or spec.update_interaction or spec.refresh_interaction then
+    skill.interaction = setmetatable({}, {
+      __call = function(_, ...)
+        return UI.ToBeDecided {}
+      end,
+    })
+  end
+  if spec.interaction_helper then
+    skill.interaction_helper = setmetatable({}, {
+      __call = function(_, ...)
+        if type(spec.interaction_helper) == "function" then
+          return spec.interaction_helper(...)
+        else
+          return spec.interaction_helper
         end
       end,
     })
@@ -609,7 +626,6 @@ function SkillSkeleton:createActiveSkill(_skill, idx, key, attr, spec)
   if spec.feasible then skill.feasible = spec.feasible end
   if spec.on_use then skill.onUse = spec.on_use end
   if spec.prompt then skill.prompt = spec.prompt end
-  if spec.card_tip then skill.cardTip = spec.card_tip end
   if spec.target_tip then skill.targetTip = spec.target_tip end
   if spec.handly_pile then skill.handly_pile = spec.handly_pile end
   if spec.click_count then skill.click_count = spec.click_count end
@@ -651,7 +667,6 @@ function SkillSkeleton:createCardSkill(_skill, idx, key, attr, spec)
   if spec.on_effect then skill.onEffect = spec.on_effect end
   if spec.on_nullified then skill.onNullified = spec.on_nullified end
   if spec.prompt then skill.prompt = spec.prompt end
-  if spec.card_tip then skill.cardTip = spec.card_tip end
   if spec.target_tip then skill.targetTip = spec.target_tip end
   if spec.fix_targets then skill.fixTargets = spec.fix_targets end
   if spec.offset_func then skill.preEffect = spec.offset_func end
@@ -763,7 +778,6 @@ function SkillSkeleton:createViewAsSkill(_skill, idx, key, attr, spec)
   if spec.prompt then skill.prompt = spec.prompt end
 
   fk.readInteractionToSkill(skill, spec)
-
   if spec.update_interaction and type(spec.update_interaction) == "function" then
     skill.update_interaction = spec.update_interaction
   end

@@ -39,33 +39,64 @@ QtObject {
         }
         return subtypeInt[a.subtype] - subtypeInt[b.subtype];
       }
-      if (a.name !== b.name) {
+      if (a.trueName !== b.trueName) {
+        return a.trueName.localeCompare(b.trueName);
+      } else if (a.name !== b.name) {
+        if (a.name === a.trueName && b.name !== b.trueName) return -1;
+        if (a.name !== a.trueName && b.name === b.trueName) return 1; // 让trueName和name一致的排在前（slash在thunder__slash和fire__slash前）
         return a.name.localeCompare(b.name);
       }
-      return a.cardId - b.cardId;
+      return 0;
     };
 
     const numberSorter = (a, b) => {
       if (a.number !== b.number) return a.number - b.number;
-      return a.cardId - b.cardId;
+      return 0;
     };
 
     const suitSorter = (a, b) => {
       const suitInt = {
         spade: 1, heart: 3,
         club: 2, diamond: 4,
-      }
+      };
       if (a.suit !== b.suit) return suitInt[a.suit] - suitInt[b.suit];
+      return 0;
+    };
+
+    const compareCards = (a, b, order) => {
+      for (const compare of order) {
+        const res = compare(a, b);
+        if (res !== 0) return res;
+      }
+
       return a.cardId - b.cardId;
     };
 
+    const sortByType = (a, b) => compareCards(a, b, [
+      typeSorter,
+      suitSorter,
+      numberSorter,
+    ]);
+
+    const sortByNumber = (a, b) => compareCards(a, b, [
+      numberSorter,
+      typeSorter,
+      suitSorter,
+    ]);
+
+    const sortBySuit = (a, b) => compareCards(a, b, [
+      suitSorter,
+      typeSorter,
+      numberSorter,
+    ]);
+
     // sortMethod: 0=type, 1=number, 2=suit
     if (sortMethod === 0) {
-      handcards.sort(typeSorter);
+      handcards.sort(sortByType);
     } else if (sortMethod === 1) {
-      handcards.sort(numberSorter);
+      handcards.sort(sortByNumber);
     } else if (sortMethod === 2) {
-      handcards.sort(suitSorter);
+      handcards.sort(sortBySuit);
     }
 
     handcardsSorted();
@@ -169,6 +200,7 @@ QtObject {
       }
       card.footnote = Lua.tr(dat.ui_data.footnote);
       card.footnoteVisible = true;
+      card.updateCardTip();
       const vcard = Ltk.getVirtualEquipData(0, dat.data.id);
       if (vcard) card.virtName = vcard.name;
       expandedCards.push(card);
@@ -185,7 +217,7 @@ QtObject {
     });
 
     for (const card of handcards) {
-      card.cardTip = Ltk.getCardTip(card.cardId);
+      card.updateCardTip();
       if (!card.selectable) {
         card.prohibitReason = Ltk.getCardProhibitReason(card.cardId);
       }

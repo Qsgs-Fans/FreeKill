@@ -216,8 +216,8 @@ QtObject {
     return _L.chooseGeneralFeasible(rule_name, selected, data, extra_data);
   }
 
-  function poxiPrompt(poxi_type, data, extra_data) {
-    return _L.poxiPrompt(poxi_type, data, extra_data);
+  function poxiPrompt(poxi_type, data, extra_data, selected) {
+    return _L.poxiPrompt(poxi_type, data, extra_data, selected);
   }
 
   function poxiFilter(poxi_type, to_select, selected, data, extra_data) {
@@ -495,10 +495,17 @@ QtObject {
     return component.createObject(null, prop);
   }
 
+  function isSkeletonSkin(general, name) {
+    if (!general || !name) return false;
+    return getSkinByName(general, name)?.is_skel ?? false
+  }
+
   // 获得完整的皮肤地址，如果为远程链接则下载到assets文件夹
   function getFullSkinPath(general, name) {
-    let skin = getSkinByName(general, name)
+    if (!general || !name) return "";
+    const skin = getSkinByName(general, name)
     if (!skin) return SkinBank.getGeneralPicture(general);
+    if (skin.is_skel) return "";
 
     if (skin.path.startsWith("http")) {
       const hash = urlToBase62(skin.path)
@@ -513,6 +520,60 @@ QtObject {
     }
 
     return Cpp.path + "/" + skin.path + skin.name
+  }
+
+  function getSkeletonSkinData(general, name) {
+    const skin = getSkinByName(general, name);
+    if (!skin?.is_skel) return;
+    const isRemoteFile = skin.path.startsWith("http://") || skin.path.startsWith("https://")
+    let path = (Cpp.path + "/" + skin.path + (skin.path.endsWith("/") ? "" : "/"));
+    const atlasBgFile = skin.bg + ".atlas";
+    const skelBgFile = skin.bg + (skin.files.includes(skin.bg + ".skel") ? ".skel" : ".json");
+    const atlasBodyFile = skin.body + ".atlas";
+    const skelBodyFile = skin.body + (skin.files.includes(skin.body + ".skel") ? ".skel" : ".json");
+
+    let suc = true;
+    if (isRemoteFile) {
+      const hash = urlToBase62(skin.path);
+      path = `${Cpp.path}/assets/lunarltk/skel/${hash}/`;
+      for (const n of skin.files) {
+        if (!Fs.resolveFile(`${Cpp.path}/assets/lunarltk/skel/${hash}/${n}`)) {
+          suc = false;
+          Fs.downloadFileToAssets(
+          skin.path + n,
+          `lunarltk/skel/${hash}/${n}`
+          )
+        }
+      }
+    }
+    
+    if (suc) {
+      const extraData = skin.extra_data;
+      return {
+        path: path,
+        atlasBgFile: atlasBgFile,
+        skelBgFile: skelBgFile,
+        atlasBodyFile: atlasBodyFile,
+        skelBodyFile: skelBodyFile,
+        bgScale: extraData.bg_scale ?? (extraData.scale ?? 1),
+        bodyScale: extraData.body_scale ?? (extraData.scale ?? 1),
+        bgXOffset: extraData.bg_x_offset ?? (extraData.x_offset ?? 0.5),
+        bgYOffset: extraData.bg_y_offset ?? (extraData.y_offset ?? 0.5),
+        bodyXOffset: extraData.body_x_offset ?? (extraData.x_offset ?? 0.5),
+        bodyYOffset: extraData.body_y_offset ?? (extraData.y_offset ?? 0.5),
+        bgShownAnim: extraData.bg_shown_anim ?? (extraData.shown_anim ?? ""),
+        bgNormalAnim: extraData.bg_normal_anim ?? (extraData.normal_anim ?? "DaiJi"),
+        bgAttackAnim: extraData.bg_attack_anim ?? (extraData.attack_anim ?? ""),
+        bgSpecialAnim: extraData.bg_special_anim ?? (extraData.special_anim ?? ""),
+        bodyShownAnim: extraData.body_shown_anim ?? (extraData.shown_anim ?? ""),
+        bodyNormalAnim: extraData.body_normal_anim ?? (extraData.normal_anim ?? "DaiJi"),
+        bodyAttackAnim: extraData.body_attack_anim ?? (extraData.special_anim ?? ""),
+        bodySpecialAnim: extraData.body_special_anim ?? (extraData.shown_anim ?? ""),
+        renderScale: extraData.render_scale ?? 1,
+        staticBg: extraData.static_bg ?? ""
+      }
+    }
+    return
   }
 
   // 将某一地址的资源根据地址hash值统一存放

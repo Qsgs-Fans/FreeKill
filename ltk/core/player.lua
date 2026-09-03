@@ -179,23 +179,6 @@ cbor.tagged_decoders[CBOR_TAG_PLAYER] = function(v)
   return Fk:currentRoom():getPlayerById(v)
 end
 
---- 设置角色、体力、技能。
----@param general General @ 角色类型
----@param setHp? boolean @ 是否设置体力
----@param addSkills? boolean @ 是否增加技能
----@deprecated
-function Player:setGeneral(general, setHp, addSkills)
-  self.general = general.name
-  if setHp then
-    self.maxHp = general.maxHp
-    self.hp = general.hp
-  end
-
-  if addSkills then
-    table.insertTableIfNeed(self.player_skills, general:getSkillNameList())
-  end
-end
-
 --- 根据角色的主副将计算角色的体力上限
 function Player:getGeneralMaxHp()
   local general = Fk.generals[type(self:getMark("__heg_general")) == "string" and self:getMark("__heg_general") or self.general]
@@ -206,36 +189,6 @@ function Player:getGeneralMaxHp()
   else
     return (general.maxHp + general.mainMaxHpAdjustedValue + deputy.maxHp + deputy.deputyMaxHpAdjustedValue) // 2
   end
-end
-
---- 查询角色是否存在flag。
----@param flag string @ 一种标记
----@deprecated @ 用mark代替
-function Player:hasFlag(flag)
-  return table.contains(self.flag, flag)
-end
-
---- 为角色赋予flag。
----@param flag string @ 一种标记
----@deprecated @ 用mark代替
-function Player:setFlag(flag)
-  if flag == "." then
-    self:clearFlags()
-    return
-  end
-  if flag:sub(1, 1) == "-" then
-    flag = flag:sub(2, #flag)
-    table.removeOne(self.flag, flag)
-    return
-  end
-  if not self:hasFlag(flag) then
-    table.insert(self.flag, flag)
-  end
-end
-
---- 清除角色flag。
-function Player:clearFlags()
-  self.flag = {}
 end
 
 --- 将指定数量的牌加入玩家的对应区域。
@@ -310,9 +263,6 @@ function Player:getVirtualEquip(cid)
   end
   return nil
 end
-
----@deprecated
-Player.getVirualEquip = Player.getVirtualEquip
 
 --- 确认玩家判定区是否存在延迟锦囊牌。
 ---@return boolean
@@ -1628,6 +1578,9 @@ end
 --- 是否为通牌队友
 ---@param other Player|integer
 function Player:isBuddy(other)
+  -- other 为 nil 表示该玩家已不在房间（如被旁观者已退房、刷新链路过其残留引用），
+  -- 直接视为非队友，避免对 nil 索引崩溃
+  if other == nil then return false end
   local room = Fk:currentRoom()
   if room.observing and not room.replaying and not room:getSettings("enableObserverViewCard") then return false end
   local id = type(other) == "number" and other or other.id

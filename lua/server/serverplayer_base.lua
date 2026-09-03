@@ -31,7 +31,11 @@ function ServerPlayerBase:doNotify(command, data)
 
   for _, t in ipairs(room.observers) do
     local id, p = table.unpack(t)
-    if id == self.id and room.room:hasObserver(p) and p:getState() ~= fk.Player_Robot then
+    -- Reconnect 是整房序列化摘要，只应发给重连者本人做全量重建；
+    -- 绑定它的旁观者若收到会把自己当重连者重建一遍（room 被刷新、观察视角被打断）。
+    -- 被旁观者回来后，旁观者靠 broadcastProperty(state) 等增量消息同步即可。
+    if id == self.id and command ~= "Reconnect" and room.room:hasObserver(p)
+      and p:getState() ~= fk.Player_Robot then
       p:doNotify(command, cbordata)
     end
   end

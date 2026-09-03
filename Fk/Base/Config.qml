@@ -38,6 +38,7 @@ QtObject {
   property bool autoTarget
   property bool doubleClickUse
   property bool noSelfNullification
+  property bool banChangeSkin
   // property list<string> disabledGenerals: []
   // property list<var> disableGeneralSchemes: []
   // property int disableSchemeIdx: 0
@@ -169,6 +170,7 @@ QtObject {
     autoTarget = conf.autoTarget ?? false;
     doubleClickUse = conf.doubleClickUse ?? false;
     noSelfNullification = conf.noSelfNullification ?? false;
+    banChangeSkin = conf.banChangeSkin ?? false;
     preferredTimeout = conf.preferredTimeout ?? 15;
     enableSuperDrag = conf.enableSuperDrag ?? false;
     hideScreenName = conf.hideScreenName ?? false;
@@ -221,6 +223,7 @@ QtObject {
     conf.autoTarget = autoTarget;
     conf.doubleClickUse = doubleClickUse;
     conf.noSelfNullification = noSelfNullification;
+    conf.banChangeSkin = banChangeSkin;
     conf.preferredTimeout = preferredTimeout;
     conf.enableSuperDrag = enableSuperDrag;
     conf.hideScreenName = hideScreenName;

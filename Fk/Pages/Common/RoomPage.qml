@@ -192,16 +192,14 @@ Item {
     }
 
     W.ButtonContent {
-      id: banSchemaButton
+      id: infoButton
       plainButton: false
       text: Lua.tr("Info")
       icon.source: Cpp.path + "/image/symbolic/mimetypes/x-office-document-symbolic.svg"
       font.bold: true
       Layout.fillWidth: true
       onClicked: {
-        overviewLoader.overviewSource = "LunarLtk.Pages";
-        overviewLoader.overviewType = "GeneralPool";
-        overviewDialog.open();
+        roomInfoDialog.open();
       }
     }
 
@@ -335,6 +333,60 @@ Item {
         }
         case MessageDialog.Cancel: {
           surrenderDialog.close();
+        }
+      }
+    }
+  }
+
+  W.PopupLoader {
+    id: roomInfoDialog
+    width: Math.min(Config.winWidth * 0.72, 980 * Config.winScale)
+    height: Math.min(Config.winHeight * 0.72, 720 * Config.winScale)
+    anchors.centerIn: parent
+    background: Rectangle {
+      color: "#EEEEEEEE"
+      radius: 5
+      border.color: "#A6967A"
+      border.width: 1
+    }
+
+    sourceComponent: Item {
+      id: roomInfoPage
+
+      Text {
+        id: roomInfoTitle
+        width: parent.width
+        height: 30
+        y: 10
+        text: Lua.tr("Room Info")
+        font.bold: true
+        font.pixelSize: 20
+        horizontalAlignment: Text.AlignHCenter
+      }
+
+      Rectangle {
+        height: 2
+        color: "#A6967A"
+        width: parent.width - 4
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: roomInfoTitle.bottom
+      }
+
+      RoomInfoContainer {
+        id: infoContainer
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: roomInfoTitle.bottom
+        anchors.topMargin: 10
+        anchors.bottom: parent.bottom
+        width: parent.width - 30
+        scrollBarParent: roomInfoPage
+        switchBackgroundColor: "#EEEEEEEE"
+        // switchBorderColor: "#A6967A"
+
+        onGeneralPoolRequested: {
+          overviewLoader.overviewSource = "LunarLtk.Pages";
+          overviewLoader.overviewType = "GeneralPool";
+          overviewDialog.open();
         }
       }
     }

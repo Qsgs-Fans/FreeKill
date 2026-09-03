@@ -18,7 +18,7 @@ local basePackage = require "core.package"
 ---@field public skill_skels SkillSkeleton[]
 ---@field public card_skels CardSkeleton[]
 ---@field public card_specs [string, integer, integer, table][]
----@field public skin_specs table<string, SkinContent[]>
+---@field public skin_specs table<string, table<string, SkinContent[] | SkelSkinContent>>
 local Package = basePackage:subclass("Package")
 
 ---@alias PackageType integer
@@ -190,18 +190,34 @@ function Package:addSkinPackage(skinPak)
   skinPak.path = skinPak.path or "/image/skins"
   local pkg_path = "packages/" .. self.extensionName .. skinPak.path .. "/"
   if skinPak.url then
-    pkg_path = skinPak.url
+    pkg_path = skinPak.url  --[[@as string]]
   end
   for _, arr in ipairs(skinPak.content) do
     for _, g in ipairs(arr.enabled_generals) do
       if g ~= "" then
         self.skin_specs[g] = self.skin_specs[g] or {}
-        for _, skin in ipairs(arr.skins) do
-          local skin_content = { name = skin, path = pkg_path } ---@type SkinContent
-          if self.skin_specs[g][skin] then
-            fk.qWarning("Warning: duplicated skin name: " .. skin .. " in extension " .. self.extensionName .. ". general: " .. g)
+        if arr.files then
+          local skin_name = arr.skin_name
+          if self.skin_specs[g][skin_name] then
+            fk.qWarning("Warning: duplicated skin name: " .. skin_name .. " in extension " .. self.extensionName .. ". general: " .. g)
           end
-          self.skin_specs[g][skin] = skin_content
+          self.skin_specs[g][skin_name] = { --[[@as SkelSkinContent]]
+            name = skin_name,
+            path = pkg_path,
+            is_skel = true,
+            files = arr.files,
+            bg = arr.bg,
+            body = arr.body,
+            extra_data = arr.extra_data,
+          }
+        else
+          for _, skin in ipairs(arr.skins) do
+            local skin_content = { name = skin, path = pkg_path, is_skel = false } ---@type SkinContent
+            if self.skin_specs[g][skin] then
+              fk.qWarning("Warning: duplicated skin name: " .. skin .. " in extension " .. self.extensionName .. ". general: " .. g)
+            end
+            self.skin_specs[g][skin] = skin_content
+          end
         end
       end
     end

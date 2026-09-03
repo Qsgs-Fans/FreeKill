@@ -225,6 +225,8 @@ W.PageBase {
 
   function enterLobby(sender, data) {
     Config.lastLoginServer = Config.serverAddr;
+    // 幂等进入 Lobby：先清掉栈内可能残留的 Lobby/页面，保证栈中只保留一个 Lobby
+    App.backToStart();
     App.enterNewPage(Qt.createComponent("Fk.Pages.Lobby", "Lobby"));
     App.setBusy(false);
     if (Cpp.quickStartMode !== "") {

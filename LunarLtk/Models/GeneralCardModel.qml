@@ -50,15 +50,13 @@ QtObject {
   property bool selectable: false
   property bool selected: false // 这个反过来被绑定
 
-  // 皮肤
+  // 皮肤(由于骨骼的加入，暂时废弃了)
   property bool pause: true // 动皮专用，防止太多一起播放卡死
   property bool showSkin: false
   property string skinName: (Config.enabledSkins[name] && showSkin) ? Config.enabledSkins[name] : "" //当前使用的皮肤
 
   // 次生参数
-  readonly property var frontSkin: {
-    return skinName ? Ltk.getFullSkinPath(name, Config.enabledSkins[name]) : SkinBank.getGeneralPicture(name);
-  }
+  readonly property var frontSkin: SkinBank.getGeneralPicture(name)
   readonly property var backSkin: {
     return SkinBank.generalCardDir + 'card-back';
   }

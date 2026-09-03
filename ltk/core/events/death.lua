@@ -2,7 +2,7 @@
 --- DyingData 描述和濒死事件有关的数据
 ---@class DyingDataSpec
 ---@field public who ServerPlayer @ 濒死角色
----@field public killer? ServerPlayer @ 凶手
+---@field public killer? ServerPlayer @ 凶手。濒死角色未死也可能会有凶手
 ---@field public damage? DamageData @ 造成此次濒死的伤害数据
 ---@field public hpLost? HpLostData @ 造成此次濒死的体力流失数据
 ---@field public ignoreDeath? boolean @ 是否不进行死亡结算
@@ -18,9 +18,6 @@ local DyingEvent = TriggerEvent:subclass("DyingEvent")
 --- 进入濒死状态时
 ---@class fk.EnterDying: DyingEvent
 fk.EnterDying = DyingEvent:subclass("fk.EnterDying")
---- （已弃用）
----@class fk.Dying: DyingEvent
-fk.Dying = DyingEvent:subclass("fk.Dying")
 --- 濒死结算结束后
 ---@class fk.AfterDying: DyingEvent
 fk.AfterDying = DyingEvent:subclass("fk.AfterDying")

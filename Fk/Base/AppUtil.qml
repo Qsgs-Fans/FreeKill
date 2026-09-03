@@ -27,6 +27,12 @@ QtObject {
     Mediator.notify(null, Command.PopPage, null);
   }
 
+  // 弹回主界面：清空栈内除 Init 外的所有页面（Lobby / 房间等）。
+  // 用于退出大厅 / 断线重连等场景，避免栈内残留多个 Lobby 导致退回旧页面。
+  function backToStart() {
+    Mediator.notify(null, Command.BackToStart, null);
+  }
+
   function showToast(s: string) {
     Mediator.notify(null, Command.ShowToast, s);
   }

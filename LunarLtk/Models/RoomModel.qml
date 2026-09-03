@@ -182,7 +182,7 @@ QtObject {
     const model = getPhoto(uid);
     // FIXME: skins这边写成这样不太好看
     if (model && property_name in model) {
-      model[property_name] = value;
+      if (value !== undefined) model[property_name] = value;
     }
   }
 
@@ -333,6 +333,7 @@ QtObject {
   }
 
   function changeSkin(sender, data) {
+    if (Config.banChangeSkin) return;
     const photoModel = getPhoto(Number(data[0]));
     const skinData = photoModel.luaPlayer.skins;
 
@@ -656,6 +657,12 @@ QtObject {
   function skipNullification() {
     skippedUseEventIds.push(skipNullificationData.useEventId);
     Lua.updateRequestUI("Button", "Cancel");
+  }
+
+  function trust() {
+    Cpp.notifyServer("Trust", "");
+    trustBtn.enabled = false;
+    deActivate();
   }
 
   // 确定只会修改model属性的逻辑都搬家到这里

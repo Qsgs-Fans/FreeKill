@@ -89,9 +89,15 @@ Item {
       return {
         minPlayer = m.minPlayer,
         maxPlayer = m.maxPlayer,
+        playerNums = m.playerNums,
       }
     end`)(gameMode);
-    playerNum.from = data.minPlayer;
-    playerNum.to = data.maxPlayer;
+    if (data.playerNums !== undefined) {
+      playerNum.items = data.playerNums;
+    } else {
+      playerNum.from = data.minPlayer;
+      playerNum.to = data.maxPlayer;
+      playerNum.items = [];
+    }
   }
 }

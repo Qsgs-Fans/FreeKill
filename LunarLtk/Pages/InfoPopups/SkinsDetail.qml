@@ -117,17 +117,8 @@ Item {
           required property int index
           required property var modelData
           text: Lua.tr(modelData)
-          source: {
-            if (index === 0) {
-              return SkinBank.getGeneralPicture(root.orig_general)
-            } else {
-              const skinData = Ltk.getSkinByName(root.orig_general, modelData)
-              if (skinData) {
-                return Ltk.getFullSkinPath(root.orig_general, modelData)
-              }
-              return SkinBank.getGeneralPicture("unknown")
-            }
-          }
+          general: root.orig_general
+          skinName: index === 0 ? "" : modelData
           y: 25
 
           W.TapHandler {
@@ -201,17 +192,8 @@ Item {
           required property int index
           required property var modelData
           text: Lua.tr(modelData)
-          source: {
-            if (index === 0) {
-              return SkinBank.getGeneralPicture(root.orig_deputy)
-            } else {
-              const skinData = Ltk.getSkinByName(root.orig_deputy, modelData)
-              if (skinData) {
-                return Ltk.getFullSkinPath(root.orig_deputy, modelData)
-              }
-              return SkinBank.getGeneralPicture("unknown")
-            }
-          }
+          general: root.orig_deputy
+          skinName: index === 0 ? "" : modelData
           y: 25
 
           W.TapHandler {

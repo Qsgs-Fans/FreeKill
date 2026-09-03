@@ -76,7 +76,7 @@ function TargetModSkill:getExtraTargetNum(player, card_skill, card)
   return 0
 end
 
--- 技能描述
+-- 卡牌提示
 ---@param player Player @ 使用者
 ---@param to_select integer @ 待选牌
 ---@param selected integer[] @ 已选牌
@@ -87,7 +87,7 @@ end
 ---@return string?
 function TargetModSkill:getCardTip(player, to_select, selected, selected_targets, card, selectable, extra_data) end
 
--- 技能描述
+-- 目标提示
 ---@param player Player @ 使用者
 ---@param to_select Player @ 待选目标
 ---@param selected Player[] @ 已选目标

@@ -31,7 +31,7 @@ QtObject {
 
   readonly property string promptText: {
     if (!poxiType) return "";
-    const rawPrompt = Ltk.poxiPrompt(poxiType, cardData, extraData);
+    const rawPrompt = Ltk.poxiPrompt(poxiType, cardData, extraData, selectedIds);
     return Ltk.processPrompt(rawPrompt)
   }
 

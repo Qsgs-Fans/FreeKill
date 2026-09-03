@@ -108,7 +108,7 @@ Item {
     textSource = data.text ?? "";
     mediaSource = data.media ?? "";
     anim.running = true;
-    pauseTime = data.pause;
-    fadeTime = data.fade;
+    pauseTime = data.pause ?? 2000;
+    fadeTime = data.fade ?? 500;
   }
 }

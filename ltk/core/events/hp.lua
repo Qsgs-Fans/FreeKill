@@ -7,7 +7,7 @@
 ---@field public reason string @ 体力变化原因
 ---@field public skillName string @ 引起体力变化的技能名
 ---@field public damageEvent? DamageData @ 引起这次体力变化的伤害数据
----@field public hpLostEvent? DamageData @ 引起这次体力变化的体力流失数据
+---@field public hpLostEvent? HpLostData @ 引起这次体力变化的体力流失数据
 ---@field public preventDying? boolean @ 是否阻止本次体力变更流程引发濒死流程
 ---@field public prevented boolean? @ 体力变化是否被防止
 

@@ -540,21 +540,26 @@ function Room:setCardEmotion(cid, name)
 end
 
 --- 播放一个全屏大动画。可以自己指定qml文件路径和额外的信息。
----@param path string? @ qml文件的路径，有默认值
----@param extra_data any @ 要传递的额外信息。默认可用键值表：text为文本，media为媒体，bgColor为背景颜色，contentAreaColor为中心区域颜色，contentAreaSize为中心区域占比
+---@param path string? @ qml文件的路径，有默认值使用```SuperLightBox```
+---@param extra_data any @ 要传递的额外信息。```SuperLightBox```默认可用键值表：text为文本，media为媒体，bgColor为背景颜色，contentAreaColor为中心区域颜色，contentAreaSize为中心区域占比
 ---@param pause integer? @ 停顿时间，默认2000，不包括淡入淡出
 ---@param fade integer? @ 淡入淡出时间，默认500
-function Room:doSuperLightBox(path, extra_data, pause, fade)
+---@param delay boolean? @ 是否延迟，若不填写```path```默认为是
+function Room:doSuperLightBox(path, extra_data, pause, fade, delay)
+  delay = delay or path == nil
   pause = pause or 2000
   fade = fade or 500
-  extra_data = extra_data or {}
-  extra_data.pause = pause
-  extra_data.fade = fade
+  extra_data = extra_data or (path == nil and {
+    pause = pause,
+    fade = fade,
+  } or nil)
   self:doAnimate("SuperLightBox", {
     path = path,
     data = extra_data,
   })
-  self:delay(pause + fade * 2)
+  if delay then
+    self:delay(pause + fade * 2)
+  end
 end
 
 --- 基本上是个不常用函数就是了
@@ -736,6 +741,7 @@ end
 ---@field include_equip? boolean @ 能不能弃装备区？
 ---@field pattern? string @ 弃牌需要符合的规则
 ---@field skip? boolean @ 是否跳过弃牌（即只询问选择可以弃置的牌）
+---@field card_tip_name? string @ 引用的选择卡牌提示的函数名
 
 --- 询问一名角色弃牌。
 ---
@@ -792,9 +798,16 @@ function Room:askToDiscard(player, params)
     min_num = params.min_num,
     include_equip = params.include_equip,
     skillName = params.skill_name,
+    cardTipName = params.card_tip_name,
     pattern = params.pattern,
   }
-  local _, ret = self:askToUseActiveSkill(player, {skill_name = "discard_skill", prompt = params.prompt, cancelable = params.cancelable, extra_data = data, no_indicate = params.no_indicate})
+  local _, ret = self:askToUseActiveSkill(player, {
+    skill_name = "discard_skill",
+    prompt = params.prompt,
+    cancelable = params.cancelable,
+    extra_data = data,
+    no_indicate = params.no_indicate,
+  })
 
   if ret then
     toDiscard = ret.cards
@@ -870,6 +883,7 @@ end
 ---@field pattern? string @ 选牌规则
 ---@field expand_pile? string|integer[] @ 可选私人牌堆名称，或额外可选牌
 ---@field visible_pile? string|integer[] @ 可见的牌
+---@field card_tip_name? string @ 引用的选择卡牌提示的函数名
 
 --- 询问一名玩家选择自己的几张牌。
 ---
@@ -913,6 +927,7 @@ function Room:askToCards(player, params)
     pattern = params.pattern,
     expand_pile = params.expand_pile,
     visible_pile = params.visible_pile,
+    cardTipName = params.card_tip_name,
   }
   local activeParams = { ---@type AskToUseActiveSkillParams
     skill_name = "choose_cards_skill",
@@ -4115,9 +4130,6 @@ function Room:actExtraTurn()
   end
 end
 
----@deprecated @ 用actExtraTurn代替
-Room.ActExtraTurn = Room.actExtraTurn
-
 --- 获得一名角色的客户端手牌顺序
 --- 本bug由玄蝶提供
 ---@param player ServerPlayer @ 角色
@@ -4478,7 +4490,7 @@ function Room:quickSetPlayerRole(roles)
 
     for i = 1, #roles do
       if not arr[i] and #_roles > 0 then
-        arr[i] = self:tableRandomPick(_roles)
+        arr[i] = table.remove(_roles, self:random(1, #_roles))
       end
       roles[i] = arr[i]
     end

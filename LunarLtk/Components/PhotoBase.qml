@@ -92,11 +92,14 @@ Game.BasicItem {
 
     SkinArea {
       id: skin
-      source: root.skinSource.name ? Ltk.getFullSkinPath(root.general, root.skinSource.name) : ""
+      general: root.general
+      skinName: root.skinSource.name
       width: generalImage.width
       Behavior on width { NumberAnimation { duration: 100 } }
       height: parent.height
       hasDeputy: !!root.deputyGeneral
+      enabledShown: true
+      visible: !Config.banChangeSkin
     }
 
     Image {
@@ -123,11 +126,14 @@ Game.BasicItem {
 
     SkinArea {
       id: deputySkin
-      source: root.deputySkinSource.name ? Ltk.getFullSkinPath(root.deputyGeneral ?? "", root.deputySkinSource.name) : ""
+      general: root.deputyGeneral
+      skinName: root.deputySkinSource.name
       anchors.left: generalImage.right
       width: parent.width / 2
       height: parent.height
       hasDeputy: !!deputyGeneral
+      enabledShown: true
+      visible: !Config.banChangeSkin
     }
   }
 
@@ -260,7 +266,7 @@ Game.BasicItem {
   // }
 
   function refreshSkins() {
-    if (root.playerid === roomScene.dataModel?.dashboardId && !Config.observing) {
+    if (root.playerid === roomScene.dataModel?.dashboardId && !Config.observing && !Config.banChangeSkin) {
       let command = "changeskin,";
       const source = root.getConfigSkin(root.general);
       command = command + source + ","

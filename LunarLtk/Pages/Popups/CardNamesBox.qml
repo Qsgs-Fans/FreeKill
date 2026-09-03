@@ -15,7 +15,8 @@ GraphicsBox {
 
   required property ChoicesModel dataModel
 
-  readonly property int lines: processMatrixRowLengthCompact(dataModel.allChoices)
+  readonly property var choiceMatrix: ensure2DArray(dataModel.allChoices)
+  readonly property int lines: processMatrixRowLengthCompact(choiceMatrix)
 
   title.text: dataModel.promptText
   width: 700
@@ -41,7 +42,7 @@ GraphicsBox {
       spacing: 20
 
       Repeater {
-        model: root.dataModel.allChoices
+        model: root.choiceMatrix
 
         delegate: GridLayout {
           required property var modelData
@@ -140,5 +141,19 @@ GraphicsBox {
     const sqrtSum = Math.floor(Math.sqrt(sum));
 
     return sqrtSum > 5 ? 6 : sqrtSum < 4 ? Math.max(sqrtSum, Math.max(...arr2)) : sqrtSum;
+  }
+
+  function ensure2DArray(arr) {
+    if (arr.length === 0) {
+      return []
+    }
+    // 判断是否二维：第一个元素是否也是列表
+    const first = arr[0];
+    const firstIsList = first != null && typeof first !== "string" && typeof first.length === "number";
+    if (firstIsList) {
+      return arr
+    }
+    // 一维list，包一层转为二维
+    return [arr]
   }
 }

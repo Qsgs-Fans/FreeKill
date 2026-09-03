@@ -9,12 +9,14 @@ BasicItem {
   width: childrenRect.width
   height: childrenRect.height
 
-  property url source: ""
+  property string general: ""
+  property string skinName: ""
   property alias text: skinName.text
 
   SkinArea {
     id: skinImg
-    source: root.source
+    general: root.general
+    skinName: root.skinName
     anchors.centerIn: border
     width: 114
     height: 164

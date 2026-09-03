@@ -18,9 +18,6 @@ end
 ---@field public min_num number @ 推测转化底牌的最小数（subcards存在时将变成选fakesubcards）
 ---@field public pattern string @ 推测参与转化的实体牌所满足的匹配器
 ---@field public subcards number[]? @ 转化底牌（用于实体牌已完全确定的情况）
----@field public skill_name string? @ 技能名称*泛转化技用
----@field public names string[]? @ 所有可转化的卡牌名*泛转化技用
----@field public ban_names string[]? @ 所有可转化的卡牌名中不可用的卡牌名*泛转化技用
 
 --- 判断一个视为技会印什么样的牌
 ---@param player Player @ 使用者
@@ -46,8 +43,7 @@ function ViewAsSkill:cardFilter(player, to_select, selected, selected_targets)
     if #selected >= filter_pattern.max_num then return false end
     if not Fk:getCardById(to_select):matchPattern(filter_pattern.pattern) then return false end
 
-    if self.interaction ~= nil and (self.interaction.spec or {}).type == "ToBeDecided" and
-      filter_pattern.names then
+    if self.interaction_helper then
       --预制模板的泛转化技，无法预先确定即将转化的牌名
       return true
     end
@@ -143,7 +139,7 @@ function ViewAsSkill:update_interaction(player, selected_cards, selected_targets
       end
       spec.result = nil
     else
-      spec.result = { cards = table.simpleClone(selected_cards) }
+      spec.result = {}
     end
   elseif dat.elemType == "ExpandItem" then
     spec.result = spec.result or {}
@@ -172,12 +168,15 @@ function ViewAsSkill:refresh_interaction(player, selected_cards, selected_target
   local VSPattern = self:filterPattern(player, nil, selected_cards)
   if VSPattern == nil then return end
 
+  local helper = self:interaction_helper(player, selected_cards, selected_targets)
+  if helper == nil or helper.type ~= "cardname" then return end
+
   local refresh_data = {}
   local req = spec.UIrequest or {}
 
   if spec.UIrequest == nil then
     if #selected_cards == VSPattern.max_num and spec.result == nil then
-      spec.result = { cards = table.simpleClone(selected_cards) }
+      spec.result = {}
       req = {
         elemType = "OptionBox",
         option = "OK"
@@ -192,15 +191,15 @@ function ViewAsSkill:refresh_interaction(player, selected_cards, selected_target
     else
       local items = {}
       local i = 1
-      local subcards = VSPattern.subcards or spec.result.cards
-      local ban_names = VSPattern.ban_names or {}
-      for _, name in ipairs(VSPattern.names) do
-        local card = Fk:cloneCard(name, nil, nil, VSPattern.skill_name, subcards)
+      local subcards = VSPattern.subcards or selected_cards
+      local names = helper.choices or {}
+      for _, name in ipairs(helper.all_choices or names) do
+        local card = Fk:cloneCard(name, nil, nil, self.name, subcards)
         table.insert(items, {
           prop = {
             type = "card",
             card = card,
-            additional_prop = { selectable = (not table.contains(ban_names, card.trueName) and player:canUseOrResponseInCurrent(card)) }
+            additional_prop = { selectable = table.contains(names, name) }
           },
           name = name,
           cid = i,
@@ -216,14 +215,9 @@ function ViewAsSkill:refresh_interaction(player, selected_cards, selected_target
   if VSPattern.max_num > 0 then
     --可选牌时，需要重设手牌区按钮
     if spec.result == nil then
-      local op_spec = {   ---@class OptionBoxParams
-        options = {},
-        all_options = { "OK" }
-      }
       if #selected_cards >= VSPattern.min_num then
-        op_spec.options = { "OK" }
+        refresh_data.optionBox = UI.OptionBox { options = { "OK" } }
       end
-      refresh_data.optionBox = UI.OptionBox(op_spec)
     else
       local handler = ClientInstance.current_request_handler
       if handler and handler.class.name == "ReqActiveSkill" then
@@ -235,7 +229,7 @@ function ViewAsSkill:refresh_interaction(player, selected_cards, selected_target
           cancelable = true
         }
         local card = self:viewAs(player, selected_cards)
-        if card and card:getSkill(player):feasible(player, selected_targets, { }, card) then
+        if card and card:getSkill(player):feasible(player, selected_targets, {}, card) then
           op_spec.options = { "OK" }
         end
         refresh_data.optionBox = UI.OptionBox(op_spec)
@@ -274,7 +268,7 @@ end
 ---@return Player[]? @ 返回固定目标角色列表。若此牌可以选择目标，返回空表
 function ViewAsSkill:fixTargets(player, selected_cards, c, extra_data)
   local card = self:viewAs(player, selected_cards)
-  if card == nil or card:getFixedTargets(player, extra_data) then
+  if card == nil or card:getFixedTargets(player, extra_data) or card.is_passive then
     return {}
   end
   return nil

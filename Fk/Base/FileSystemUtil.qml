@@ -10,6 +10,21 @@ QtObject {
     return url.replace(Cpp.os === "Win" ? "file:///" : "file://", "");
   }
 
+  function convertPathToUrl(path) {
+    // 确保路径使用正斜杠
+    path = path.replace(/\\/g, "/");
+    if (Cpp.os === "Win") {
+      if (!path.startsWith("file:///")) {
+        return "file:///" + path;
+      }
+    } else {
+      if (!path.startsWith("file://")) {
+        return "file://" + path;
+      }
+    }
+    return path;
+}
+
   // exists是一次stat操作，属于相当耗时的系统调用
   // 这里简单加一层cache，显然这个cache不会清理，懒得管了
   function exists(path) {
@@ -18,6 +33,16 @@ QtObject {
     }
     const ret = Backend.exists(path);
     existsCache[path] = ret;
+    return ret;
+  }
+
+  // 只有文件存在才会存到cache中
+  function existsFile(path) {
+    if (path in existsCache) {
+      return existsCache[path];
+    }
+    const ret = Backend.exists(path);
+    if (ret) existsCache[path] = ret;
     return ret;
   }
 
@@ -37,14 +62,14 @@ QtObject {
     const slash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
     const dot = path.lastIndexOf(".");
     if (dot > slash + 1) {
-      return exists(path) ? path : "";
+      return existsFile(path) ? path : "";
     }
 
-    if (exists(path)) return path;
+    if (existsFile(path)) return path;
 
     const exts = [".png", ".jpg", ".jpeg", ".gif", ".bmp", ".svg", ".webp", ".avif", ".ico"];
     for (const ext of exts) {
-      if (exists(path + ext)) return path + ext;
+      if (existsFile(path + ext)) return path + ext;
     }
     return "";
   }

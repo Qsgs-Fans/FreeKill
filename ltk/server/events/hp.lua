@@ -134,7 +134,7 @@ function ChangeHp:main()
 
   if data.who.hp < 1 then
     if num < 0 and not data.preventDying then
-      local dyingDataSpec = {
+      local dyingDataSpec = { ---@class DyingData
         who = data.who,
         damage = damageData,
         killer = damageData and damageData.from,
