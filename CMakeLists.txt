@@ -16,12 +16,14 @@ find_package(Qt6 REQUIRED COMPONENTS
 if (NOT DEFINED FK_SERVER_ONLY)
   find_package(Qt6 REQUIRED COMPONENTS
     Gui
+    GuiPrivate
     Qml
     Quick
     Widgets
     Multimedia
     QuickControls2
     Concurrent
+    ShaderTools
     LinguistTools
   )
 else ()

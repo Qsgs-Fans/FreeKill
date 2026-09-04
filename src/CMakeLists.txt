@@ -62,11 +62,10 @@ if (NOT DEFINED FK_SERVER_ONLY)
     # "ui/mod.cpp"
   )
 
-  # Spine 渲染器（版本无关接口 + 各版本后端；纯 C 运行时在下方按版本编译为静态库）
+  # Spine 渲染器（版本无关接口 + 各版本后端 + RHI 渲染节点；纯 C 运行时在下方按版本编译为静态库）
   set(SPINE_PLUGIN_SRCS
     "ui/spine/texture.cpp"
-    "ui/spine/skeletonrenderer.cpp"
-    "ui/spine/rendercmdscache.cpp"
+    "ui/spine/spinerendernode.cpp"
     "ui/spine/skeletonanimationfbo.cpp"
     "ui/spine/spineevent.cpp"
     "ui/spine/spineregister.cpp"
@@ -192,6 +191,8 @@ if (NOT DEFINED FK_SERVER_ONLY)
     Qt6::QuickControls2
     Qt6::Concurrent
     Qt6::OpenGL
+    Qt6::ShaderTools
+    Qt6::GuiPrivate
   )
 endif()
 
@@ -260,6 +261,21 @@ if (SOLOUD_LIB)
   target_include_directories(libFreeKill PRIVATE ${SOLOUD_INCLUDE})
   target_compile_definitions(libFreeKill PRIVATE FK_WITH_SOLOUD)
 endif()
+
+# RHI 渲染节点需要 Qt 私有 rhi 头（<rhi/qrhi.h> 由 Qt6::GuiPrivate 提供，
+# QShaderBaker 在 QtShaderTools 的私有 include 目录，需手工附加）。
+if (TARGET Qt6::ShaderTools AND Qt6ShaderTools_DIR)
+  get_filename_component(QT6_PREFIX "${Qt6ShaderTools_DIR}/../../.." ABSOLUTE)
+  set(QT6_PRIV_VER "${Qt6_VERSION_MAJOR}.${Qt6_VERSION_MINOR}.${Qt6_VERSION_PATCH}")
+  if (EXISTS "${QT6_PREFIX}/include/QtShaderTools/${QT6_PRIV_VER}/QtShaderTools/rhi/qshaderbaker.h")
+    target_include_directories(libFreeKill PRIVATE
+      "${QT6_PREFIX}/include/QtShaderTools/${QT6_PRIV_VER}/QtShaderTools")
+  elseif (EXISTS "${QT6_PREFIX}/include/QtShaderTools/rhi/qshaderbaker.h")
+    target_include_directories(libFreeKill PRIVATE
+      "${QT6_PREFIX}/include/QtShaderTools")
+  endif()
+endif()
+
 target_precompile_headers(libFreeKill PRIVATE "pch.h")
 target_link_libraries(libFreeKill PRIVATE
   ${LUA_LIB}

@@ -31,18 +31,25 @@
 #ifndef SKELETONANIMATION_H
 #define SKELETONANIMATION_H
 
-#include <QQuickFramebufferObject>
+#include <QtQuick/QQuickItem>
+#include <QtQuick/qsgnode.h>
 #include <QUrl>
 #include <QElapsedTimer>
 #include <QList>
 #include <QVector>
+#include <QHash>
+#include <QImage>
 #include "spinebackend.h"
 #include "spineevent.h"
 
-QT_FORWARD_DECLARE_CLASS(RenderCmdsCache)
 QT_FORWARD_DECLARE_CLASS(Texture)
+class SpineRenderNode;
+class SpineFrameData;
 
-class SkeletonAnimationFbo : public QQuickFramebufferObject
+// 历史遗留命名（原为 QQuickFramebufferObject），现为普通 QQuickItem，
+// 渲染通过 SpineRenderNode（QSGRenderNode + RHI）完成，可适配
+// OpenGL / Vulkan / D3D / Metal 等全部 Qt Quick 后端。
+class SkeletonAnimationFbo : public QQuickItem
 {
     Q_OBJECT
     Q_DISABLE_COPY(SkeletonAnimationFbo)
@@ -124,8 +131,8 @@ public:
 
     int detectedVersion() const { return mDetectedVersion; }
 
-    virtual Renderer* createRenderer() const;
-    void renderToCache(QQuickFramebufferObject::Renderer*, RenderCmdsCache*);
+protected:
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
 
 public Q_SLOTS:
     void updateSkeletonAnimation();
@@ -140,6 +147,8 @@ protected:
 
 private:
     void onSpineEvent(const SpineEventInfo& info);
+    void collectAtlasImages();
+    void buildFrameData(SpineFrameData &frame);
 
     QUrl mSkeletonDataFile;
     QUrl mAtlasFile;
@@ -162,6 +171,12 @@ private:
     SpineBackend *mBackend;
     QVector<SpineDrawCommand> mDrawCommands;
     QRectF mBounds;
+
+    // 渲染节点与图集纹理缓存
+    SpineRenderNode *mRenderNode = nullptr;
+    QVector<QImage> mAtlasImages;
+    QHash<Texture *, int> mTextureIndex;
+    int mTextureEpoch = 0;
 
     QList<SpineEvent*> mEventCache;
 };
