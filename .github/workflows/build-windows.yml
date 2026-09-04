@@ -77,7 +77,7 @@ jobs:
         windeployqt FreeKill.exe
         cp -r ../.git .
         git restore .
-        rm -rf .git* android doc lib lang translations src
+        rm -rf .git* android doc lib lang translations src thirdparty
         curl https://raw.githubusercontent.com/Qsgs-Fans/freekill-server-list/master/server-list.json > server-list.json
         cd ..
         cp lib/win/* FreeKill-release
