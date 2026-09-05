@@ -17,6 +17,7 @@ using namespace fkShell;
 #ifndef FK_SERVER_ONLY
  #include <QFileDialog>
  #include <QScreen>
+ #include <QMediaPlayer>
  #include <QSplashScreen>
  #include <QtQuick/QQuickWindow>
  #include <QSurfaceFormat>
@@ -317,6 +318,12 @@ int freekill_main(int argc, char *argv[]) {
   qFatal("This is server-only build and have no GUI support.\n\
       Please use ./FreeKill -s to start a server in command line.");
 #else
+
+  // Windows 桌面：Qt 6.5+ 的视频播放统一走 FFmpeg 后端
+#ifdef Q_OS_WIN32
+  qputenv("QT_MEDIA_BACKEND", "ffmpeg");
+  qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "d3d11va");
+#endif
 
   app = new QApplication(argc, argv);
   app->connect(app, &QCoreApplication::aboutToQuit, cleanUpGlobalStates);

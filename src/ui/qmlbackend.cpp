@@ -5,7 +5,6 @@
 #include <qjsonobject.h>
 
 #ifndef FK_SERVER_ONLY
-#include <QAudioOutput>
 #include <QCoreApplication>
 #include <QNetworkAccessManager>
 #include <QNetworkDatagram>
@@ -14,7 +13,6 @@
 #include <QDnsLookup>
 
 #include <QClipboard>
-#include <QMediaPlayer>
 #include <QMessageBox>
 #include <QAbstractButton>
 #include <QLibrary>

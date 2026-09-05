@@ -8,9 +8,6 @@ class Replayer;
 #include <qtmetamacros.h>
 #include <QList>
 
-class QMediaPlayer;
-class QAudioOutput;
-
 class QmlBackend : public QObject {
   Q_OBJECT
 
@@ -118,12 +115,6 @@ private:
 
   QUdpSocket *udpSocket;
   qreal m_volume;
-  int maxConcurrentPlayback = 13;
-
-  // 音频播放池（常驻 QMediaPlayer，避免每音效新建线程/解码器；mp3 需 QMediaPlayer）
-  QList<QMediaPlayer *> m_players;
-  QList<QAudioOutput *> m_audioOutputs;
-  int m_soundSlot = 0;
 
   Replayer *replayer;
   QString m_quickStartMode;
