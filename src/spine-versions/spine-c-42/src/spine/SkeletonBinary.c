@@ -1027,13 +1027,33 @@ static int _readVertices(_dataInput *input, float **vertices, int *verticesLengt
 		return *verticesLength;
 	}
 
-	float *v = MALLOC(float, (*verticesLength) * 3 * 3);
-	int *b = MALLOC(int, (*verticesLength) * 3);
+	int vertexCapacity = (*verticesLength) * 3 * 3;
+	int boneCapacity = (*verticesLength) * 3;
+	if (vertexCapacity < 8) vertexCapacity = 8;
+	if (boneCapacity < 8) boneCapacity = 8;
+	float *v = MALLOC(float, vertexCapacity);
+	int *b = MALLOC(int, boneCapacity);
 	int boneIdx = 0;
 	int vertexIdx = 0;
 	for (int i = 0; i < vertexCount; ++i) {
 		int boneCount = readVarint(input, 1);
+		int requiredBones = boneIdx + 1 + boneCount;
+		if (requiredBones > boneCapacity) {
+			while (boneCapacity < requiredBones) {
+				boneCapacity += boneCapacity >> 1;
+			}
+			b = REALLOC(b, int, boneCapacity);
+		}
 		b[boneIdx++] = boneCount;
+
+		int requiredVertices = vertexIdx + boneCount * 3;
+		if (requiredVertices > vertexCapacity) {
+			while (vertexCapacity < requiredVertices) {
+				vertexCapacity += vertexCapacity >> 1;
+			}
+			v = REALLOC(v, float, vertexCapacity);
+		}
+
 		for (int ii = 0; ii < boneCount; ++ii) {
 			b[boneIdx++] = readVarint(input, 1);
 			v[vertexIdx++] = readFloat(input) * scale;

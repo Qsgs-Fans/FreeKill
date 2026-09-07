@@ -117,17 +117,27 @@ QShader bakeShader(const char *src, QShader::Stage stage)
     // bake 返回的 QShader 无效（isValid()==false）且 errorMessage() 为空。
     // 该集合覆盖 QRhi 各后端：Vulkan(SPIR-V) / OpenGL+ES(GLSL) /
     // D3D11(HLSL 5.0) / Metal(MSL 1.2)。
+    // 注意 GlslEs 必须同时提供 100（ES2/老设备）与 300（ES3，Android 主流）
+    // 两种变体，否则 ES3 上下文只能退化到 ES100（其 UBO 需要 SPIRV-Cross
+    // 降级为普通 uniform，个别平台会失败导致管线无效 → 黑屏）。
     baker.setGeneratedShaders({
         { QShader::SpirvShader, QShaderVersion(100) },
         { QShader::GlslShader, QShaderVersion(100, QShaderVersion::GlslEs) },
+        { QShader::GlslShader, QShaderVersion(300, QShaderVersion::GlslEs) },
         { QShader::GlslShader, QShaderVersion(120) },
         { QShader::GlslShader, QShaderVersion(150) },
+        { QShader::GlslShader, QShaderVersion(330) },
         { QShader::HlslShader, QShaderVersion(50) },
         { QShader::MslShader, QShaderVersion(12) },
     });
     QShader s = baker.bake();
-    if (!s.isValid())
-        qWarning() << "SpineRenderNode: shader bake failed:" << baker.errorMessage();
+    if (!s.isValid()) {
+        qWarning().noquote() << "SpineRenderNode: shader bake FAILED"
+                             << (stage == QShader::VertexStage ? "[VS]" : "[FS]")
+                             << baker.errorMessage();
+        // 失败时不缓存，允许后续重试（例如 glslang 组件延迟就绪）
+        return QShader();
+    }
     cache.insert(key, s);
     return s;
 }
@@ -271,7 +281,12 @@ static QRhiGraphicsPipeline *createTexturePipeline(QRhi *rhi, QRhiShaderResource
         QRhiShaderStage(QRhiShaderStage::Fragment, fs),
     });
     p->setRenderPassDescriptor(rp);
-    p->create();
+    if (!p->create()) {
+        qWarning() << "SpineRenderNode: texture pipeline create FAILED (additive="
+                   << additive << ")";
+        delete p;
+        return nullptr;
+    }
     return p;
 }
 
@@ -303,7 +318,11 @@ static QRhiGraphicsPipeline *createColorPipeline(QRhi *rhi, QRhiShaderResourceBi
         QRhiShaderStage(QRhiShaderStage::Fragment, fs),
     });
     p->setRenderPassDescriptor(rp);
-    p->create();
+    if (!p->create()) {
+        qWarning() << "SpineRenderNode: color pipeline create FAILED";
+        delete p;
+        return nullptr;
+    }
     return p;
 }
 
@@ -314,6 +333,17 @@ void SpineRenderNode::prepare()
         return;
     d->rhi = rhi;
 
+    // 一次性诊断：确认当前 RHI 后端与纹理/NDC 约定，便于排查
+    // 移动端（Android GLES/Vulkan）黑屏问题。
+    static bool sDiagPrinted = false;
+    if (!sDiagPrinted) {
+        sDiagPrinted = true;
+        qInfo().noquote() << "[Spine] RHI backend:" << rhi->backendName()
+                          << "yUpInNDC=" << rhi->isYUpInNDC()
+                          << "yUpInFb=" << rhi->isYUpInFramebuffer()
+                          << "samples=" << renderTarget()->sampleCount();
+    }
+
     if (d->invalidated) {
         d->freeRhi();
         d->invalidated = false;
@@ -323,7 +353,11 @@ void SpineRenderNode::prepare()
 
     if (!d->uniformBuffer) {
         d->uniformBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 80);
-        d->uniformBuffer->create();
+        if (!d->uniformBuffer->create()) {
+            qWarning() << "SpineRenderNode: uniform buffer create FAILED";
+            delete d->uniformBuffer;
+            d->uniformBuffer = nullptr;
+        }
     }
 
     // 图集纹理（epoch 变化时重建并上传）
@@ -347,7 +381,12 @@ void SpineRenderNode::prepare()
             QRhiSampler *sampler = rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear,
                                                    QRhiSampler::Linear,
                                                    QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge);
-            sampler->create();
+            if (!sampler->create()) {
+                qWarning() << "SpineRenderNode: sampler create FAILED";
+                delete sampler;
+                delete tex;
+                continue;
+            }
 
             QRhiShaderResourceBindings *srb = rhi->newShaderResourceBindings();
             srb->setBindings({
@@ -357,7 +396,13 @@ void SpineRenderNode::prepare()
                 QRhiShaderResourceBinding::sampledTexture(
                     1, QRhiShaderResourceBinding::FragmentStage, tex, sampler),
             });
-            srb->create();
+            if (!srb->create()) {
+                qWarning() << "SpineRenderNode: texture SRB create FAILED";
+                delete srb;
+                delete sampler;
+                delete tex;
+                continue;
+            }
 
             d->rhiTextures.push_back(tex);
             d->rhiSamplers.push_back(sampler);
@@ -379,14 +424,24 @@ void SpineRenderNode::prepare()
             delete d->triBuffer;
             d->triCapacity = qMax(16384, triBytes);
             d->triBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, d->triCapacity);
-            d->triBuffer->create();
+            if (!d->triBuffer->create()) {
+                qWarning() << "SpineRenderNode: tri buffer create FAILED";
+                delete d->triBuffer;
+                d->triBuffer = nullptr;
+                d->triCapacity = 0;
+            }
         }
         const int debugBytes = lineBytes + pointBytes;
         if (!d->debugBuffer || debugBytes > d->debugCapacity) {
             delete d->debugBuffer;
             d->debugCapacity = qMax(4096, debugBytes);
             d->debugBuffer = rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::VertexBuffer, d->debugCapacity);
-            d->debugBuffer->create();
+            if (!d->debugBuffer->create()) {
+                qWarning() << "SpineRenderNode: debug buffer create FAILED";
+                delete d->debugBuffer;
+                d->debugBuffer = nullptr;
+                d->debugCapacity = 0;
+            }
         }
 
         if (triBytes)
@@ -435,10 +490,18 @@ void SpineRenderNode::render(const RenderState *state)
                 0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
                 d->uniformBuffer),
         });
-        d->colorSrb->create();
+        if (!d->colorSrb->create()) {
+            qWarning() << "SpineRenderNode: color SRB create FAILED";
+            delete d->colorSrb;
+            d->colorSrb = nullptr;
+        }
     }
 
     const QShader vs = bakeShader(kVSSrc, QShader::VertexStage);
+    if (!vs.isValid()) {
+        // bake 失败（缺 glslang / 目标变体生成失败）时无法绘制，直接返回
+        return;
+    }
 
     // 图集三角形批
     if (!d->frame.batches.empty()) {
@@ -454,6 +517,8 @@ void SpineRenderNode::render(const RenderState *state)
             if (!pipe) {
                 pipe = createTexturePipeline(d->rhi, d->textureSrbs[b.textureIndex],
                                              vs, pmaIdx ? fsPma : fsStraight, b.additive, rp);
+                if (!pipe)
+                    continue;   // create 失败，本批跳过（已打日志）
             }
             cb->setGraphicsPipeline(pipe);
             cb->setShaderResources(d->textureSrbs[b.textureIndex]);
@@ -471,6 +536,8 @@ void SpineRenderNode::render(const RenderState *state)
             if (!d->colorLinePipe) {
                 d->colorLinePipe = createColorPipeline(d->rhi, d->colorSrb, vs, fsPlain,
                                                        QRhiGraphicsPipeline::Lines, rp);
+                if (!d->colorLinePipe)
+                    return;     // create 失败（已打日志）
             }
             cb->setGraphicsPipeline(d->colorLinePipe);
             cb->setShaderResources(d->colorSrb);
@@ -483,6 +550,8 @@ void SpineRenderNode::render(const RenderState *state)
             if (!d->colorPointPipe) {
                 d->colorPointPipe = createColorPipeline(d->rhi, d->colorSrb, vs, fsPlain,
                                                         QRhiGraphicsPipeline::Points, rp);
+                if (!d->colorPointPipe)
+                    return;     // create 失败（已打日志）
             }
             cb->setGraphicsPipeline(d->colorPointPipe);
             cb->setShaderResources(d->colorSrb);

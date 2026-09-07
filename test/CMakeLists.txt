@@ -69,3 +69,13 @@ add_test(
   COMMAND TestLuaSkill
   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
+
+qt_add_executable(TestSpineSmoke spine_smoke_test.cpp)
+target_precompile_headers(TestSpineSmoke REUSE_FROM TestSocket)
+target_include_directories(TestSpineSmoke PRIVATE ${PROJECT_SOURCE_DIR}/src/ui/spine)
+target_link_libraries(TestSpineSmoke PRIVATE ${TEST_LIB})
+add_test(
+  NAME "spine smoke test"
+  COMMAND TestSpineSmoke
+  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+)
