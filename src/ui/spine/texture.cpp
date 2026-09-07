@@ -31,20 +31,46 @@
 #include "texture.h"
 #include <QImage>
 #include <QFileInfo>
+#include <QDir>
 #include <QDebug>
 
 Texture::Texture(const QString& filePath)
     :mImage(0)
     ,mName(filePath)
 {
-    if (!QFileInfo::exists(filePath)){
-        qDebug()<<"Texture::Texture Error: file not exists. Path:"<<filePath;
-        return;
+    QString resolved = filePath;
+    if (!QFileInfo::exists(resolved)) {
+        // Android/Linux 文件系统大小写敏感：骨骼皮肤包常在 Windows 上制作，
+        // atlas 内部引用的贴图名可能与磁盘实际文件名大小写不一致
+        // （例如 atlas 写 *_Ren.png 而文件是 *_ren.png）。若直接按原名打开会
+        // 失败 → 纹理为空 → 骨骼渲染成空白。这里在同类目录做一次
+        // 不区分大小写的兜底匹配（Windows 上 exists 已通过则跳过，无副作用）。
+        const QFileInfo fi(resolved);
+        const QDir dir = fi.dir();
+        const QString wanted = fi.fileName();
+        if (wanted.isEmpty()) {
+            qWarning() << "Texture::Texture Error: empty file name. Path:" << filePath;
+            return;
+        }
+        if (dir.exists()) {
+            const QStringList entries =
+                dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+            for (const QString &e : entries) {
+                if (e.compare(wanted, Qt::CaseInsensitive) == 0) {
+                    resolved = dir.absoluteFilePath(e);
+                    break;
+                }
+            }
+        }
+        if (resolved == filePath) {
+            qWarning() << "Texture::Texture Error: file not exists. Path:" << filePath;
+            return;
+        }
     }
 
-    mImage = new QImage(filePath);
+    mImage = new QImage(resolved);
     if (mImage->isNull()){
-        qDebug()<<"Texture::Texture Error: image file isNull. Path:"<<filePath;
+        qWarning() << "Texture::Texture Error: image file isNull. Path:" << resolved;
         delete mImage;
         mImage = 0;
         return;

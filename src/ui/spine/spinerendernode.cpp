@@ -329,8 +329,15 @@ static QRhiGraphicsPipeline *createColorPipeline(QRhi *rhi, QRhiShaderResourceBi
 void SpineRenderNode::prepare()
 {
     QRhi *rhi = m_window ? m_window->rhi() : nullptr;
-    if (!rhi || !renderTarget() || !commandBuffer())
+    if (!rhi || !renderTarget() || !commandBuffer()) {
+        static int sSkipWarn = 0;
+        if (sSkipWarn++ < 8)
+            qWarning() << "[Spine] prepare SKIPPED rhi=" << (rhi != nullptr)
+                       << "renderTarget=" << (renderTarget() != nullptr)
+                       << "commandBuffer=" << (commandBuffer() != nullptr)
+                       << "frameValid=" << d->frame.valid;
         return;
+    }
     d->rhi = rhi;
 
     // 一次性诊断：确认当前 RHI 后端与纹理/NDC 约定，便于排查
@@ -463,6 +470,16 @@ void SpineRenderNode::prepare()
 
 void SpineRenderNode::render(const RenderState *state)
 {
+    static int sRenderLog = 0;
+    if (sRenderLog < 8) {
+        ++sRenderLog;
+        qInfo() << "[Spine] render() called valid=" << (d && d->frame.valid)
+                << "batches=" << (d ? int(d->frame.batches.size()) : -1)
+                << "tris=" << (d ? int(d->frame.triangles.size()) : -1)
+                << "rhi=" << (d && d->rhi)
+                << "cb=" << (commandBuffer() != nullptr)
+                << "rt=" << (renderTarget() != nullptr);
+    }
     if (!d->rhi || !d->frame.valid || !commandBuffer() || !renderTarget())
         return;
 

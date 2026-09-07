@@ -257,6 +257,16 @@ QSGNode *SkeletonAnimationFbo::updatePaintNode(QSGNode *oldNode, UpdatePaintNode
     if (!node)
         node = new SpineRenderNode(window());
     mRenderNode = node;
+    {
+        static int sUpnLog = 0;
+        if (sUpnLog < 8) {
+            ++sUpnLog;
+            qInfo() << "[SA] updatePaintNode valid=" << isSkeletonValid()
+                    << "bounds=" << mBounds.width() << "x" << mBounds.height()
+                    << "atlasImages=" << mAtlasImages.size()
+                    << "drawCmds=" << mDrawCommands.size();
+        }
+    }
 
     // 骨架重载后推送新的图集（epoch 变化才会触发纹理重建）
     node->setTextures(std::vector<QImage>(mAtlasImages.cbegin(), mAtlasImages.cend()),
@@ -573,6 +583,10 @@ void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
     }
 
     collectAtlasImages(); // 建立图集 -> QImage 缓存与索引
+    qInfo() << "[SA] skeleton loaded ok spineVer=" << int(ver)
+            << "bounds=" << mBounds.width() << "x" << mBounds.height()
+            << "atlasImages=" << mAtlasImages.size()
+            << "skel=" << skeletonPath;
     mTimer.invalidate();
 }
 
