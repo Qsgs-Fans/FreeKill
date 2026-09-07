@@ -336,8 +336,14 @@ int freekill_main(int argc, char *argv[]) {
   // 不强制图形 API，交由 Qt 自动选择可用后端（D3D11 / Vulkan / OpenGL）。
   // 如需手动指定可用环境变量：QSG_RHI_BACKEND=d3d11|vulkan|opengl
 #elif defined(Q_OS_ANDROID)
-  // 安卓强制使用 Vulkan 后端
-  QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
+  // 设置 QML 使用 OpenGL 渲染
+  QQuickWindow::setGraphicsApi(QSGRendererInterface::OpenGL);
+  // 在此基础上再指定使用OpenGL ES
+  {
+    auto fmt = QSurfaceFormat::defaultFormat();
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+    QSurfaceFormat::setDefaultFormat(fmt);
+  }
 #endif
 
 #define SHOW_SPLASH_MSG(msg)                                                   \
