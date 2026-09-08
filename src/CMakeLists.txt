@@ -96,6 +96,17 @@ if (NOT DEFINED FK_SERVER_ONLY)
   set_property(TARGET FreeKill PROPERTY AUTORCC ON)
   list(APPEND freekill_EXESRCS "${PROJECT_SOURCE_DIR}/src/ui/spine/resource.qrc")
 
+  # Spine 骨骼 shader 用构建期预编译（qt_add_shaders → .qsb），而非运行期 QShaderBaker。
+  qt_add_shaders(FreeKill "spine_shaders"
+    PREFIX "/shaders"
+    BASE "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders"
+    FILES
+      "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine.vert"
+      "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine_pma.frag"
+      "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine_straight.frag"
+      "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine_plain.frag"
+  )
+
   # 多版本 spine-c 运行时（源码已按版本重命名符号，互不冲突）
   # 支持 2.1 / 3.4~3.8 / 4.0~4.2，供版本自动/显式分发使用
   set(SPINE_RUNTIME_VERSIONS 21 34 35 36 37 38 40 41 42)
