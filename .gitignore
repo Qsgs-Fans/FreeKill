@@ -1,6 +1,8 @@
 # Compile output
 /build/
+/build-610/
 /build-android/
+/build-android-610/
 /docs/build
 /docs/.venv
 /*.o

@@ -97,9 +97,13 @@ if (NOT DEFINED FK_SERVER_ONLY)
   list(APPEND freekill_EXESRCS "${PROJECT_SOURCE_DIR}/src/ui/spine/resource.qrc")
 
   # Spine 骨骼 shader 用构建期预编译（qt_add_shaders → .qsb），而非运行期 QShaderBaker。
+  # 关键：GLSL 必须同时生成 300 es（GLES 3.0，Android 真机主流）。默认 qt_add_shaders
+  # 只生成 100 es / 120 / 150，Android GLES 3.0 真机会降级到低精度 ES2 shader，
+  # 导致坐标精度不足 → 骨骼移位、无视 clip/opacityMask（模拟器桌面 GPU 容错故正常）。
   qt_add_shaders(FreeKill "spine_shaders"
     PREFIX "/shaders"
     BASE "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders"
+    GLSL "100 es,300 es,120,150"
     FILES
       "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine.vert"
       "${PROJECT_SOURCE_DIR}/src/ui/spine/shaders/spine_pma.frag"
