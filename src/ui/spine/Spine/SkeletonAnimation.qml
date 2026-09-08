@@ -46,11 +46,22 @@ Item{
     property alias sourceSize: skeleton.sourceSize
     property alias spineVersion: skeleton.spineVersion
     property alias detectedVersion: skeleton.detectedVersion
+    // 骨架数据是否已真正加载完成（C++ 异步加载完成后为 true）。
+    // alias 自动转发底层 loadedChanged，供上层做“等全部加载完再统一播放”的同步。
+    property alias loaded: skeleton.loaded
 
     signal start(int trackIndex)
     signal end(int trackIndex)
     signal complete(int trackIndex, int loopCount)
     signal event(int trackIndex, SpineEvent event)
+    // 一次骨架加载尝试结束（成功 ok=true / 失败 ok=false）。仅靠 loaded 无法
+    // 区分“加载失败”与“还没加载完”，失败层若不被感知会卡住上层同步播放等待。
+    signal skeletonLoadFinished(bool ok)
+
+    // 加载是否已给出结论（无论成败）。缓存为属性，避免上层在 onCompleted 注册时
+    // 恰好错过信号（加载极快/已失败）导致永远等待。
+    property bool loadConcluded: false
+    property bool loadOk: false
 
     function setToSetupPose(){
         skeleton.setToSetupPose();
@@ -108,6 +119,13 @@ Item{
         }
         onSkeletonEvent: function(trackIndex, event){
             root.event(trackIndex, event);
+        }
+        // 加载结束（成功或失败）都向上转发，供 SkinArea 等做同步协调；
+        // 同时缓存结论，防止上层注册时错过信号。
+        onSkeletonLoadFinished: function(ok){
+            root.loadConcluded = true
+            root.loadOk = ok
+            root.skeletonLoadFinished(ok);
         }
     }
 

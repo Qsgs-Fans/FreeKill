@@ -32,10 +32,15 @@
 
 QmlBackend *Backend = nullptr;
 
+// 静默 FFmpeg 刷屏的日志（仅保留 error 级别），定义见文件末尾
+static void silenceFfmpegLogs();
+
 QmlBackend::QmlBackend(QObject *parent) : QObject(parent) {
   Backend = this;
   m_quickStartMode = QStringLiteral("");
 #ifndef FK_SERVER_ONLY
+  // 尽早静默 FFmpeg 的控制台刷屏日志（Input #0, mov,mp4...）
+  silenceFfmpegLogs();
   engine = nullptr;
   replayer = nullptr;
   udpSocket = new QUdpSocket(this);

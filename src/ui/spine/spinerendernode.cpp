@@ -274,17 +274,6 @@ void SpineRenderNode::prepare()
     }
     d->rhi = rhi;
 
-    // 一次性诊断：确认当前 RHI 后端与纹理/NDC 约定，便于排查
-    // 移动端（Android GLES/Vulkan）黑屏问题。
-    static bool sDiagPrinted = false;
-    if (!sDiagPrinted) {
-        sDiagPrinted = true;
-        qInfo().noquote() << "[Spine] RHI backend:" << rhi->backendName()
-                          << "yUpInNDC=" << rhi->isYUpInNDC()
-                          << "yUpInFb=" << rhi->isYUpInFramebuffer()
-                          << "samples=" << renderTarget()->sampleCount();
-    }
-
     if (d->invalidated) {
         d->freeRhi();
         d->invalidated = false;
@@ -404,16 +393,6 @@ void SpineRenderNode::prepare()
 
 void SpineRenderNode::render(const RenderState *state)
 {
-    static int sRenderLog = 0;
-    if (sRenderLog < 8) {
-        ++sRenderLog;
-        qInfo() << "[Spine] render() called valid=" << (d && d->frame.valid)
-                << "batches=" << (d ? int(d->frame.batches.size()) : -1)
-                << "tris=" << (d ? int(d->frame.triangles.size()) : -1)
-                << "rhi=" << (d && d->rhi)
-                << "cb=" << (commandBuffer() != nullptr)
-                << "rt=" << (renderTarget() != nullptr);
-    }
     if (!d->rhi || !d->frame.valid || !commandBuffer() || !renderTarget())
         return;
 

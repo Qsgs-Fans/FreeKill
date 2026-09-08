@@ -33,6 +33,9 @@
 #include "spinerendernode.h"
 #include <QQuickWindow>
 #include <QtQml/QQmlFile>
+#include <QtConcurrent/QtConcurrent>
+#include <QFutureWatcher>
+#include <QMutex>
 #include <cstring>
 #include "texture.h"
 
@@ -57,12 +60,16 @@ SkeletonAnimationFbo::SkeletonAnimationFbo(QQuickItem *parent)
 
 SkeletonAnimationFbo::~SkeletonAnimationFbo()
 {
-    releaseSkeletonRelatedData();
+    releaseSkeletonRelatedData(false); // 析构中不通知（避免 QML 回调访问半析构对象）
 }
 
 void SkeletonAnimationFbo::setToSetupPose()
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this]() { setToSetupPose(); });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::setToSetupPose Error: Skeleton is not ready";
         return;
     }
@@ -72,6 +79,10 @@ void SkeletonAnimationFbo::setToSetupPose()
 void SkeletonAnimationFbo::setBonesToSetupPose()
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this]() { setBonesToSetupPose(); });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::setBonesToSetupPose Error: Skeleton is not ready";
         return;
     }
@@ -81,6 +92,10 @@ void SkeletonAnimationFbo::setBonesToSetupPose()
 void SkeletonAnimationFbo::setSlotsToSetupPose()
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this]() { setSlotsToSetupPose(); });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::setSlotsToSetupPose Error: Skeleton is not ready";
         return;
     }
@@ -90,6 +105,12 @@ void SkeletonAnimationFbo::setSlotsToSetupPose()
 bool SkeletonAnimationFbo::setAttachment(const QString &slotName, const QString &attachmentName)
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this, slotName, attachmentName]() {
+                setAttachment(slotName, attachmentName);
+            });
+            return false;
+        }
         qDebug()<<"SkeletonAnimation::setAttachment Error: Skeleton is not ready";
         return false;
     }
@@ -100,6 +121,12 @@ bool SkeletonAnimationFbo::setAttachment(const QString &slotName, const QString 
 void SkeletonAnimationFbo::setMix(const QString &fromAnimation, const QString &toAnimation, float duration)
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this, fromAnimation, toAnimation, duration]() {
+                setMix(fromAnimation, toAnimation, duration);
+            });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::setMix Error: Skeleton is not ready.";
         return;
     }
@@ -110,6 +137,12 @@ void SkeletonAnimationFbo::setMix(const QString &fromAnimation, const QString &t
 void SkeletonAnimationFbo::setAnimation(int trackIndex, const QString& name, bool loop)
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放（QML onCompleted 常早于加载完成）
+            mPendingCalls.push_back([this, trackIndex, name, loop]() {
+                setAnimation(trackIndex, name, loop);
+            });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::setAnimation Error: Skeleton is not ready";
         return;
     }
@@ -121,6 +154,12 @@ void SkeletonAnimationFbo::setAnimation(int trackIndex, const QString& name, boo
 void SkeletonAnimationFbo::addAnimation(int trackIndex, const QString& name, bool loop, float delay)
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this, trackIndex, name, loop, delay]() {
+                addAnimation(trackIndex, name, loop, delay);
+            });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::addAnimation Error: Skeleton is not ready";
         return;
     }
@@ -139,6 +178,10 @@ bool SkeletonAnimationFbo::isPlaying(int trackIndex)
 void SkeletonAnimationFbo::clearTracks()
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this]() { clearTracks(); });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::clearTracks Error: Skeleton is not ready";
         return;
     }
@@ -148,6 +191,10 @@ void SkeletonAnimationFbo::clearTracks()
 void SkeletonAnimationFbo::clearTrack(int trackIndex)
 {
     if (!isSkeletonValid()){
+        if (mLoading) { // 后台加载中：入队，就绪后回放
+            mPendingCalls.push_back([this, trackIndex]() { clearTrack(trackIndex); });
+            return;
+        }
         qDebug()<<"SkeletonAnimation::clearTrack Error: Skeleton is not ready";
         return;
     }
@@ -195,6 +242,15 @@ void SkeletonAnimationFbo::setSkin(const QString & value)
         return;
     mSkin = value;
     Q_EMIT skinChanged();
+
+    if (mLoading) {
+        // 后台加载中：骨架会以“发起时的快照 skin”加载，完成后在此用最新 mSkin 修正
+        mPendingCalls.push_back([this]() {
+            if (mBackend && mSkeletonLoaded)
+                mBackend->setSkin(mSkin);
+        });
+        return;
+    }
 
     if (isSkeletonValid())
         mBackend->setSkin(mSkin);
@@ -257,16 +313,6 @@ QSGNode *SkeletonAnimationFbo::updatePaintNode(QSGNode *oldNode, UpdatePaintNode
     if (!node)
         node = new SpineRenderNode(window());
     mRenderNode = node;
-    {
-        static int sUpnLog = 0;
-        if (sUpnLog < 8) {
-            ++sUpnLog;
-            qInfo() << "[SA] updatePaintNode valid=" << isSkeletonValid()
-                    << "bounds=" << mBounds.width() << "x" << mBounds.height()
-                    << "atlasImages=" << mAtlasImages.size()
-                    << "drawCmds=" << mDrawCommands.size();
-        }
-    }
 
     // 骨架重载后推送新的图集（epoch 变化才会触发纹理重建）
     node->setTextures(std::vector<QImage>(mAtlasImages.cbegin(), mAtlasImages.cend()),
@@ -357,7 +403,12 @@ void SkeletonAnimationFbo::buildFrameData(SpineFrameData &frame)
     frame = SpineFrameData();
     frame.premultiplied = mPremultipliedAlapha;
 
-    if (mBounds.isNull() || mBounds.width() <= 0 || mBounds.height() <= 0)
+    // 注意：不能因 mBounds 为空就直接返回。
+    // front 等“前景特效”骨骼在 setup pose 下可能没有任何可见附件，
+    // 导致 bounds() 计算出空矩形；但动画（如 Attack）播放后会有绘制命令。
+    // 此时仍要用 centerAnchor 映射（世界坐标原样、仅 y 翻转）来绘制，
+    // 否则这些骨骼“加载了却永远画不出来”。
+    if (mDrawCommands.isEmpty())
         return;
 
     const SpineLocalMapper map(mBounds, QSizeF(width(), height()));
@@ -524,17 +575,102 @@ void SkeletonAnimationFbo::updateSkeletonAnimation()
     update();
 }
 
+namespace {
+// 后台线程执行整个骨架加载（spine 文件解析 + 图集 PNG 解码 + 纹理 RGBA8888 转换），
+// 避免组件创建瞬间阻塞 GUI 线程。加载结果以 SkeletonLoadResult 整体移交 GUI 线程。
+//
+// 线程安全：不同 spine 版本运行时符号带前缀、全局状态互不干扰，但同一版本的多个
+// 并发加载会竞争其内部少量全局可变状态（如 VertexAttachment 的 nextID、Json 错误
+// 指针 ep 等）。因此这里用一把文件级互斥锁把“同一时刻所有骨架加载”串行化——
+// 加载发生在后台，串行带来的等待只影响后台线程，不会卡 GUI。
+QMutex g_skeletonLoadMutex;
+
+std::shared_ptr<SkeletonLoadResult> doBackgroundSkeletonLoad(
+    const QString &skeletonPath, const QString &atlasPath,
+    float scale, const QString &skin, int versionHint)
+{
+    QMutexLocker locker(&g_skeletonLoadMutex);
+
+    auto res = std::make_shared<SkeletonLoadResult>();
+
+    // 检测（或确认）Spine 版本：显式指定优先，否则从文件自动检测
+    const int effective = (versionHint == SpineVersion::Auto)
+        ? static_cast<int>(detectSpineVersion(skeletonPath))
+        : versionHint;
+    res->version = effective;
+
+    SpineBackend *backend = createSpineBackend(static_cast<SpineVersion::Type>(effective));
+    if (!backend)
+        return res; // ok=false，backend 置空
+    res->backend = backend; // 所有权先交给 result：任何失败路径都会随 result 析构释放
+
+    if (!backend->load(skeletonPath, atlasPath, scale, skin))
+        return res; // ok=false；backend 已 dispose 内部资源，由 result 释放对象
+    res->ok = true;
+
+    res->bounds = backend->bounds();
+
+    // 在 setup pose 下收集图集页并转 RGBA8888（load 阶段骨架尚在 setup pose；
+    // 若某骨架 setup pose 下没有可见附件（如 front 特效），draw commands 为空，
+    // 此处收集不到——与旧同步行为一致，播放出现纹理时再由 needAtlas 补建）。
+    QVector<SpineDrawCommand> cmds;
+    backend->collectDrawCommands(cmds);
+    QVector<QImage> images;
+    QHash<Texture *, int> index;
+    for (const SpineDrawCommand &cmd : cmds) {
+        Texture *tex = static_cast<Texture *>(cmd.texture);
+        if (!tex || !tex->image() || tex->image()->isNull())
+            continue;
+        if (index.contains(tex))
+            continue;
+        QImage img = tex->image()->convertToFormat(QImage::Format_RGBA8888);
+        index.insert(tex, images.size());
+        images.push_back(std::move(img));
+    }
+    res->atlasImages = std::move(images);
+    res->textureIndex = std::move(index);
+    return res;
+}
+} // namespace
+
 void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
 {
+    // 分发策略：
+    //  - 首次创建 / 尚无骨架可显示（如加载失败后的重试）→ 后台线程加载，
+    //    把耗时文件解析 + PNG 解码移出 GUI 线程，避免组件创建瞬间卡顿。
+    //  - 运行时重载（已有骨架在播放/显示，如换肤、动态改参数）→ 同步加载，
+    //    与旧行为完全一致，播放阶段不受影响（也避免“清空→空白→就绪”的闪烁
+    //    以及 spine-c 同版本在 GUI 播放线程与后台加载线程间的并发隐患）。
+    if (mLoading) {                 // 后台加载进行中，属性又变化
+        mReloadRequested = true;    // 等本次完成后用最新参数重载
+        return;
+    }
+    if (isSkeletonValid()) {
+        loadSkeletonAndAtlasDataSync();
+        return;
+    }
+    loadSkeletonAndAtlasDataAsync();
+}
+
+// 同步加载：运行时重载沿用（播放阶段行为不变）。仅当已有有效骨架时由分发器调用。
+void SkeletonAnimationFbo::loadSkeletonAndAtlasDataSync()
+{
+    // 与后台加载共用同一把锁：保证任意时刻（GUI 线程或后台线程）同一 spine 版本
+    // 至多只有一处正在 load/parse，避免竞争 spine-c 各版本内部的少量全局可变状态
+    // （如 VertexAttachment 的 nextID、Json 错误指针 ep 等）。
+    QMutexLocker locker(&g_skeletonLoadMutex);
+
     releaseSkeletonRelatedData();
 
     if (mAtlasFile.isEmpty() || !mAtlasFile.isValid()){
         qDebug()<<"SkeletonAnimation::loadSkeletonAndAtlasData Error: Invalid AtlasFile:"<<mAtlasFile;
+        Q_EMIT skeletonLoadFinished(false);
         return;
     }
 
     if (mSkeletonDataFile.isEmpty() || !mSkeletonDataFile.isValid()){
         qDebug()<<"SkeletonAnimation::loadSkeletonAndAtlasData Error: Invalid SkeletonDataFile:"<<mSkeletonDataFile;
+        Q_EMIT skeletonLoadFinished(false);
         return;
     }
 
@@ -554,6 +690,7 @@ void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
     if (!mBackend) {
         qWarning() << "SkeletonAnimation: 不支持的 Spine 版本" << spineVersionToString(ver)
                    << "，无法加载。SkeletonDataFile:" << mSkeletonDataFile;
+        Q_EMIT skeletonLoadFinished(false);
         return;
     }
 
@@ -567,10 +704,13 @@ void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
                    << "atlas:" << mAtlasFile
                    << "version:" << spineVersionToString(ver);
         releaseSkeletonRelatedData();
+        Q_EMIT skeletonLoadFinished(false);
         return;
     }
 
     mSkeletonLoaded = true;
+    Q_EMIT loadedChanged(); // 同步加载成功：骨架真正就绪，通知 QML
+    Q_EMIT skeletonLoadFinished(true);
 
     mBounds = mBackend->bounds();
     if (mBounds.width() > 0 && mBounds.height() > 0) {
@@ -583,11 +723,132 @@ void SkeletonAnimationFbo::loadSkeletonAndAtlasData()
     }
 
     collectAtlasImages(); // 建立图集 -> QImage 缓存与索引
-    qInfo() << "[SA] skeleton loaded ok spineVer=" << int(ver)
-            << "bounds=" << mBounds.width() << "x" << mBounds.height()
-            << "atlasImages=" << mAtlasImages.size()
-            << "skel=" << skeletonPath;
     mTimer.invalidate();
+}
+
+// 首次创建：后台线程执行骨架加载（含 PNG 解码），完成后回到 GUI 线程应用。
+void SkeletonAnimationFbo::loadSkeletonAndAtlasDataAsync()
+{
+    if (mAtlasFile.isEmpty() || !mAtlasFile.isValid()){
+        qDebug()<<"SkeletonAnimation::loadSkeletonAndAtlasData Error: Invalid AtlasFile:"<<mAtlasFile;
+        Q_EMIT skeletonLoadFinished(false);
+        return;
+    }
+
+    if (mSkeletonDataFile.isEmpty() || !mSkeletonDataFile.isValid()){
+        qDebug()<<"SkeletonAnimation::loadSkeletonAndAtlasData Error: Invalid SkeletonDataFile:"<<mSkeletonDataFile;
+        Q_EMIT skeletonLoadFinished(false);
+        return;
+    }
+
+    // 快照当前参数；后台线程只读这些值，绝不触碰 this。
+    const QString skeletonPath = QQmlFile::urlToLocalFileOrQrc(mSkeletonDataFile);
+    const QString atlasPath = QQmlFile::urlToLocalFileOrQrc(mAtlasFile);
+    const float scale = mScale;
+    const QString skin = mSkin;
+    const int versionHint = mSpineVersion;
+
+    const quint64 gen = ++mLoadGeneration;
+    mLoading = true;
+
+    // 耗时加载（骨架解析 + PNG 解码 + 格式转换）全部在后台线程完成，避免组件创建
+    // 瞬间卡顿 GUI。播放阶段（update/渲染）保持原样、完全不受影响。QFutureWatcher
+    // 作为 this 子对象：组件在加载期间被销毁时 watcher 随之销毁，finished 不再触发，
+    // 后台任务结束后由 future 自行释放结果，不会访问已销毁的对象。
+    auto *watcher = new QFutureWatcher<std::shared_ptr<SkeletonLoadResult>>(this);
+    connect(watcher, &QFutureWatcher<std::shared_ptr<SkeletonLoadResult>>::finished, this,
+            [this, watcher, gen]() {
+                auto res = watcher->result();
+                watcher->deleteLater();
+                if (gen != mLoadGeneration)
+                    return; // 过期结果：直接丢弃（res 析构自动释放 backend）
+                onSkeletonLoadFinished(std::move(res));
+            });
+    watcher->setFuture(QtConcurrent::run(
+        [skeletonPath, atlasPath, scale, skin, versionHint]() {
+            return doBackgroundSkeletonLoad(skeletonPath, atlasPath, scale, skin, versionHint);
+        }));
+}
+
+// GUI 线程：后台加载完成回调。
+void SkeletonAnimationFbo::onSkeletonLoadFinished(std::shared_ptr<SkeletonLoadResult> res)
+{
+    mLoading = false;
+    if (mReloadRequested) {
+        // 加载期间属性又被改动：丢弃本次结果，用最新参数重新加载。
+        mReloadRequested = false;
+        loadSkeletonAndAtlasData();
+        return;
+    }
+    applyLoadedSkeleton(std::move(res));
+}
+
+// GUI 线程：应用后台加载成功的骨架。
+void SkeletonAnimationFbo::applyLoadedSkeleton(std::shared_ptr<SkeletonLoadResult> res)
+{
+    if (!res || !res->ok || !res->backend) {
+        qWarning() << "SkeletonAnimation: 后台加载骨架失败。"
+                   << "skeleton:" << mSkeletonDataFile
+                   << "atlas:" << mAtlasFile
+                   << "version:" << spineVersionToString(
+                        static_cast<SpineVersion::Type>(res ? res->version : SpineVersion::Unknown));
+        mPendingCalls.clear(); // 无骨架可回放，清空避免悬挂
+        Q_EMIT skeletonLoadFinished(false); // 通知上层：该层已结束且不可用
+        update();
+        return;
+    }
+
+    // 取出 backend 所有权（置空避免 res 析构时二次释放）
+    SpineBackend *backend = res->backend;
+    res->backend = nullptr;
+
+    // 首次创建时 mBackend 必为 null（异步仅在无骨架时启动），防御性兜底
+    delete mBackend;
+    mBackend = backend;
+    mSkeletonLoaded = true;
+    Q_EMIT loadedChanged(); // 后台加载成功：骨架真正就绪，通知 QML
+    Q_EMIT skeletonLoadFinished(true); // 通知上层：该层已就绪
+
+    if (mDetectedVersion != res->version) {
+        mDetectedVersion = res->version;
+        Q_EMIT detectedVersionChanged();
+    }
+
+    // 事件回调捕获 this（会 emit QML 信号），必须在 GUI 线程设置
+    mBackend->setEventCallback([this](const SpineEventInfo &info) { onSpineEvent(info); });
+
+    mBounds = res->bounds;
+    if (mBounds.width() > 0 && mBounds.height() > 0) {
+        setSourceSize(QSize(mBounds.width(), mBounds.height()));
+        // 重要：不要 setImplicitSize/setWidth/setHeight。若设置了 implicitSize，
+        // Qt 定位器（Row/Column 等）会把无显式宽高的子项宽度改成 implicitWidth，
+        // 使骨骼 item 被“偷偷”赋成 bounds 尺寸、从而误入 fill 适配模式。
+        // 这里刻意让自由定位的骨骼保持 0 尺寸 → 渲染层走“中心锚定”。
+        // QML 若想“填满适配”，请显式给骨架 width/height。
+    }
+
+    mAtlasImages = std::move(res->atlasImages);
+    mTextureIndex = std::move(res->textureIndex);
+    ++mTextureEpoch; // 驱动渲染节点重建并上传纹理
+
+    // 立即用新骨架（setup pose）填充 mDrawCommands，避免首帧 buildFrameData
+    // 拿到的是上一次（已释放骨架）遗留的旧命令。之后每帧 updateSkeletonAnimation
+    // 会继续刷新该缓冲（顶点指针指向 backend 内复用缓冲）。
+    mBackend->collectDrawCommands(mDrawCommands);
+
+    mTimer.invalidate();
+    flushPendingCalls(); // 回放加载期间排队等待的 setAnimation 等调用
+    update();
+}
+
+// GUI 线程：骨架就绪后回放加载期间排队的调用（保持原调用顺序）。
+void SkeletonAnimationFbo::flushPendingCalls()
+{
+    if (mPendingCalls.isEmpty())
+        return;
+    QVector<std::function<void()>> calls = std::move(mPendingCalls);
+    for (const std::function<void()> &call : calls)
+        call();
 }
 
 QRectF SkeletonAnimationFbo::calculateSkeletonRect()
@@ -603,16 +864,21 @@ bool SkeletonAnimationFbo::isSkeletonValid()
     return mSkeletonLoaded && mBackend;
 }
 
-void SkeletonAnimationFbo::releaseSkeletonRelatedData()
+void SkeletonAnimationFbo::releaseSkeletonRelatedData(bool notify)
 {
+    const bool wasLoaded = mSkeletonLoaded;
     delete mBackend;
     mBackend = nullptr;
 
     mSkeletonLoaded = false;
+    mDrawCommands.clear(); // 顶点指针指向已删除 backend 的复用缓冲，必须清空防悬垂
     mAtlasImages.clear();
     mTextureIndex.clear();
     ++mTextureEpoch; // 使渲染节点下一帧重建纹理缓存
     mShouldRelaseCacheTexture = true;
+
+    if (notify && wasLoaded)
+        Q_EMIT loadedChanged(); // 骨架从已加载变为不可用，通知 QML（如重载换肤）
 }
 
 void SkeletonAnimationFbo::componentComplete()

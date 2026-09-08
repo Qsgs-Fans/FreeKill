@@ -125,13 +125,20 @@ if (-not $NoDeploy) {
     # 仅 GUI 版需要 Qt 运行时与 QML 模块
     if (-not $ServerOnly) {
         # windeployqt (stderr 有警告时不要中断脚本)
+        # 注意：windeployqt 成功时也会向 stderr 打印大量信息。在 $ErrorActionPreference="Stop"
+        # 下，PowerShell 会把原生命令的 stderr 当作 NativeCommandError 抛出，导致 windeployqt
+        # 进程被中断、DLL 部署不完整（exe 缺 Qt6*.dll 无法运行）。因此调用前临时改为 "Continue"。
         $WinDeployQt = Join-Path $QtDir "bin\windeployqt.exe"
         $ExePath = Join-Path $BuildDir "FreeKill.exe"
         $QmlDir   = Join-Path $ScriptDir "packages\freekill-core\Fk"
+        $oldEAP = $ErrorActionPreference
+        $ErrorActionPreference = "Continue"
         try {
             & $WinDeployQt $ExePath --qmldir $QmlDir 2>&1 | Out-Null
         } catch {
             Write-Host "  [!] windeployqt 有警告 (通常无害)" -ForegroundColor DarkYellow
+        } finally {
+            $ErrorActionPreference = $oldEAP
         }
 
         # Qt.labs.qmlmodels (windeployqt 可能遗漏 labs 模块)
