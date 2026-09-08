@@ -1,5 +1,7 @@
 # ChangeLog
 
+## 0.5.25
+
 ## 0.5.24
 
 - 将 Spine 通过Qt的QSGRenderNode原生渲染管线进行渲染，大大优化的骨骼动画的性能
