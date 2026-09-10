@@ -3,7 +3,7 @@
   "description": "FreeKill Server",
   "iconUrl": "default",
   "capacity": 100,
-  "tempBanTime": 20,
+  "tempBanTime": 0,
   "motd": "Welcome!",
   "hiddenPacks": [],
   "enableBots": true,
