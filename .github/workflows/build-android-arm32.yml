@@ -1,0 +1,255 @@
+name: Build For Android Arm32
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Setup Android Environment
+      run: |
+        cd ..
+        mkdir android
+        cd android
+        wget --quiet https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip commandlinetools-linux-9477386_latest.zip
+        yes | ./cmdline-tools/bin/sdkmanager --sdk_root=$(pwd) \
+          "platforms;android-35" \
+          "platform-tools" \
+          "build-tools;35.0.0" \
+          "ndk;27.2.12479018"
+
+    - name: Setup OpenSSL 3.1.8
+      run: |
+        cd ..
+        wget --quiet https://github.com/openssl/openssl/releases/download/openssl-3.1.8/openssl-3.1.8.tar.gz
+        tar xf ./openssl-3.1.8.tar.gz
+        cd openssl-3.1.8
+
+        # export ANDROID_SDK_ROOT=$(pwd)/../android
+        # export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        # PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+        # ./Configure shared android-arm64 -U__ANDROID_API__ -D__ANDROID_API__=23
+
+        # 如同Qt文档所言 手动为库添加后缀 避免和系统ssl冲突
+        # make -j$(nproc) SHLIB_VERSION_NUMBER= build_libs
+
+        # cp libcrypto.so libcrypto_3.so
+        # cp libssl.so libssl_3.so
+        # patchelf --set-soname libcrypto_3.so libcrypto_3.so
+        # patchelf --set-soname libssl_3.so libssl_3.so
+        # patchelf --replace-needed libcrypto.so libcrypto_3.so libssl_3.so
+
+        git clone https://github.com/KDAB/android_openssl
+        rm -rf include
+        cp -r android_openssl/ssl_3/include .
+        cp -r android_openssl/ssl_3/armeabi-v7a/libcrypto_3.so .
+        cp -r android_openssl/ssl_3/armeabi-v7a/libssl_3.so .
+
+        cd ../FreeKill
+        cp -r ../openssl-3.1.8/include/openssl ./include
+
+    #- name: Setup Debug Session
+    #  uses: owenthereal/action-upterm@v1
+
+    - name: Build libgit2 1.9.0
+      run: |
+        cd ..
+        git clone https://github.com/libgit2/libgit2
+        cd libgit2
+        git checkout v1.9.0
+        mkdir build
+        cd build
+        export ANDROID_SDK_ROOT=$(pwd)/../../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+        SSL_DIR=$(pwd)/../../openssl-3.1.8
+        cmake .. \
+          -DBUILD_SHARED_LIBS=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_CLI=OFF \
+          -DCMAKE_SYSTEM_NAME=Android \
+          -DCMAKE_SYSTEM_VERSION=29 \
+          -DCMAKE_ANDROID_ARCH_ABI=armeabi-v7a \
+          -DCMAKE_ANDROID_NDK=${ANDROID_NDK_ROOT} \
+          -DOPENSSL_INCLUDE_DIR="${SSL_DIR}/include" \
+          -DOPENSSL_CRYPTO_LIBRARY="${SSL_DIR}/libcrypto_3.so" \
+          -DOPENSSL_SSL_LIBRARY="${SSL_DIR}/libssl_3.so"
+        make -j$(nproc)
+        cp libgit2.so ${SSL_DIR}
+
+    - name: Build Lua 5.4.8
+      run: |
+        cd ..
+        wget https://www.lua.org/ftp/lua-5.4.8.tar.gz
+        tar -xf ./lua-5.4.8.tar.gz
+        cd lua-5.4.8
+        
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+
+        
+        export API=24
+        export TOOLCHAIN=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+        export TARGET=armv7a-linux-androideabi
+        export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+        export AR=$TOOLCHAIN/bin/llvm-ar
+        export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+        
+        make CC="$CC" AR="$AR rcu" RANLIB="$RANLIB" MYCFLAGS="-fPIC -DLUA_USE_LINUX" all
+        rm src/lua.o src/luac.o
+        armv7a-linux-androideabi29-clang -shared -o liblua54.so src/*.o -lm -llog -ldl
+
+        cp -f liblua54.so $(pwd)/../FreeKill/lib/android/
+    
+    - name: Build SQLite 3.51.2
+      run: |
+        cd ..
+        wget https://www.sqlite.org/2026/sqlite-src-3510200.zip
+        unzip sqlite-src-3510200.zip
+        cd sqlite-src-3510200
+
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        PATH=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin:$ANDROID_NDK_ROOT/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+
+        
+        export API=23
+        export TOOLCHAIN=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64
+        export TARGET=armv7a-linux-androideabi
+        export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+        export AR=$TOOLCHAIN/bin/llvm-ar
+        export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+        
+        ./configure --build=arm-v7-linux-androideabi --prefix=$(pwd)/install --enable-shared CFLAGS="-fPIC -Os -DSQLITE_ENABLE_UNLOCK_NOTIFY=1 -DSQLITE_OMIT_LOAD_EXTENSION=1"
+        make all
+        
+        cp -f libsqlite3.so $(pwd)/../FreeKill/lib/android/
+
+    - name: Install swig
+      run: |
+        sudo apt-get install -y swig
+
+    - name: Install Qt for Host
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.10.0'
+        host: 'linux'
+        target: 'desktop'
+        arch: 'linux_gcc_64'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Install Qt for Android
+      uses: jurplel/install-qt-action@v3
+      with:
+        aqtversion: '==3.1.*'
+        py7zrversion: '>=0.20.2'
+        version: '6.10.0'
+        host: 'linux'
+        target: 'android'
+        arch: 'android_armv7'
+        modules: 'qtmultimedia qt5compat qtshadertools'
+
+    - name: Copy android assets
+      run: |
+        ${Qt6_DIR}/../gcc_64/bin/lrelease lang/zh_CN.ts
+        ${Qt6_DIR}/../gcc_64/bin/lrelease lang/en_US.ts
+        cp lang/zh_CN.qm .
+        cp lang/en_US.qm .
+        FKVER=$(cat CMakeLists.txt | grep 'project(FreeKill' | cut -d ' ' -f 3)
+        cd android
+        sed -i 's/function //g' copy_assets.sh  # FIX THIS
+        ./copy_assets.sh || echo "" # fail on copy cert, ubuntu is not arch
+        cd assets/res
+        cp -r /etc/ssl/certs .
+        cp /usr/share/ca-certificates/mozilla/* certs/
+        curl https://raw.githubusercontent.com/Qsgs-Fans/freekill-server-list/master/server-list.json > server-list.json
+        cd ../..
+        echo ${FKVER%)} > ../fk_ver
+        ../genfkver.sh
+        cp ../fk_ver assets/res
+        
+    - name: Fix qt-cmake permissions (workaround for cached Qt)
+      run: chmod +x ${Qt6_DIR}/bin/qt-cmake
+
+    - name: Configure CMake Project
+      working-directory: ${{github.workspace}}
+      run: |
+        export QT_HOST_PATH=${Qt6_DIR}/../gcc_64/
+        export ANDROID_SDK_ROOT=$(pwd)/../android
+        export ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/27.2.12479018
+        export FK_ANDROID_SSL_DIR=$(pwd)/../openssl-3.1.8
+        sed -i "s/LinguistTools/Linguist/g" CMakeLists.txt
+        ${Qt6_DIR}/bin/qt-cmake -S . -B ./build -DCMAKE_BUILD_TYPE=MinSizeRel
+
+    - name: Build project
+      working-directory: ${{github.workspace}}/build
+      run: make -j2
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: build/android-build/build/outputs/apk/release/android-build-release-unsigned.apk
+
+  release:
+    name: Release APK
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Git Repo
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Get Previous tag
+      id: previoustag
+      uses: WyriHaximus/github-action-get-previous-tag@v1
+      with:
+        fallback: 0.0.1
+
+    - name: Download APK from build
+      uses: actions/download-artifact@v4
+      with:
+        name: apk
+        path: apk
+
+    - uses: r0adkll/sign-android-release@v1
+      name: Sign app APK
+      # ID used to access action output
+      id: sign_app
+      with:
+        releaseDirectory: apk
+        signingKeyBase64: ${{ secrets.KEY_STORE }}
+        alias: ${{ secrets.KEY_STORE_ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+      env:
+        # override default build-tools version (29.0.3) -- optional
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+    - name: Rename APK
+      run: |
+        mv ${{ steps.sign_app.outputs.signedReleaseFile }} \
+          apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
+
+    - name: Upload Release APK
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.MY_TOKEN }}
+        tag_name: ${{ steps.previoustag.outputs.tag }}
+        files: apk/FreeKill-${{ steps.previoustag.outputs.tag }}.apk
