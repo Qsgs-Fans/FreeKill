@@ -35,6 +35,17 @@ static void writeDirMD5(QFile &dest, const QString &dir,
   }
 }
 
+bool IsUIPackDir(const QString &pkgDir) {
+  QFile f(pkgDir + "/init.lua");
+  if (!f.open(QIODevice::ReadOnly)) {
+    return false;
+  }
+  // 声明一般都在文件开头，读前 16KB 足够
+  auto head = f.read(16 * 1024);
+  f.close();
+  return head.contains("Package.UIPack");
+}
+
 static void writePkgsMD5(QFile &dest, const QString &dir,
                         const QString &filter) {
   QDir d(dir);
@@ -49,6 +60,8 @@ static void writePkgsMD5(QFile &dest, const QString &dir,
     if (info.fileName().endsWith(".disabled")) continue;
     if (disabled.contains(info.fileName())) continue;
     if (builtinPkgs.contains(info.fileName())) continue;
+    // UI 包只有界面代码，客户端与服务端无需一致
+    if (IsUIPackDir(info.filePath())) continue;
 
     writeDirMD5(dest, info.filePath(), filter);
   }

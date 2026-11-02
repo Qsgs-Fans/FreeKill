@@ -15,6 +15,9 @@
 // utilities
 
 QString calcFileMD5();
+/// 判断 packages/<dir> 是否为 UI 包（init.lua 中以 Package.UIPack 声明）。
+/// UI 包只包含界面代码，不影响游戏逻辑，因此不参与 MD5 校验和扩展包同步。
+bool IsUIPackDir(const QString &pkgDir);
 QByteArray JsonArray2Bytes(const QJsonArray &arr);
 QJsonDocument String2Json(const QString &str);
 

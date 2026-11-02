@@ -56,13 +56,24 @@ QStringList PackMan::getDisabledPacks() {
 }
 
 QString PackMan::getPackSummary() {
-  return db->selectJson("SELECT name, url, hash FROM packages WHERE enabled = 1;");
+  // UI 包由客户端自行安装/启用，不随服务端同步
+  QJsonArray arr;
+  for (auto e : db->select("SELECT name, url, hash FROM packages WHERE enabled = 1;")) {
+    if (IsUIPackDir("packages/" + e["name"])) continue;
+    QJsonObject obj;
+    obj["name"] = e["name"];
+    obj["url"] = e["url"];
+    obj["hash"] = e["hash"];
+    arr.append(obj);
+  }
+  return QString::fromUtf8(QJsonDocument(arr).toJson(QJsonDocument::Compact));
 }
 
 void PackMan::loadSummary(const QString &jsonData, bool useThread) {
   auto f = [=, this] {
-    // First, disable all packages
+    // First, disable all packages (UI 包除外：它们不参与同步，保持用户自己的启用状态)
     for (auto e : db->select("SELECT name FROM packages;")) {
+      if (IsUIPackDir("packages/" + e["name"])) continue;
       disablePack(e["name"]);
     }
 
