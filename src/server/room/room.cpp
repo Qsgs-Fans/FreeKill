@@ -618,7 +618,9 @@ void Room::_gameOver() {
 
     if (p->getState() != Player::Online) {
       if (p->getState() == Player::Offline) {
-        if (!isOutdated()) {
+        // 与上面“逃跑”分支保持一致：单机启动（ClientInstance 存在）时不临时封禁，
+        // 否则本机 127.0.0.1 会被封 tempBanTime 分钟，之后单机启动一直被拒。
+        if (!isOutdated() && !ClientInstance) {
           server->temporarilyBan(pid);
         } else {
           emit p->kicked();
